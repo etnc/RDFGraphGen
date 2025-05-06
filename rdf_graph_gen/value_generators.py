@@ -207,7 +207,7 @@ def generate_string(min_length, max_length, pattern):
 
 
 def generate_default_value(datatype, min_exclusive, min_inclusive, max_exclusive, max_inclusive, min_length, max_length,
-                           pattern, equals, disjoint, less_than, less_than_or_equals, has_value, path, sh_class):
+                           pattern, equals, disjoint, less_than, less_than_or_equals, path, sh_class):
 
     # Return specified value if 'equals' constraint is present
     if equals:

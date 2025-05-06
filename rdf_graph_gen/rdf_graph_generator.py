@@ -133,7 +133,6 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     sh_min_length = shape_dictionary.get(SH.minLength)
     sh_max_length = shape_dictionary.get(SH.maxLength)
     sh_pattern = shape_dictionary.get(SH.pattern)
-    sh_has_value = shape_dictionary.get(SH.hasValue)
     sh_node = shape_dictionary.get(SH.node)
     sh_path = shape_dictionary.get(SH.path)
 
@@ -142,9 +141,21 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     # for each nested property generate a rdf graph recursively
     if properties:
         for key, value in properties.items():
-            # the min and max count of the property that is generated
+            
+            # the min count of the property that is generated (generate at least 1)
             sh_min_count = int(value.get(SH.minCount, "1"))
             sh_max_count = int(value.get(SH.maxCount, sh_min_count))
+            
+            # check if property has hasValue, and if it has add one tuple and go on with that property
+            sh_has_value = value.get(SH.hasValue)
+            if sh_has_value is not None:
+                result.add((node, key, sh_has_value))
+                sh_max_count -= 1
+            
+            # decrease sh_max_count because one value is generated. If the new value is lesser than sh_min_count, decrease sh_min_count to sh_max_count 
+            if sh_max_count < sh_min_count:
+                sh_min_count = sh_max_count
+            
             for i in range(0, random.randint(sh_min_count, sh_max_count)):
                 generated_prop = dictionary_to_rdf_graph(value, None, result, node, dictionary,
                                                          property_pair_constraint_components, sh_class)
@@ -183,7 +194,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     # return a generated value based on multiple constarints
     return generate_default_value(sh_datatype, sh_min_exclusive, sh_min_inclusive, sh_max_exclusive, sh_max_inclusive,
                                   sh_min_length, sh_max_length, sh_pattern, sh_equals, sh_disjoint, sh_less_than,
-                                  sh_less_than_or_equals, sh_has_value, sh_path, sh_class)
+                                  sh_less_than_or_equals, sh_path, sh_class)
 
 
 """
