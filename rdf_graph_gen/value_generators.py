@@ -154,6 +154,10 @@ def generate_decimal(min_exclusive, min_inclusive, max_exclusive, max_inclusive,
 # The min_exclusive, min_inclusive, max_exclusive, max_inclusive, disjoint, less_than, less_than_or_equals, has_value
 # properties are not taken into account at this point for string generation
 def generate_string(min_length, max_length, pattern):
+    
+    if pattern:
+       return Literal(_randone(parse(pattern)))
+    
     if min_length:
         min_length = int(min_length)
         if max_length:
@@ -168,8 +172,8 @@ def generate_string(min_length, max_length, pattern):
             min_length = max_length - 5 if max_length > 5 else 0
         else:
             min_length, max_length = 8, 15
-    if not pattern:
-        pattern = '^([a-zA-Z0-9])*'
+
+    pattern = '^([a-zA-Z0-9])*'
     length = random.randint(min_length, max_length)
     strp = ''
     while len(strp) < length:
