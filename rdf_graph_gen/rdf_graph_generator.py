@@ -287,9 +287,21 @@ def generate_rdf_graphs_from_shacl_constraints(shape_file, number):
     return graph
 
 
-def generate_rdf(shape_file, output_file, number):
+def generate_rdf(shape_file, output_file, number, batch_size):
     shape = Graph()
     shape.parse(shape_file)
     dictionary = generate_dictionary_from_shapes_graph(shape)
-    graph = generate_rdf_graphs_from_dictionary(shape, dictionary, number)
-    graph.serialize(destination=output_file)
+    
+    # implement generating and writing down of the graphs in batches
+    with open(output_file, "a") as ttl_file:
+        while number > 0:
+            
+            batch_number = min(number, batch_size)
+            graph = generate_rdf_graphs_from_dictionary(shape, dictionary, batch_number)
+            text_graph = graph.serialize(format = 'ttl')
+            ttl_file.write(text_graph)
+            
+            number -= batch_size
+            
+        ttl_file.flush()
+        ttl_file.close()
