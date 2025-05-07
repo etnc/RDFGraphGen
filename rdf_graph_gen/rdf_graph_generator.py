@@ -176,9 +176,15 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
                     break
         return node
 
-    # if sh:in exists, return a value from it's predefined set
+    # if sh:in exists, return a value from it's predefined set. 
+    # Check the parent shape so you dont add the same tuple multiple times.
     elif sh_in:
+        existing = {o for o in result.objects(parent, sh_path)}
+        potential = set(sh_in) - existing
+        if len(potential) > 0:
+            return random.choice(list(potential))
         return random.choice(sh_in)
+    
     # if the property is described by a sh:node, generate a node and add it
     elif sh_node:
         n = dictionary.get(sh_node)
