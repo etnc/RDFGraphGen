@@ -8,6 +8,7 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 from rdf_graph_gen.shacl_mapping_generator import SCH
 import pkg_resources
+import warnings
 
 """
 Reads data from a CSV file and returns the content as a list of values.
@@ -91,7 +92,10 @@ def generate_date(min_exclusive, min_inclusive, max_exclusive, max_inclusive, le
     if max_date:
         if min_date:
             if max_date < min_date:
-                raise Exception("A conflicting date definition")
+                # raise Exception("A conflicting date definition")
+                min_date_replacement = add_to_date(max_date, -50, 0, 0)
+                warnings.warn(f"Invalid date range: ({min_date}, {max_date}). The range will be changed to: ({min_date_replacement}, {max_date}).", stacklevel=2)
+                min_date = min_date_replacement
         else:
             min_date = add_to_date(max_date, -50, 0, 0)
     else:
@@ -116,7 +120,9 @@ def generate_integer(min_exclusive, min_inclusive, max_exclusive, max_inclusive,
     if max_int is not None:
         if min_int is not None:
             if max_int < min_int:
-                raise Exception("Conflicting integer constraints")
+                min_int_replacement = max_int - 50
+                warnings.warn(f"Invalid int range: ({min_int}, {max_int}). The range will be changed to: ({min_int_replacement}, {max_int}).", stacklevel=2)
+                min_int = min_int_replacement
         else:
             min_int = max_int - 50
     else:
@@ -141,7 +147,9 @@ def generate_decimal(min_exclusive, min_inclusive, max_exclusive, max_inclusive,
     if max_float is not None:
         if min_float is not None:
             if max_float < min_float:
-                raise Exception("Conflicting float constraints")
+                min_float_replacement = max_float - 50
+                warnings.warn(f"Invalid float range: ({min_float}, {max_float}). The range will be changed to: ({min_float_replacement}, {max_float}).", stacklevel=2)
+                min_float = min_float_replacement
         else:
             min_float = max_float - 50
     else:
@@ -163,7 +171,9 @@ def generate_string(min_length, max_length, pattern):
         if max_length:
             max_length = int(max_length)
             if min_length > max_length:
-                raise Exception("Conflicting string constraints")
+                max_length_replacement = min_length + 10
+                warnings.warn(f"Invalid string length range: ({min_length}, {max_length}). The range will be changed to: ({min_length}, {max_length_replacement}).", stacklevel=2)
+                max_length = max_length_replacement
         else:
             max_length = min_length + 10
     else:
