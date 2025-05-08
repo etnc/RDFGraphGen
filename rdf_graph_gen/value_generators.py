@@ -77,7 +77,7 @@ def add_to_date(date1, years, months, days):
 
 # The min_length, max_length, pattern, disjoint, has_value properties are not taken into account at this point for date
 # generation
-def generate_date(min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than, less_than_or_equals):
+def generate_date(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than, less_than_or_equals):
     min_date, max_date = None, None
     if min_inclusive or min_exclusive:
         min_date = date.fromisoformat(min_inclusive) if min_inclusive else add_to_date(
@@ -102,12 +102,27 @@ def generate_date(min_exclusive, min_inclusive, max_exclusive, max_inclusive, le
         if not min_date:
             min_date = date.fromisoformat('1970-07-07')
         max_date = add_to_date(min_date, 50, 0, 0)
-    return get_date_between_two_dates(min_date, max_date)
+    
+    # Find a value in interval that is not allready generated
+    date_value_down = date_value_up = get_date_between_two_dates(min_date, max_date)
+
+    while date_value_up <= max_date:
+        if date_value_up not in existing_values:
+            return date_value_up
+        date_value_up = add_to_date(date_value_up, 0, 0, 1)
+        
+    while date_value_down >= min_date:
+        if date_value_down not in existing_values:
+            return date_value_down
+        date_value_down = add_to_date(date_value_down, 0, 0, -1)
+
+    return None
+
 
 
 # The min_length, max_length, pattern, disjoint, has_value properties are not taken into account at this point for
 # integer generation
-def generate_integer(min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than, less_than_or_equals):
+def generate_integer(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than, less_than_or_equals):
     min_int, max_int = None, None
     if min_inclusive is not None or min_exclusive is not None:
         min_int = int(min_inclusive) if min_inclusive is not None else int(min_exclusive) + 1
@@ -129,12 +144,26 @@ def generate_integer(min_exclusive, min_inclusive, max_exclusive, max_inclusive,
         if min_int is None:
             min_int = 1
         max_int = min_int + 50
-    return Literal(random.randint(min_int, max_int))
+        
+    # Find a value in interval that is not allready generated
+    int_value_down = int_value_up = random.randint(min_int, max_int)
+
+    while int_value_up <= max_int:
+        if int_value_up not in existing_values:
+            return Literal(int_value_up)
+        int_value_up += 1
+        
+    while int_value_down >= min_int:
+        if int_value_down not in existing_values:
+            return Literal(int_value_down)
+        int_value_down -= 1
+        
+    return None
 
 
 # The min_length, max_length, pattern, disjoint, has_value properties are not taken into account at this point for
 # decimal generation
-def generate_decimal(min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than, less_than_or_equals):
+def generate_decimal(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than, less_than_or_equals):
     min_float, max_float = None, None
     if min_inclusive is not None or min_exclusive is not None:
         min_float = float(min_inclusive) if min_inclusive is not None else math.nextafter(float(min_exclusive), +math.inf)
@@ -156,15 +185,27 @@ def generate_decimal(min_exclusive, min_inclusive, max_exclusive, max_inclusive,
         if min_float is None:
             min_float = 1
         max_float = min_float + 50
-    return Literal(random.uniform(min_float, max_float))
+        
+    # Prevention from regenerating the same float value again. 
+    # Should not be stuck in an infinite loop, its a 4-decimal float
+    float_value = random.uniform(min_float, max_float)
+    while float_value in existing_values:
+        float_value = random.uniform(min_float, max_float, 4)
+    return Literal(float_value)
 
 
 # The min_exclusive, min_inclusive, max_exclusive, max_inclusive, disjoint, less_than, less_than_or_equals, has_value
 # properties are not taken into account at this point for string generation
-def generate_string(min_length, max_length, pattern):
+def generate_string(existing_values, min_length, max_length, pattern):
     
+    # If pattern is present, generate a literal using it. 
+    # Try to find a value that is not allready generated 10 times, if u cant, give up.
     if pattern:
-       return Literal(_randone(parse(pattern)))
+        for i in range(10):
+            literal = _randone(parse(pattern))
+            if literal not in existing_values:
+                return Literal(literal)
+        return None
     
     if min_length:
         min_length = int(min_length)
@@ -183,14 +224,20 @@ def generate_string(min_length, max_length, pattern):
         else:
             min_length, max_length = 8, 15
 
+    # If a pattern is not present, use this one
     pattern = '^([a-zA-Z0-9])*'
-    length = random.randint(min_length, max_length)
-    strp = ''
-    while len(strp) < length:
-        strp = strp + _randone(parse(pattern))
-    if len(strp) > length:
-        strp = strp[:length]
-    return Literal(strp)
+    # Try to find a value that is not allready generated 10 times, if u cant, give up.
+    for i in range(10):
+        length = random.randint(min_length, max_length)
+        strp = ''
+        while len(strp) < length:
+            strp = strp + _randone(parse(pattern))
+        if len(strp) > length:
+            strp = strp[:length]
+        if strp not in existing_values:
+            return Literal(strp)
+        
+    return None
 
 
 """
@@ -220,7 +267,7 @@ def generate_string(min_length, max_length, pattern):
 """
 
 
-def generate_default_value(datatype, min_exclusive, min_inclusive, max_exclusive, max_inclusive, min_length, max_length,
+def generate_default_value(existing_values, datatype, min_exclusive, min_inclusive, max_exclusive, max_inclusive, min_length, max_length,
                            pattern, equals, disjoint, less_than, less_than_or_equals, path, sh_class):
 
     # Return specified value if 'equals' constraint is present
@@ -261,19 +308,22 @@ def generate_default_value(datatype, min_exclusive, min_inclusive, max_exclusive
 
     # Generate values based on datatype and constraints
     if datatype == XSD.integer:
-        return generate_integer(min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
+        return generate_integer(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
                                 less_than_or_equals)
     elif datatype == XSD.decimal:
-        return generate_decimal(min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
+        return generate_decimal(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
                                 less_than_or_equals)
     elif datatype == XSD.boolean:
         return Literal(bool(random.getrandbits(1)))
     elif datatype == XSD.date:
-        return Literal(generate_date(min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
-                                     less_than_or_equals))
+        date = generate_date(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
+                                     less_than_or_equals)
+        if date: 
+            return Literal(date)
+        return None
 
     # Default case: Generate a string value
-    return generate_string(min_length, max_length, pattern)
+    return generate_string(existing_values, min_length, max_length, pattern)
 
 
 """

@@ -198,7 +198,8 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         return predefined_value
 
     # return a generated value based on multiple constarints
-    return generate_default_value(sh_datatype, sh_min_exclusive, sh_min_inclusive, sh_max_exclusive, sh_max_inclusive,
+    existing_values = {o.toPython() for o in result.objects(parent, sh_path)}
+    return generate_default_value(existing_values, sh_datatype, sh_min_exclusive, sh_min_inclusive, sh_max_exclusive, sh_max_inclusive,
                                   sh_min_length, sh_max_length, sh_pattern, sh_equals, sh_disjoint, sh_less_than,
                                   sh_less_than_or_equals, sh_path, sh_class)
 
