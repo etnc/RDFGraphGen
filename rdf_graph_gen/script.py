@@ -1,5 +1,5 @@
 import argparse
-from rdf_graph_gen.rdf_graph_generator import *
+from rdf_graph_gen.multiprocess_generate import MultiprocessGenerator
 
 
 def main():
@@ -12,7 +12,9 @@ def main():
                         default=1000)
 
     args = parser.parse_args()
-    generate_rdf(args.file1, args.file2, int(args.instance_no), int(args.batch_size))
+    
+    generator = MultiprocessGenerator(args.file1, args.file2, int(args.instance_no), int(args.batch_size))
+    generator.generate()
 
 
 if __name__ == "__main__":

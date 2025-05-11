@@ -29,14 +29,14 @@ rdflib.BNode or rdflib.URIRef: The RDF node representing the SHACL shape in the 
 
 
 def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictionary,
-                            property_pair_constraint_components_parent, parent_class):
+                            property_pair_constraint_components_parent, parent_class, batchID):
     # initialization
     property_pair_constraint_components = []
     node = BNode()
 
     if shape_name:
         global COUNTER
-        node = URIRef("http://example.org/ns#Node" + str(COUNTER))
+        node = URIRef(f'http://example.org/ns#Node{batchID}_{COUNTER}')
         COUNTER += 1
         # as SH.description add the name of the shape that this node was generated from
         result.add((node, SH.description, shape_name))
@@ -158,7 +158,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
             
             for i in range(0, random.randint(sh_min_count, sh_max_count)):
                 generated_prop = dictionary_to_rdf_graph(value, None, result, node, dictionary,
-                                                         property_pair_constraint_components, sh_class)
+                                                         property_pair_constraint_components, sh_class, batchID)
                 if generated_prop is not None:
                     result.add((node, key, generated_prop))
 
@@ -169,7 +169,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
             sh_max_count = int(value.get(SH.maxCount, sh_min_count))
             for i in range(0, random.randint(sh_min_count, sh_max_count)):
                 generated_prop = dictionary_to_rdf_graph(value, None, result, node, dictionary,
-                                                         property_pair_constraint_components, sh_class)
+                                                         property_pair_constraint_components, sh_class, batchID)
                 if generated_prop is not None:
                     result.add((node, value.get(SH.path), generated_prop))
                 else:
@@ -190,7 +190,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         n = dictionary.get(sh_node)
         if not n:
             raise Exception("The SHACL shape " + sh_node + " cannot be found!")
-        return dictionary_to_rdf_graph(n, sh_node, result, None, dictionary, [], sh_class)
+        return dictionary_to_rdf_graph(n, sh_node, result, None, dictionary, [], sh_class, batchID)
 
     # check if a predefined value exists for this iteration
     predefined_value = generate_intuitive_value(sh_path, sh_class, dependencies)
@@ -233,7 +233,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
 """
 
 
-def generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, number_of_samples):
+def generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, number_of_samples, batchID):
     result_graph = Graph()
     result_graph.bind("schemaorg", SCH)
 
@@ -244,7 +244,7 @@ def generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, number_of_samp
     for key in independent_node_shapes:
         for i in range(0, number_of_samples):
             # Call 'dictionary_to_rdf_graph' to generate RDF triples for the current shape
-            dictionary_to_rdf_graph(dictionary[key], key, result_graph, None, dictionary, [], None)
+            dictionary_to_rdf_graph(dictionary[key], key, result_graph, None, dictionary, [], None, batchID)
 
     return result_graph
 
@@ -289,7 +289,7 @@ def generate_rdf_graphs_from_shacl_constraints(shape_file, number):
     # Convert parsed SHACL shapes graph into a dictionary representation
     dictionary = generate_dictionary_from_shapes_graph(shape)
     # Generate RDF graphs conforming to SHACL constraints
-    graph = generate_rdf_graphs_from_dictionary(shape, dictionary, number)
+    graph = generate_rdf_graphs_from_dictionary(shape, dictionary, number, 'B1')
     # Return the resulting RDF graph
     return graph
 
@@ -304,7 +304,7 @@ def generate_rdf(shape_file, output_file, number, batch_size):
         while number > 0:
             
             batch_number = min(number, batch_size)
-            graph = generate_rdf_graphs_from_dictionary(shape, dictionary, batch_number)
+            graph = generate_rdf_graphs_from_dictionary(shape, dictionary, batch_number, 'B1')
             text_graph = graph.serialize(format = 'ttl')
             ttl_file.write(text_graph)
             
