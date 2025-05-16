@@ -27,7 +27,9 @@ After installation, this package can be used as a command line tool:
 
 ```rdfgen input-shape.ttl output-graph.ttl scale-factor```
 
-The parameters here are the same as the ones described above.
+There are also some optional parameters. You can find out more by using the:
+
+```rdfgen --help```
 
 ## Examples
 

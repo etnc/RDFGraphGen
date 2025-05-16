@@ -61,4 +61,4 @@ class MultiprocessGenerator:
         
         time_delta = datetime.now() - start
         
-        print(f'Process running on {mp.cpu_count()} cpus, finished in {time_delta}')
+        print(f'Generator ran on {mp.cpu_count()} CPUs, finished in {time_delta}.')
