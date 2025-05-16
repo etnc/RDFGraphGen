@@ -10,10 +10,10 @@ The generation process involves extracting the constraints from the SHACL shapes
 
 The following function can be used to generate RDF data:
 
-__generate_rdf(input-shape.ttl, output-graph.ttl, number-of-entities)__
+__generate_rdf(input-shape.ttl, output-graph.ttl, scale-factor)__
 - input-shape.ttl is a Turtle file that contains SHACL shapes
 - output-graph.ttl is a Turtle file that will store the generated RDF entities
-- number-of-entities is the number of RDF entities to be generated
+- scale-factor determines the size of the generated RDF graph
 
 ## Installation
 
@@ -25,11 +25,12 @@ To install it, use:
 
 After installation, this package can be used as a command line tool:
 
-```rdfgen input-shape.ttl output-graph.ttl number-of-entities```
+```rdfgen input-shape.ttl output-graph.ttl scale-factor```
 
 The parameters here are the same as the ones described above.
 
 ## Examples
+
 Examples of SHACL shapes based on Schema.org and other types, along with generated synthetic RDF graphs based on these shapes, can be found in the [generated examples](generated_examples/) directory in this repo.
 
 ## Publications
@@ -37,9 +38,9 @@ Examples of SHACL shapes based on Schema.org and other types, along with generat
 * (preprint) Marija Vecovska, Milos Jovanovik. "[RDFGraphGen: A Synthetic RDF Graph Generator based on SHACL Constraints](https://arxiv.org/abs/2407.17941)". arXiv:2407.17941.
 
 ## Remarks
+
 - A SHACL shape has to have a 'a sh:NodeShape' property and object in order to be recognized as a Node Shape.
-- sh:severity is ignored because it has no useful info.
-- SHACL Property Paths are not supported
-- sh:datatype can have many different values, not all are recognized.
-- sh:nodeKind is ignored
-- The triples generated based on properties with a sh:minCount constraint can sometimes have a smaller value than the defined minimum count. This is because sometimes the generator generates the same triple multiple times. 
+- ``sh:severity`` is ignored because it has no useful info.
+- Only predicate paths are supported at this time.
+- Most common ``sh:datatype`` scenarios are supported.
+- Currently ``sh:nodeKind`` is ignored. 
