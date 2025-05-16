@@ -1,6 +1,6 @@
-# RDFGraphGen: A Synthetic RDF Graph Generator based on SHACL Constraints
+# RDFGraphGen: A Synthetic RDF Graph Generator based on SHACL Shapes
 
-This is a Python package which can be used to generate synthetic RDF knowledge graphs, based on SHACL constraints. 
+This is a Python package which can be used to generate synthetic RDF knowledge graphs, based on SHACL shapes. 
 
 The Shapes Constraint Language (SHACL) is a W3C standard which specifies ways to validate data in RDF graphs, by defining constraining shapes. However, even though the main purpose of SHACL is validation of existing RDF data, in order to solve the problem with the lack of available RDF datasets in multiple RDF-based application development processes, we envisioned and implemented a reverse role for SHACL: we use SHACL shape definitions as a starting point to generate synthetic data for an RDF graph. 
 
