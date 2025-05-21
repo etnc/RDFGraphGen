@@ -1,0 +1,53 @@
+@prefix schema: <http://schema.org/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.com/ns#> .
+
+ex:ExampleShape
+    a sh:NodeShape ;
+    sh:property [
+        sh:path ex:randomProperty ;
+        sh:datatype xsd:string;
+        sh:minLength 2;
+        sh:maxLength 8;
+    ] ;
+    sh:property [
+        sh:path ex:anotherRandomProperty ;
+        sh:minCount 3 ;
+        sh:maxCount 6 ;
+    ] ;
+    sh:property [
+        sh:path ex:firstConnectingProperty ;
+        sh:node ex:AddressShape ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path ex:secondConnectingProperty ;
+        sh:node ex:DateShape ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] .
+
+ex:AddressShape
+    a sh:NodeShape ;
+    sh:property [
+        sh:path ex:addressValue ;
+        sh:datatype xsd:string ;
+        sh:minLength 6 ;
+        sh:maxLength 16 ;
+        sh:minCount 1 ;
+        sh:maxCount 2 ;
+    ] .
+
+ex:DateShape
+    a sh:NodeShape ;
+    sh:property [
+        sh:path ex:date1 ;
+        sh:lessThan ex:date2 ;
+    ] ;
+    sh:property [
+        sh:path ex:date2 ;
+        sh:minInclusive "2025-02-03"^^xsd:date ;
+        sh:maxInclusive "2025-05-13"^^xsd:date ;
+    ] .

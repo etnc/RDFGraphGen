@@ -1,0 +1,27 @@
+@prefix schema: <http://schema.org/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.com/ns#> .
+
+schema:ExampleShape
+    a sh:NodeShape ;
+    sh:property [
+        sh:path ex:randomProperty ;
+        sh:datatype xsd:string;
+        sh:minLength 10;
+        sh:maxLength 10;
+    ] ;
+    sh:property [
+        sh:path ex:anotherRandomProperty ;
+        sh:minCount 3;
+        sh:maxCount 6;
+    ];
+    sh:property [
+        sh:path ex:date1 ;
+        sh:lessThan ex:date2 ;
+    ] ;
+    sh:property [
+        sh:path ex:date2 ;
+        sh:minInclusive "2007-02-10"^^xsd:date ;
+        sh:maxInclusive "2007-05-10"^^xsd:date ;
+  ] .

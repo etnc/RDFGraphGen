@@ -1,0 +1,13 @@
+@prefix schema: <http://schema.org/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.com/ns#> .
+
+schema:ExampleShape
+    a sh:NodeShape ;
+    sh:property [
+        sh:path ex:randomProperty ;
+        sh:datatype xsd:string;
+        sh:minLength 6;
+        sh:maxLength 10;
+    ] .

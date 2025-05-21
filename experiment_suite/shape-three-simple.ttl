@@ -1,0 +1,44 @@
+@prefix schema: <http://schema.org/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.com/ns#> .
+
+ex:ExampleShape
+    a sh:NodeShape ;
+    sh:property [
+        sh:path ex:randomProperty ;
+        sh:datatype xsd:string;
+        sh:minLength 2;
+        sh:maxLength 8;
+    ] ;
+    sh:property [
+        sh:path ex:firstConnectingProperty ;
+        sh:node ex:AddressShape ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path ex:secondConnectingProperty ;
+        sh:node ex:PhoneShape ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] .
+
+ex:AddressShape
+    a sh:NodeShape ;
+    sh:property [
+        sh:path ex:addressValue ;
+        sh:datatype xsd:string ;
+        sh:minLength 6 ;
+        sh:maxLength 16 ;
+    ] .
+
+ex:PhoneShape
+    a sh:NodeShape ;
+    sh:property [
+        sh:path ex:phoneValue ;
+        sh:datatype xsd:integer ;
+        sh:minLength 6 ;
+        sh:maxLength 12 ;
+    ] .
+
