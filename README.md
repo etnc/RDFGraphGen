@@ -37,7 +37,7 @@ Examples of SHACL shapes based on Schema.org and other types, along with generat
 
 ## Publications
 
-* (preprint) Marija Vecovska, Milos Jovanovik. "[RDFGraphGen: A Synthetic RDF Graph Generator based on SHACL Constraints](https://arxiv.org/abs/2407.17941)". arXiv:2407.17941.
+* (preprint) Milos Jovanovik, Marija Vecovska, Maxime Jakubowski, Katja Hose. "[RDFGraphGen: An RDF Graph Generator based on SHACL Shapes](https://arxiv.org/abs/2407.17941)". arXiv:2407.17941.
 
 ## Remarks
 
