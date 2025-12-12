@@ -7,8 +7,8 @@ from rdflib import XSD, Literal, URIRef, Namespace
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from rdf_graph_gen.shacl_mapping_generator import SCH
-import pkg_resources
 import warnings
+from importlib import resources
 
 """
 Reads data from a CSV file and returns the content as a list of values.
@@ -24,7 +24,13 @@ list: A list containing the values read from the CSV file.
 
 
 def get_path(file_name):
-    file_path = pkg_resources.resource_filename('rdf_graph_gen', f'datasets/{file_name}')
+    try:
+        # Python 3.9+
+        file_path = resources.files("rdf_graph_gen").joinpath(f"datasets/{file_name}")
+    except AttributeError:
+        # Python 3.7-3.8
+        with resources.path("rdf_graph_gen.datasets", file_name) as path:
+            file_path = str(path)
     return file_path
 
 
