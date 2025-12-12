@@ -273,7 +273,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
 """
 
 
-def pre_generate_pools(dictionary):
+def pre_generate_pools(dictionary, result_graph):
     """
     Pre-generate individuals for pools when ex:poolSize is specified.
     
@@ -284,9 +284,9 @@ def pre_generate_pools(dictionary):
     Parameters:
     -----------
     dictionary (dict): Dictionary of SHACL shapes.
+    result_graph (rdflib.Graph): The graph to add the pool individuals to.
     """
     global INDIVIDUAL_POOLS
-    temp_graph = Graph()  # Temporary graph for pre-generating pool individuals
     
     # Scan all shapes for ex:sharedWith configurations
     for shape_name, shape_dict in dictionary.items():
@@ -312,7 +312,7 @@ def pre_generate_pools(dictionary):
                                 individual = dictionary_to_rdf_graph(
                                     target_shape_dict, 
                                     target_node_shape, 
-                                    temp_graph, 
+                                    result_graph, 
                                     None, 
                                     dictionary, 
                                     [], 
@@ -327,7 +327,7 @@ def generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, number_of_samp
     result_graph.bind("schemaorg", SCH)
 
     # Pre-generate pools if ex:poolSize is specified
-    pre_generate_pools(dictionary)
+    pre_generate_pools(dictionary, result_graph)
 
     # Find independent node shapes in the provided shapes_graph
     independent_node_shapes = find_independent_node_shapes(shapes_graph)

@@ -1,0 +1,48 @@
+@prefix ex: <http://example.com/ns#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <http://schema.org/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+schema:CompanyShape
+    a sh:NodeShape ;
+    sh:targetClass schema:Corporation ;
+    sh:property [
+        sh:path schema:name ;
+        sh:datatype xsd:string ;
+    ] ;
+    sh:property [
+        sh:path ex:bond ;
+        sh:node schema:BondShape ;
+        sh:minCount 1 ;
+        sh:maxCount 10 ;
+    ] ;
+    .
+
+schema:BondShape
+    a sh:NodeShape ;
+    sh:targetClass ex:Bond ;
+    sh:property [
+        sh:path schema:name ;
+        sh:datatype xsd:string ;
+    ] ;
+    sh:property [
+        sh:path ex:registeredOn ;
+        sh:node schema:ExchangeShape ;
+        ex:sharedWith [
+            sh:node schema:BondShape ;
+            ex:probability 1.0 ;
+            ex:poolSize 6 ;
+        ]
+    ] ;
+    .
+
+schema:ExchangeShape
+    a sh:NodeShape ;
+    sh:targetClass ex:Exchange ;
+    sh:property [
+        sh:path schema:name ;
+        sh:datatype xsd:string ;
+    ] ;
+    .
