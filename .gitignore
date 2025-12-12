@@ -2,3 +2,4 @@ old/
 documentation/
 __pycache__
 uv.lock
+.vscode/settings.json
