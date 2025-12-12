@@ -6,6 +6,16 @@ from rdf_graph_gen.value_generators import *
 
 COUNTER = 100
 
+# Global pool for storing generated individuals by shape name
+# Structure: {shape_name: [list of URIRefs]}
+INDIVIDUAL_POOLS = {}
+
+
+def clear_pools():
+    """Clear all individual pools. Useful for batch processing."""
+    global INDIVIDUAL_POOLS
+    INDIVIDUAL_POOLS = {}
+
 """
 Function Explanation:
 ---------------------
@@ -190,7 +200,37 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         n = dictionary.get(sh_node)
         if not n:
             raise Exception("The SHACL shape " + sh_node + " cannot be found!")
-        return dictionary_to_rdf_graph(n, sh_node, result, None, dictionary, [], sh_class, batchID)
+        
+        # Check if this property has ex:sharedWith configuration for individual reuse
+        shared_with = shape_dictionary.get(EX.sharedWith)
+        if shared_with:
+            # Get the pool shape (which shape's individuals to share from)
+            pool_shape = shared_with.get(SH.node)
+            probability = shared_with.get(EX.probability, 0.5)  # Default 50% reuse probability
+            
+            # Initialize pool for this shape if it doesn't exist
+            global INDIVIDUAL_POOLS
+            if pool_shape not in INDIVIDUAL_POOLS:
+                INDIVIDUAL_POOLS[pool_shape] = []
+            
+            pool = INDIVIDUAL_POOLS[pool_shape]
+            
+            # Get individuals already used by this parent to avoid duplicates
+            existing = set(result.objects(parent, sh_path)) if parent else set()
+            available_pool = [ind for ind in pool if ind not in existing]
+            
+            # Decide whether to reuse (if pool has available individuals) based on probability
+            if available_pool and random.random() < probability:
+                # Reuse an existing individual from the pool (excluding already used ones)
+                return random.choice(available_pool)
+            else:
+                # Create a new individual and add it to the pool
+                new_individual = dictionary_to_rdf_graph(n, sh_node, result, None, dictionary, [], sh_class, batchID)
+                pool.append(new_individual)
+                return new_individual
+        else:
+            # No sharing configured, create a new individual as before
+            return dictionary_to_rdf_graph(n, sh_node, result, None, dictionary, [], sh_class, batchID)
 
     # check if a predefined value exists for this iteration
     predefined_value = generate_intuitive_value(sh_path, sh_class, dependencies)
@@ -233,9 +273,61 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
 """
 
 
+def pre_generate_pools(dictionary):
+    """
+    Pre-generate individuals for pools when ex:poolSize is specified.
+    
+    This function scans all shapes in the dictionary and looks for properties with
+    ex:sharedWith configurations that specify ex:poolSize. For each such configuration,
+    it pre-generates the specified number of individuals to populate the pool.
+    
+    Parameters:
+    -----------
+    dictionary (dict): Dictionary of SHACL shapes.
+    """
+    global INDIVIDUAL_POOLS
+    temp_graph = Graph()  # Temporary graph for pre-generating pool individuals
+    
+    # Scan all shapes for ex:sharedWith configurations
+    for shape_name, shape_dict in dictionary.items():
+        properties = shape_dict.get("properties", {})
+        for prop_path, prop_dict in properties.items():
+            shared_with = prop_dict.get(EX.sharedWith)
+            if shared_with:
+                pool_shape = shared_with.get(SH.node)
+                pool_size = shared_with.get(EX.poolSize)
+                target_node_shape = prop_dict.get(SH.node)
+                
+                # If poolSize is specified and pool is empty, pre-generate individuals
+                if pool_size and pool_shape:
+                    if pool_shape not in INDIVIDUAL_POOLS:
+                        INDIVIDUAL_POOLS[pool_shape] = []
+                    
+                    pool = INDIVIDUAL_POOLS[pool_shape]
+                    # Only pre-generate if pool is currently empty
+                    if len(pool) == 0 and target_node_shape:
+                        target_shape_dict = dictionary.get(target_node_shape)
+                        if target_shape_dict:
+                            for i in range(pool_size):
+                                individual = dictionary_to_rdf_graph(
+                                    target_shape_dict, 
+                                    target_node_shape, 
+                                    temp_graph, 
+                                    None, 
+                                    dictionary, 
+                                    [], 
+                                    None, 
+                                    'POOL'
+                                )
+                                pool.append(individual)
+
+
 def generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, number_of_samples, batchID):
     result_graph = Graph()
     result_graph.bind("schemaorg", SCH)
+
+    # Pre-generate pools if ex:poolSize is specified
+    pre_generate_pools(dictionary)
 
     # Find independent node shapes in the provided shapes_graph
     independent_node_shapes = find_independent_node_shapes(shapes_graph)

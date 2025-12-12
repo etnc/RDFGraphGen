@@ -1,0 +1,65 @@
+@prefix ex: <http://example.com/ns#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <http://schema.org/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+schema:TVSeriesShape
+    a sh:NodeShape ;
+    sh:targetClass schema:TVSeries;
+    sh:property [
+        sh:path schema:director;
+        sh:node schema:DirectorShape ;
+    ] ;
+    sh:property [
+        sh:path schema:actor;
+        sh:node schema:ActorShape ;
+        sh:minCount 3 ;
+        ex:sharedWith [
+            sh:node schema:TVSeriesShape ;
+            ex:probability 0.85 ;
+        ]
+    ] ;
+    sh:property [
+        sh:path schema:wumple ;
+        sh:datatype xsd:string ;
+        sh:pattern '[a-z ]{2,5}';
+    ] ;
+    sh:property [
+        sh:path schema:name ;
+        sh:datatype xsd:string ;
+    ] ;
+    sh:property [
+        sh:path schema:startDate ;
+        sh:datatype xsd:date;
+        sh:lessThan schema:datePublished ;
+    ] ;
+        sh:property [
+        sh:path schema:endDate ;
+        sh:datatype xsd:date;
+    ] ;
+    sh:property [
+        sh:path schema:datePublished ;
+        sh:lessThanOrEquals schema:endDate  ;
+    ] ;
+    .
+
+schema:DirectorShape
+  sh:targetClass schema:Person ;
+  a sh:NodeShape ;
+    sh:property [
+      sh:path schema:familyName ;
+      sh:datatype xsd:string ;
+    ] ;
+    .
+
+schema:ActorShape
+  sh:targetClass schema:Person ;
+  a sh:NodeShape ;
+  sh:property [
+      sh:path schema:name ;
+      sh:datatype xsd:string ;
+      sh:name "given name" ;
+    ] ;
+    .

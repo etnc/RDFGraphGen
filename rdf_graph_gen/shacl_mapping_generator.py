@@ -1,6 +1,7 @@
 from rdflib import SH, RDF, URIRef, Namespace
 
 SCH = Namespace("http://schema.org/")
+EX = Namespace("http://example.com/ns#") # TODO: change to proper namespace
 """
 Function Explanation:
 ---------------------
@@ -87,7 +88,15 @@ def find_independent_node_shapes(shapes_graph):
     node_shapes = find_node_shapes(shapes_graph)
 
     # Step 2: Retrieve SHACL Node Shapes that are pointed to by other shapes
-    node_shapes_pointed = {s for s in shapes_graph.objects(None, SH.node)}
+    # Exclude sh:node predicates that appear inside ex:sharedWith blocks (for pooling)
+    node_shapes_pointed = set()
+    for s, p, o in shapes_graph.triples((None, SH.node, None)):
+        # Check if this sh:node is inside an ex:sharedWith block
+        # by checking if the subject has any ex:sharedWith triples
+        is_shared_with_block = (s, None, None) in shapes_graph and \
+                              any(shapes_graph.triples((None, EX.sharedWith, s)))
+        if not is_shared_with_block:
+            node_shapes_pointed.add(o)
 
     # Step 3: Return the set difference to find independent SHACL Node Shapes
     return node_shapes - node_shapes_pointed
@@ -241,6 +250,19 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
             # Handle SH:or, SH:and, SH:xone, SH:not properties
             shape_dictionary[p] = get_dict_list_from_shacl_list(o, shapes_graph,
                                                                 property_pair_constraint_components_parent)
+
+        elif p == EX.sharedWith:
+            # Handle ex:sharedWith for individual reuse/pooling
+            shared_with_dict = {}
+            # Parse the nested properties of ex:sharedWith
+            for _, sp, so in shapes_graph.triples((o, None, None)):
+                if sp == SH.node:
+                    shared_with_dict[SH.node] = so
+                elif sp == EX.probability:
+                    shared_with_dict[EX.probability] = float(so)
+                elif sp == EX.poolSize:
+                    shared_with_dict[EX.poolSize] = int(so)
+            shape_dictionary[EX.sharedWith] = shared_with_dict
 
         else:
             # Handle other SHACL properties
