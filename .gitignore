@@ -4,3 +4,4 @@ __pycache__
 uv.lock
 .vscode/settings.json
 tmp/*
+*.egg-info

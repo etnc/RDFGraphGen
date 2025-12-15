@@ -44,5 +44,6 @@ schema:ExchangeShape
     sh:property [
         sh:path schema:name ;
         sh:datatype xsd:string ;
+        sh:pattern '[A-Z]{3} ([a-z][aeiou][a-z]){1,3}';
     ] ;
     .
