@@ -1,2 +1,6 @@
 old/
 documentation/
+.venv/
+build/
+dist/
+rdf_graph_gen.egg-info/
