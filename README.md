@@ -38,6 +38,7 @@ Examples of SHACL shapes based on Schema.org and other types, along with generat
 ## Publications
 
 * Milos Jovanovik, Marija Vecovska, Maxime Jakubowski, Katja Hose. "[RDFGraphGen: An RDF Graph Generator based on SHACL Shapes](https://link.springer.com/chapter/10.1007/978-981-95-5009-8_8)". Knowledge Graphs. IJCKG 2025. Lecture Notes in Computer Science, Volume 16297, pp. 111-125, 2026.
+* (preprint) Milos Jovanovik, Marija Vecovska, Maxime Jakubowski, Katja Hose. "[RDFGraphGen: An RDF Graph Generator based on SHACL Shapes](https://arxiv.org/abs/2407.17941)". arXiv:2407.17941.
 
 ## Remarks
 
