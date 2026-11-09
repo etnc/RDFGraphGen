@@ -7,7 +7,7 @@ from rdflib import XSD, Literal, URIRef, Namespace
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from rdf_graph_gen.shacl_mapping_generator import SCH
-import pkg_resources
+from importlib.resources import files
 import warnings
 
 """
@@ -24,13 +24,14 @@ list: A list containing the values read from the CSV file.
 
 
 def get_path(file_name):
-    file_path = pkg_resources.resource_filename('rdf_graph_gen', f'datasets/{file_name}')
-    return file_path
+    # Location of a bundled dataset file, resolved via importlib.resources (works for any installation layout)
+    return files('rdf_graph_gen') / 'datasets' / file_name
 
 
 def get_array_from_csv(file_name):
     results = []  # Initialize an empty list to store the values
-    with open(file_name, encoding='utf-8') as csvfile:
+    # file_name is either a plain path or a Traversable returned by get_path
+    with (file_name.open(encoding='utf-8') if hasattr(file_name, 'open') else open(file_name, encoding='utf-8')) as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:  # Iterate through each row in the CSV file
             results = results + row  # Append values from each row to the results list

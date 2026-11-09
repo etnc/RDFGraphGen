@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rdf-graph-gen"
+dynamic = ["version"]
+description = "Synthetic RDF graph generator based on SHACL shapes."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.9"
+dependencies = [
+    "rdflib>=7.0.0",
+    "python-dateutil>=2.8.2",
+    "exrex>=0.11.0",
+]
+keywords = ["RDF", "SHACL", "knowledge graph", "synthetic data", "data generator", "benchmark"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
+    "Topic :: Database",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Testing",
+]
+
+[project.optional-dependencies]
+# SHACL validation of generated graphs (rdfgen validate, rdfgen --validate)
+validate = ["pyshacl>=0.25.0"]
+# Running the test suite
+test = ["pytest>=7.0", "pyshacl>=0.25.0"]
+
+[project.scripts]
+rdfgen = "rdf_graph_gen.script:main"
+
+[project.urls]
+Homepage = "https://github.com/etnc/RDFGraphGen"
+Paper = "https://doi.org/10.1007/978-981-95-5009-8_8"
+Preprint = "https://arxiv.org/abs/2407.17941"
+
+[tool.setuptools.dynamic]
+version = { attr = "rdf_graph_gen.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["rdf_graph_gen*"]
+
+[tool.setuptools.package-data]
+rdf_graph_gen = ["datasets/*.csv"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

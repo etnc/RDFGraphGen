@@ -4,3 +4,5 @@ documentation/
 build/
 dist/
 rdf_graph_gen.egg-info/
+__pycache__/
+.pytest_cache/
