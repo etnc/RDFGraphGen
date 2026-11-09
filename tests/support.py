@@ -47,11 +47,11 @@ def assert_conforms(summary):
     assert summary.conforms, "\n" + summary.format()
 
 
-def known_bug(item, description, raises=AssertionError):
+def known_bug(description, raises=AssertionError):
     """
-    Mark a test as an expected failure caused by a known generator bug, tracked under the given item of the
-    v1.3 fix plan. The test must fail with the given exception (by default: a failed assertion, i.e. the
-    generated data does not conform); a failure of any other kind is reported as an error. The marker is
-    strict: once the bug is fixed, the test reports XPASS and fails, as a reminder to remove the marker.
+    Mark a test as an expected failure caused by a known generator bug. The test must fail with the given
+    exception (by default: a failed assertion, i.e. the generated data does not conform); a failure of any other
+    kind is reported as an error. The marker is strict: once the bug is fixed, the test reports XPASS and fails,
+    as a reminder to remove the marker.
     """
-    return pytest.mark.xfail(strict=True, raises=raises, reason=f"known bug (v1.3 plan item {item}): {description}")
+    return pytest.mark.xfail(strict=True, raises=raises, reason=f"known bug: {description}")

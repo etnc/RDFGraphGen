@@ -10,7 +10,7 @@ from rdf_graph_gen.validation import validate_generated
 
 # Nested node shapes, several datatypes, cardinality ranges and a sh:lessThan pair
 THREE_COMPLEX = str(REPO_ROOT / "experiment_suite" / "shape-three-complex.ttl")
-# Generates non-conforming data (known bug, plan item 4): used to compare validation results
+# Generates non-conforming data (a known bug): used to compare validation results
 THREE_SIMPLE = str(REPO_ROOT / "experiment_suite" / "shape-three-simple.ttl")
 
 

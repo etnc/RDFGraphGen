@@ -237,10 +237,15 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
             # Handle SH:in property
             shape_dictionary[p] = get_list_from_shacl_list(o, shapes_graph)
 
-        elif p in {URIRef(SH['or']), URIRef(SH['and']), URIRef(SH['xone']), URIRef(SH['not'])}:
-            # Handle SH:or, SH:and, SH:xone, SH:not properties
+        elif p in {URIRef(SH['or']), URIRef(SH['and']), URIRef(SH['xone'])}:
+            # Handle SH:or, SH:and, SH:xone properties: their value is an RDF list of shapes
             shape_dictionary[p] = get_dict_list_from_shacl_list(o, shapes_graph,
                                                                 property_pair_constraint_components_parent)
+
+        elif p == URIRef(SH['not']):
+            # Handle SH:not: its value is a single shape (not a list), and a shape can have several sh:not.
+            # The negated shape is parsed in isolation (its property pairs must not affect this shape).
+            shape_dictionary.setdefault(p, []).append(shape_to_dictionary(o, shapes_graph, []))
 
         else:
             # Handle other SHACL properties
