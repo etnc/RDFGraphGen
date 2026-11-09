@@ -1,10 +1,14 @@
+import random
 from copy import deepcopy
 from rdflib import Graph, BNode
 
 from rdf_graph_gen.shacl_mapping_generator import *
 from rdf_graph_gen.value_generators import *
 
+# Counters for the identifiers of generated entities (IRIs) and nested values (blank nodes). They are reset at
+# the start of every batch, so identifiers depend only on the batch, not on the process that generates it.
 COUNTER = 100
+BNODE_COUNTER = 0
 
 """
 Function Explanation:
@@ -32,14 +36,17 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
                             property_pair_constraint_components_parent, parent_class, batchID):
     # initialization
     property_pair_constraint_components = []
-    node = BNode()
+    global COUNTER, BNODE_COUNTER
 
     if shape_name:
-        global COUNTER
         node = URIRef(f'http://example.org/ns#Node{batchID}_{COUNTER}')
         COUNTER += 1
         # as SH.description add the name of the shape that this node was generated from
         result.add((node, SH.description, shape_name))
+    else:
+        # deterministic blank node identifiers (rdflib's default ones are random)
+        node = BNode(f'{batchID}b{BNODE_COUNTER}')
+        BNODE_COUNTER += 1
 
     sh_class = shape_dictionary.get(SH.targetClass, shape_dictionary.get(URIRef(SH['class'])))
     if sh_class:
@@ -180,9 +187,10 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     # Check the parent shape so you dont add the same tuple multiple times.
     elif sh_in:
         existing = {o for o in result.objects(parent, sh_path)}
-        potential = set(sh_in) - existing
+        # keep the order of the sh:in list (set order varies between runs, which breaks reproducibility)
+        potential = [value for value in sh_in if value not in existing]
         if len(potential) > 0:
-            return random.choice(list(potential))
+            return random.choice(potential)
         return random.choice(sh_in)
     
     # if the property is described by a sh:node, generate a node and add it
@@ -234,11 +242,14 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
 
 
 def generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, number_of_samples, batchID):
+    global COUNTER, BNODE_COUNTER
+    COUNTER, BNODE_COUNTER = 100, 0  # identifiers are unique per batch (batchID) and independent of the process
+
     result_graph = Graph()
     result_graph.bind("schemaorg", SCH)
 
-    # Find independent node shapes in the provided shapes_graph
-    independent_node_shapes = find_independent_node_shapes(shapes_graph)
+    # Find independent node shapes in the provided shapes_graph (in a fixed order, for reproducibility)
+    independent_node_shapes = sorted(find_independent_node_shapes(shapes_graph), key=str)
 
     # Generate RDF samples for each independent node shape
     for key in independent_node_shapes:
@@ -282,33 +293,39 @@ def generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, number_of_samp
 
 
 def generate_rdf_graphs_from_shacl_constraints(shape_file, number):
-    # Create an empty RDF graph
-    shape = Graph()
-    # Parse SHACL shapes from the input file into the graph
-    shape.parse(shape_file)
-    # Convert parsed SHACL shapes graph into a dictionary representation
-    dictionary = generate_dictionary_from_shapes_graph(shape)
-    # Generate RDF graphs conforming to SHACL constraints
-    graph = generate_rdf_graphs_from_dictionary(shape, dictionary, number, 'B1')
-    # Return the resulting RDF graph
-    return graph
+    return generate_graph(shape_file, number)
 
 
-def generate_rdf(shape_file, output_file, number, batch_size):
-    shape = Graph()
-    shape.parse(shape_file)
-    dictionary = generate_dictionary_from_shapes_graph(shape)
-    
-    # implement generating and writing down of the graphs in batches
-    with open(output_file, "a") as ttl_file:
-        while number > 0:
-            
-            batch_number = min(number, batch_size)
-            graph = generate_rdf_graphs_from_dictionary(shape, dictionary, batch_number, 'B1')
-            text_graph = graph.serialize(format = 'ttl')
-            ttl_file.write(text_graph)
-            
-            number -= batch_size
-            
-        ttl_file.flush()
-        ttl_file.close()
+def generate_batch(shapes_graph, dictionary, number, batch_index, seed=None):
+    """
+    Generate one batch: `number` entities per top-level node shape, with identifiers that are unique to the
+    batch. With a seed, the batch depends only on (seed, batch_index), not on the process that generates it.
+    """
+    if seed is not None:
+        # The generator (and exrex) use the global random module; seeding with a string is stable across runs
+        random.seed(f"{seed}/{batch_index}")
+    return generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, number, f'B{batch_index}')
+
+
+def generate_graph(shapes, scale_factor, seed=None):
+    """
+    Generate a synthetic RDF graph in memory and return it as an rdflib Graph.
+
+    shapes: an rdflib Graph with SHACL shapes, or the path to a file with SHACL shapes.
+    scale_factor: the number of entities generated for each top-level node shape.
+    seed: optional; the same seed always produces the same graph. The result is the same as the first batch
+          of 'rdfgen ... --seed SEED' with a batch size of at least scale_factor.
+    """
+    shapes_graph = shapes if isinstance(shapes, Graph) else Graph().parse(shapes)
+    dictionary = generate_dictionary_from_shapes_graph(shapes_graph)
+    return generate_batch(shapes_graph, dictionary, scale_factor, 1, seed)
+
+
+def generate_rdf(shape_file, output_file, number, batch_size=1000, seed=None, processes=1):
+    """
+    Generate a synthetic RDF graph and write it to output_file (Turtle), in batches of batch_size entities.
+    With processes > 1, the batches are generated in parallel. The same seed always produces the same file,
+    regardless of the number of processes.
+    """
+    from rdf_graph_gen.multiprocess_generate import MultiprocessGenerator
+    MultiprocessGenerator(shape_file, output_file, number, batch_size, processes=processes, seed=seed).generate()

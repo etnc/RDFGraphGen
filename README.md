@@ -8,12 +8,15 @@ The generation process involves extracting the constraints from the SHACL shapes
 
 ## Usage
 
-The following function can be used to generate RDF data:
+The following functions from `rdf_graph_gen.rdf_graph_generator` can be used to generate RDF data:
 
 __generate_rdf(input-shape.ttl, output-graph.ttl, scale-factor)__
 - input-shape.ttl is a Turtle file that contains SHACL shapes
 - output-graph.ttl is a Turtle file that will store the generated RDF entities
 - scale-factor determines the size of the generated RDF graph
+- optional: `batch_size`, `seed` (the same seed always produces the same graph) and `processes`
+
+__generate_graph(shapes, scale-factor, seed=None)__ returns the generated RDF graph as an rdflib `Graph`, instead of writing it to a file.
 
 ## Installation
 
@@ -31,6 +34,8 @@ There are also some optional parameters. You can find out more by using the:
 
 ```rdfgen --help```
 
+For reproducible graphs, e.g. for benchmarks, use `--seed`: the same seed always produces the same graph, regardless of the number of worker processes (`--processes`).
+
 ## Checking Conformance
 
 RDFGraphGen can check whether a generated RDF graph conforms to the input SHACL shapes. This requires the optional validation dependencies:
@@ -45,7 +50,9 @@ To check any existing RDF graph against SHACL shapes, use the `validate` command
 
 ```rdfgen validate input-shape.ttl output-graph.ttl```
 
-Each generated entity is checked against the shape it was generated from (the generator links each entity to its shape with `sh:description`), so the check is meaningful even for shapes without target declarations; target declarations in the shapes apply as usual. The command prints a summary of the validation results per constraint, `--report FILE` writes the full SHACL validation report, and the exit status is `0` if the graph conforms and `1` if it does not. Validation loads the whole graph into memory, so it is intended for small and medium-sized graphs.
+A generated graph conforms if every generated entity conforms to the shape it was generated from (the generator links each entity to its shape with `sh:description`), and every focus node selected by the target declarations of the shapes conforms to its shape. This makes the check meaningful even for shapes without target declarations. The command prints a summary of the validation results per constraint, distinguishing entities that fail only because a nested entity fails; `--report FILE` writes the full SHACL validation report. The exit status is `0` if the graph conforms, `1` if it does not, and `3` if nothing was checked.
+
+With `--validate`, each batch is checked right after it is generated, so the check scales with the generation. The `validate` command loads the whole graph into memory, so it is intended for small and medium-sized graphs.
 
 ## Examples
 

@@ -4,8 +4,7 @@ from pathlib import Path
 import pytest
 from rdflib import Graph
 
-from rdf_graph_gen.rdf_graph_generator import generate_rdf_graphs_from_dictionary
-from rdf_graph_gen.shacl_mapping_generator import generate_dictionary_from_shapes_graph
+from rdf_graph_gen.rdf_graph_generator import generate_graph
 from rdf_graph_gen.validation import validate_generated
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -19,6 +18,9 @@ PREFIXES = """
 @prefix ex: <http://example.org/> .
 """
 
+# All test data is generated with a fixed seed, so test runs are reproducible
+SEED = 20241108
+
 
 def parse_turtle(text):
     """Parse a Turtle snippet; the common prefixes (sh, xsd, rdf, rdfs, schema, ex) are predeclared."""
@@ -30,10 +32,9 @@ def load_shapes(ttl=None, path=None):
     return Graph(bind_namespaces="core").parse(path) if path is not None else parse_turtle(ttl)
 
 
-def generate(shapes_graph, scale=30):
-    """Generate `scale` entities per top-level node shape, in-process (single batch)."""
-    dictionary = generate_dictionary_from_shapes_graph(shapes_graph)
-    return generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, scale, "B1")
+def generate(shapes_graph, scale=30, seed=SEED):
+    """Generate `scale` entities per top-level node shape, in memory."""
+    return generate_graph(shapes_graph, scale, seed=seed)
 
 
 def generate_and_validate(ttl=None, path=None, scale=30):
@@ -46,10 +47,11 @@ def assert_conforms(summary):
     assert summary.conforms, "\n" + summary.format()
 
 
-def known_bug(item, description):
+def known_bug(item, description, raises=AssertionError):
     """
     Mark a test as an expected failure caused by a known generator bug, tracked under the given item of the
-    v1.3 fix plan. The marker is strict: once the bug is fixed, the test reports XPASS and fails, as a reminder
-    to remove the marker.
+    v1.3 fix plan. The test must fail with the given exception (by default: a failed assertion, i.e. the
+    generated data does not conform); a failure of any other kind is reported as an error. The marker is
+    strict: once the bug is fixed, the test reports XPASS and fails, as a reminder to remove the marker.
     """
-    return pytest.mark.xfail(strict=True, reason=f"known bug (v1.3 plan item {item}): {description}")
+    return pytest.mark.xfail(strict=True, raises=raises, reason=f"known bug (v1.3 plan item {item}): {description}")

@@ -137,7 +137,8 @@ CASES = [
     case("required-recursion", """ex:A a sh:NodeShape ; sh:property [ sh:path ex:toB ; sh:node ex:B ; sh:minCount 1 ] .
             ex:B a sh:NodeShape ; sh:property [ sh:path ex:toA ; sh:node ex:A ; sh:minCount 1 ] .
             ex:Root a sh:NodeShape ; sh:property [ sh:path ex:r ; sh:node ex:A ] .""",
-         known_bug(6, "endless recursion (RecursionError); needs a depth limit with links back to earlier entities")),
+         known_bug(6, "endless recursion; needs a depth limit with links back to earlier entities",
+                   raises=RecursionError)),
     case("self-recursive-shape", """ex:P a sh:NodeShape ; sh:property [ sh:path ex:name ; sh:datatype xsd:string ] ;
             sh:property [ sh:path ex:knows ; sh:node ex:P ; sh:minCount 0 ; sh:maxCount 2 ] .""",
          known_bug(3, "a shape that references itself is not treated as top-level, so no entities are generated")),
@@ -157,7 +158,7 @@ CASES = [
     case("and", """ex:S a sh:NodeShape ; sh:and (
             [ sh:property [ sh:path ex:a ; sh:minCount 1 ] ] [ sh:property [ sh:path ex:b ; sh:minCount 1 ] ] ) ."""),
     case("not", 'ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:integer ; sh:not [ sh:in (1 2 3) ] ] .',
-         known_bug("3, 7", "sh:not crashes the shape parser")),
+         known_bug("3, 7", "sh:not crashes the shape parser", raises=StopIteration)),
 
     # other
     case("closed", """ex:S a sh:NodeShape ; sh:targetClass ex:C ; sh:closed true ; sh:ignoredProperties ( rdf:type ) ;

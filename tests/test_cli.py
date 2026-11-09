@@ -5,7 +5,7 @@ from rdflib import Graph, RDF, SH
 from support import PREFIXES, REPO_ROOT
 
 from rdf_graph_gen import __version__
-from rdf_graph_gen.script import EXIT_ERROR, EXIT_NONCONFORMING, EXIT_OK, main
+from rdf_graph_gen.script import EXIT_ERROR, EXIT_NONCONFORMING, EXIT_NOTHING_CHECKED, EXIT_OK, main
 
 SHAPES = PREFIXES + """
 ex:ValueShape a sh:NodeShape ;
@@ -43,7 +43,14 @@ def test_validate_command_nonconforming_graph_writes_report(tmp_path, capsys):
 def test_validate_command_declared_targets_only(tmp_path, capsys):
     shapes = write(tmp_path, "shapes.ttl", SHAPES)
     data = write(tmp_path, "data.ttl", PREFIXES + 'ex:n1 sh:description ex:ValueShape ; ex:value "seven" .')
-    assert main(["validate", shapes, data, "--declared-targets-only"]) == EXIT_OK
+    assert main(["validate", shapes, data, "--declared-targets-only"]) == EXIT_NOTHING_CHECKED
+    assert "NOTHING CHECKED" in capsys.readouterr().out
+
+
+def test_validate_command_nothing_checked(tmp_path, capsys):
+    shapes = write(tmp_path, "shapes.ttl", SHAPES)  # no target declarations
+    data = write(tmp_path, "data.ttl", PREFIXES + "ex:n1 ex:value 7 .")  # no provenance links
+    assert main(["validate", shapes, data]) == EXIT_NOTHING_CHECKED
     assert "NOTHING CHECKED" in capsys.readouterr().out
 
 
@@ -80,14 +87,38 @@ def test_report_requires_validate(tmp_path):
 
 
 def test_generate_with_validate_conforming(tmp_path, capsys):
+    # several batches in two worker processes
     shapes = str(REPO_ROOT / "experiment_suite" / "shape-single-simple.ttl")
     output = tmp_path / "out.ttl"
-    assert main([shapes, str(output), "25", "-b", "10", "--validate"]) == EXIT_OK
-    assert "Conformance check: CONFORMS" in capsys.readouterr().out
+    assert main([shapes, str(output), "25", "-b", "10", "-p", "2", "--validate"]) == EXIT_OK
+    out = capsys.readouterr().out
+    assert "Conformance check: CONFORMS" in out
+    assert "Focus nodes checked: 25 " in out
     assert len(set(Graph().parse(output).subjects(SH.description, None))) == 25
 
 
 def test_generate_with_validate_nonconforming(tmp_path, capsys):
     shapes = write(tmp_path, "shapes.ttl", UNSATISFIABLE_SHAPES)
-    assert main([shapes, str(tmp_path / "out.ttl"), "5", "--validate"]) == EXIT_NONCONFORMING
+    assert main([shapes, str(tmp_path / "out.ttl"), "5", "-p", "1", "--validate"]) == EXIT_NONCONFORMING
     assert "DOES NOT CONFORM" in capsys.readouterr().out
+
+
+def test_generate_with_validate_merges_batch_reports(tmp_path):
+    shapes = write(tmp_path, "shapes.ttl", UNSATISFIABLE_SHAPES)
+    report = tmp_path / "report.ttl"
+    status = main([shapes, str(tmp_path / "out.ttl"), "7", "-b", "3", "-p", "1", "--validate", "--report", str(report)])
+    assert status == EXIT_NONCONFORMING
+    report_graph = Graph().parse(report)
+    reports = list(report_graph.subjects(RDF.type, SH.ValidationReport))
+    assert len(reports) == 1  # one report for the whole graph, not one per batch
+    assert len(list(report_graph.objects(reports[0], SH.result))) == 7  # one sh:minCount result per entity
+
+
+def test_generate_rdf_overwrites_the_output_file(tmp_path):
+    from rdf_graph_gen.rdf_graph_generator import generate_rdf
+    shapes = str(REPO_ROOT / "experiment_suite" / "shape-single-simple.ttl")
+    output = tmp_path / "out.ttl"
+    generate_rdf(shapes, str(output), 10, seed=1)
+    first = output.read_text(encoding="utf-8")
+    generate_rdf(shapes, str(output), 10, seed=1)
+    assert output.read_text(encoding="utf-8") == first  # previously, the second run was appended

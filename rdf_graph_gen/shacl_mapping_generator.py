@@ -329,7 +329,9 @@ def define_dependencies(dictionary):
     t_class = dictionary.get(SH.targetClass)
     properties = dictionary.get("properties")
 
-    if t_class:
+    # This function is called for every generated entity, on shape dictionaries that are shared between
+    # entities, so it must be idempotent: dependencies are added only once (see _add_dependency).
+    if t_class and properties:
 
         # Check if the target class is 'Person'
         if t_class == SCH.Person:
@@ -349,32 +351,30 @@ def define_dependencies(dictionary):
 
             # Check and establish dependencies for 'givenName' and 'gender'
             if gender_dict and given_name_dict:
-                dependency_list = given_name_dict.get('depends_on', [])
-                dependency_list.append(gender)
-                given_name_dict['depends_on'] = dependency_list
+                _add_dependency(given_name_dict, gender)
 
             # Check and establish dependencies for 'name' and 'gender'
             if gender_dict and name_dict:
-                dependency_list = name_dict.get('depends_on', [])
-                dependency_list.append(gender)
-                name_dict['depends_on'] = dependency_list
+                _add_dependency(name_dict, gender)
 
             # Check and establish dependencies for 'email' based on other properties
             if email_dict:
-                dependency_list = email_dict.get('depends_on', [])
-
                 # Check for 'givenName' and 'familyName' dependencies
                 if given_name_dict and family_name_dict:
-                    dependency_list.append(given_name)
-                    dependency_list.append(family_name)
+                    _add_dependency(email_dict, given_name)
+                    _add_dependency(email_dict, family_name)
                 # Check for 'name' dependency
                 elif name_dict:
-                    dependency_list.append(name)
+                    _add_dependency(email_dict, name)
                 # Check for 'givenName' dependency
                 elif given_name_dict:
-                    dependency_list.append(given_name)
+                    _add_dependency(email_dict, given_name)
 
-                email_dict['depends_on'] = dependency_list
+
+def _add_dependency(property_dict, dependency):
+    dependency_list = property_dict.setdefault('depends_on', [])
+    if dependency not in dependency_list:
+        dependency_list.append(dependency)
 
 
 """
