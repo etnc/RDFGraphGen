@@ -31,6 +31,22 @@ There are also some optional parameters. You can find out more by using the:
 
 ```rdfgen --help```
 
+## Checking Conformance
+
+RDFGraphGen can check whether a generated RDF graph conforms to the input SHACL shapes. This requires the optional validation dependencies:
+
+```pip install "rdf-graph-gen[validate]"```
+
+To check the graph right after it is generated, add the `--validate` flag:
+
+```rdfgen input-shape.ttl output-graph.ttl scale-factor --validate```
+
+To check any existing RDF graph against SHACL shapes, use the `validate` command:
+
+```rdfgen validate input-shape.ttl output-graph.ttl```
+
+Each generated entity is checked against the shape it was generated from (the generator links each entity to its shape with `sh:description`), so the check is meaningful even for shapes without target declarations; target declarations in the shapes apply as usual. The command prints a summary of the validation results per constraint, `--report FILE` writes the full SHACL validation report, and the exit status is `0` if the graph conforms and `1` if it does not. Validation loads the whole graph into memory, so it is intended for small and medium-sized graphs.
+
 ## Examples
 
 Examples of SHACL shapes based on Schema.org and other types, along with generated synthetic RDF graphs based on these shapes, can be found in the [generated examples](generated_examples/) directory in this repo.
