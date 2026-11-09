@@ -35,7 +35,8 @@ SHIPPED_SHAPES = [
                  marks=known_bug("xsd:decimal values are typed xsd:double; sh:pattern ignores "
                                          "sh:minLength/sh:maxLength")),
     pytest.param("generated_examples/shape_examples/tv_series_shape.ttl",
-                 marks=known_bug("sh:lessThan pairs are violated")),
+                 marks=known_bug("a value of 0 is treated as missing, so sh:equals does not copy it; sh:lessThan can "
+                                 "leave no valid range for numberOfSeasons")),
 ]
 
 
@@ -108,8 +109,15 @@ CASES = [
     case("disjoint", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:a ; sh:datatype xsd:string ; sh:disjoint ex:b ] ;
             sh:property [ sh:path ex:b ; sh:datatype xsd:string ] ."""),
     case("equals-keeps-constraints-of-other-property", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:a ; sh:equals ex:b ] ;
-            sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minInclusive 5 ; sh:maxInclusive 9 ] .""",
-         known_bug("sh:equals overwrites the constraints of the other property")),
+            sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minInclusive 5 ; sh:maxInclusive 9 ] ."""),
+    case("equals-other-property-declared-first", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minInclusive 5 ; sh:maxInclusive 9 ] ;
+            sh:property [ sh:path ex:a ; sh:equals ex:b ] ."""),
+    case("equals-with-several-values", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:a ; sh:equals ex:b ] ;
+            sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minCount 2 ; sh:maxCount 2 ] .""",
+         known_bug("sh:equals copies only the first value of the other property")),
+    case("disjoint-keeps-constraints-of-other-property", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:a ; sh:disjoint ex:b ] ;
+            sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minInclusive 5 ; sh:maxInclusive 9 ] ."""),
 
     # shape references and node values
     case("node", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:node ex:T ; sh:minCount 1 ] .

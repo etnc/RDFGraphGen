@@ -268,9 +268,10 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
         less_than_or_equals = d.get(SH.lessThanOrEquals)
 
         # Additional handling for constraints
-        if equals and not sh_properties.get(SH.equals):
+        # Make sure the other property of the pair is generated; if the shape declares it, keep its constraints
+        if equals and not sh_properties.get(equals):
             sh_properties[equals] = {SH.path: equals}
-        if disjoint and not sh_properties.get(SH.disjoint):
+        if disjoint and not sh_properties.get(disjoint):
             sh_properties[disjoint] = {SH.path: disjoint}
         if less_than and not sh_properties.get(less_than):
             less_than_dict = sh_properties.get(less_than, {})

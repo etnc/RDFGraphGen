@@ -25,3 +25,21 @@ def test_not_is_parsed_as_a_list_of_negated_shapes():
     property_negations = shape["properties"][URIRef(EX + "p")][SH["not"]]
     assert [Literal(1), Literal(2)] in [n.get(SH["in"]) for n in property_negations]
     assert Literal(5) in [n.get(SH.hasValue) for n in property_negations]
+
+
+def test_equals_and_disjoint_keep_the_constraints_of_the_other_property():
+    from rdflib import XSD  # imported here: pytest probes module-level objects, and rdflib's XSD warns about that
+    shape = parse_shape("""
+        ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:a ; sh:equals ex:b ; sh:disjoint ex:c ] ;
+            sh:property [ sh:path ex:b ; sh:datatype xsd:integer ] ;
+            sh:property [ sh:path ex:c ; sh:datatype xsd:date ] .
+    """)
+    assert shape["properties"][URIRef(EX + "b")][SH.datatype] == XSD.integer
+    assert shape["properties"][URIRef(EX + "c")][SH.datatype] == XSD.date
+
+
+def test_equals_and_disjoint_add_the_other_property_if_it_is_not_declared():
+    shape = parse_shape("ex:S a sh:NodeShape ; sh:property [ sh:path ex:a ; sh:equals ex:b ; sh:disjoint ex:c ] .")
+    assert shape["properties"][URIRef(EX + "b")] == {SH.path: URIRef(EX + "b")}
+    assert shape["properties"][URIRef(EX + "c")] == {SH.path: URIRef(EX + "c")}
