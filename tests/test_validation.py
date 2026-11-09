@@ -1,7 +1,9 @@
 """Tests of the conformance checker itself (rdf_graph_gen.validation)."""
+from rdflib import SH, URIRef
+
 from support import parse_turtle
 
-from rdf_graph_gen.validation import validate_generated
+from rdf_graph_gen.validation import build_validation_shapes, validate_generated
 
 SHAPES = """
 ex:ValueShape a sh:NodeShape ;
@@ -65,6 +67,54 @@ def test_entity_selected_by_both_provenance_and_targets_is_checked_once():
     summary = validate_generated(shapes, data)
     assert summary.focus_nodes == 1
     assert summary.results_by_constraint == {("sh:datatype", "ex:value"): 1}
+
+
+NESTED_SHAPES = """
+ex:ParentShape a sh:NodeShape ; sh:property [ sh:path ex:child ; sh:node ex:ChildShape ] .
+ex:ChildShape a sh:NodeShape ; sh:property [ sh:path ex:value ; sh:datatype xsd:integer ] .
+"""
+
+
+def test_results_propagated_from_nested_entities_are_distinguished():
+    data = parse_turtle("""
+        ex:parent sh:description ex:ParentShape ; ex:child ex:kid .
+        ex:kid sh:description ex:ChildShape ; ex:value "not an integer" .
+    """)
+    summary = validate_generated(parse_turtle(NESTED_SHAPES), data)
+    assert summary.violating_focus_nodes == 2
+    assert summary.root_cause_focus_nodes == 1  # the parent only fails because its child does
+    assert summary.results_by_constraint == {("sh:datatype", "ex:value"): 1, ("sh:node", "ex:child"): 1}
+    assert summary.propagated_results == {("sh:node", "ex:child"): 1}
+    assert "of which 1 only because a nested entity does not conform" in summary.format()
+
+
+def test_node_constraint_on_the_focus_node_itself_is_a_root_cause():
+    shapes = parse_turtle(NESTED_SHAPES + "ex:WrapperShape a sh:NodeShape ; sh:node ex:ChildShape .")
+    data = parse_turtle('ex:n1 sh:description ex:WrapperShape ; ex:value "not an integer" .')
+    summary = validate_generated(shapes, data)
+    assert summary.root_cause_focus_nodes == 1
+    assert not summary.propagated_results
+
+
+def test_validation_does_not_add_targets_to_the_original_shapes():
+    # Adding one target per entity to the original shapes made validation quadratic (sh:node re-reads the shape)
+    shapes = parse_turtle(NESTED_SHAPES)
+    data = parse_turtle("""
+        ex:parent sh:description ex:ParentShape ; ex:child ex:child .
+        ex:child sh:description ex:ChildShape ; ex:value 1 .
+    """)
+    validation_shapes, provenance_nodes, _ = build_validation_shapes(shapes, data)
+    for shape in ("ParentShape", "ChildShape"):
+        assert (URIRef("http://example.org/" + shape), SH.targetNode, None) not in validation_shapes
+    assert set(validation_shapes.objects(None, SH.targetNode)) == provenance_nodes
+    assert len(shapes) < len(validation_shapes) and (None, SH.targetNode, None) not in shapes
+
+
+def test_declared_target_nodes_can_be_excluded():
+    shapes = parse_turtle(SHAPES + "ex:ValueShape sh:targetNode ex:absent .")
+    data = parse_turtle("ex:n1 ex:value 1 .")
+    assert not validate_generated(shapes, data).conforms  # ex:absent has no ex:value
+    assert validate_generated(shapes, data, declared_target_nodes=False).vacuous
 
 
 def test_node_level_violation_is_reported_without_a_path():
