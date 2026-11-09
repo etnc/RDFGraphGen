@@ -7,21 +7,26 @@ generated data would check nothing and report "conforms" vacuously.
 
 To make the check meaningful, every generated entity is also validated against the shape it was generated
 from: the generator links each entity to its source shape with a provenance triple
-(entity sh:description shape), and this link is turned into an sh:targetNode declaration on a copy of the
-shapes graph. Target declarations that are present in the shapes graph still apply as usual.
+(entity sh:description shape). For each such shape, the validation shapes graph gets a copy of the shape
+whose sh:targetNode declarations select the entities generated from it. The original shapes are left
+unchanged, which keeps validation linear in the size of the data: SHACL processors read all triples of a
+shape each time they evaluate it, including for every value of a sh:node reference to it, so adding one
+target triple per entity to the original shape would make validation quadratic. Target declarations that
+are present in the shapes graph still apply as usual.
 
 The validation itself is performed by pySHACL, an optional dependency
 (pip install "rdf-graph-gen[validate]").
 """
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 
-from rdflib import Graph, RDF, RDFS, SH, URIRef
+from rdflib import BNode, Graph, RDF, RDFS, SH, URIRef
 
 # Predicate the generator uses to link a generated entity to the shape it was generated from.
 PROVENANCE_PREDICATE = SH.description
 
 _COMPONENT_SUFFIX = "ConstraintComponent"
+_TARGET_PREDICATES = (SH.targetNode, SH.targetClass, SH.targetSubjectsOf, SH.targetObjectsOf)
 
 
 class ValidatorUnavailableError(RuntimeError):
@@ -104,15 +109,23 @@ def validate_generated(shapes_graph, data_graph, use_provenance=True):
     validation_shapes = Graph()
     validation_shapes += shapes_graph
 
+    declared_by_shape = {shape: _declared_focus_nodes_of(shape, shapes_graph, data_graph)
+                         for shape in _shapes_with_targets(shapes_graph)}
+    declared_nodes = set().union(*declared_by_shape.values())
+
     provenance_nodes = set()
     if use_provenance:
+        generated_from = defaultdict(set)
         known_shapes = _shape_nodes(shapes_graph)
         for node, shape in data_graph.subject_objects(PROVENANCE_PREDICATE):
             if shape in known_shapes:
-                validation_shapes.add((shape, SH.targetNode, node))
-                provenance_nodes.add(node)
-
-    declared_nodes = _declared_focus_nodes(shapes_graph, data_graph)
+                generated_from[shape].add(node)
+        for shape, nodes in generated_from.items():
+            provenance_nodes |= nodes
+            # Nodes that the shape's own targets select are validated against it anyway
+            extra_nodes = nodes - declared_by_shape.get(shape, set())
+            if extra_nodes:
+                _add_targeted_copy(validation_shapes, shapes_graph, shape, extra_nodes)
 
     conforms, report_graph, _ = validate(data_graph, shacl_graph=validation_shapes, inference="none",
                                          abort_on_first=False, allow_infos=False, allow_warnings=False)
@@ -146,6 +159,26 @@ def _shape_nodes(shapes_graph):
     return set(shapes_graph.subjects(RDF.type, SH.NodeShape)) | set(shapes_graph.subjects(RDF.type, SH.PropertyShape))
 
 
+def _shapes_with_targets(shapes_graph):
+    """Shapes with explicit target declarations, and shapes that are also classes (implicit class targets)."""
+    shapes = {s for p in _TARGET_PREDICATES for s in shapes_graph.subjects(p, None)}
+    shapes |= {s for s in _shape_nodes(shapes_graph) if (s, RDF.type, RDFS.Class) in shapes_graph}
+    return shapes
+
+
+def _add_targeted_copy(validation_shapes, shapes_graph, shape, nodes):
+    """Add a copy of `shape` (without its targets) that targets `nodes`; the original shape stays unchanged."""
+    copy = BNode()
+    for predicate, value in shapes_graph.predicate_objects(shape):
+        if predicate == RDF.type:
+            if value in (SH.NodeShape, SH.PropertyShape):
+                validation_shapes.add((copy, predicate, value))
+        elif predicate not in _TARGET_PREDICATES:
+            validation_shapes.add((copy, predicate, value))
+    for node in nodes:
+        validation_shapes.add((copy, SH.targetNode, node))
+
+
 def _instances(data_graph, cls):
     # SHACL instances of a class: nodes typed with the class or one of its (transitive) subclasses in the data graph
     classes = set(data_graph.transitive_subjects(RDFS.subClassOf, cls))
@@ -153,17 +186,16 @@ def _instances(data_graph, cls):
     return {node for c in classes for node in data_graph.subjects(RDF.type, c)}
 
 
-def _declared_focus_nodes(shapes_graph, data_graph):
-    """The focus nodes selected by the target declarations of the shapes graph (SHACL section 2.1.3)."""
-    nodes = set(shapes_graph.objects(None, SH.targetNode))
-    for cls in set(shapes_graph.objects(None, SH.targetClass)):
+def _declared_focus_nodes_of(shape, shapes_graph, data_graph):
+    """The focus nodes selected by the target declarations of one shape (SHACL section 2.1.3)."""
+    nodes = set(shapes_graph.objects(shape, SH.targetNode))
+    for cls in shapes_graph.objects(shape, SH.targetClass):
         nodes |= _instances(data_graph, cls)
-    for shape in _shape_nodes(shapes_graph):  # implicit class targets: shapes that are also classes
-        if (shape, RDF.type, RDFS.Class) in shapes_graph:
-            nodes |= _instances(data_graph, shape)
-    for predicate in set(shapes_graph.objects(None, SH.targetSubjectsOf)):
+    if (shape, RDF.type, RDFS.Class) in shapes_graph:  # implicit class target
+        nodes |= _instances(data_graph, shape)
+    for predicate in shapes_graph.objects(shape, SH.targetSubjectsOf):
         nodes.update(data_graph.subjects(predicate, None))
-    for predicate in set(shapes_graph.objects(None, SH.targetObjectsOf)):
+    for predicate in shapes_graph.objects(shape, SH.targetObjectsOf):
         nodes.update(data_graph.objects(None, predicate))
     return nodes
 

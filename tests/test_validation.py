@@ -59,6 +59,14 @@ def test_declared_target_class_selects_instances_including_subclasses():
     assert summary.results_by_constraint == {("sh:minCount", "ex:value"): 1}
 
 
+def test_entity_selected_by_both_provenance_and_targets_is_checked_once():
+    shapes = parse_turtle(SHAPES + "ex:ValueShape sh:targetClass ex:Thing .")
+    data = parse_turtle('ex:n1 a ex:Thing ; sh:description ex:ValueShape ; ex:value "not an integer" .')
+    summary = validate_generated(shapes, data)
+    assert summary.focus_nodes == 1
+    assert summary.results_by_constraint == {("sh:datatype", "ex:value"): 1}
+
+
 def test_node_level_violation_is_reported_without_a_path():
     shapes = parse_turtle("""
         ex:ClosedShape a sh:NodeShape ; sh:closed true ; sh:property [ sh:path ex:value ] .
