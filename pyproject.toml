@@ -57,3 +57,7 @@ rdf_graph_gen = ["datasets/*.csv"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[tool.ruff.lint]
+# Only checks that indicate actual bugs (syntax errors, undefined names, invalid comparisons), no style rules
+select = ["E9", "F63", "F7", "F82"]

@@ -1,0 +1,7 @@
+# Files included in the source distribution in addition to the package, so that the tests can run from it
+include CHANGELOG.md
+recursive-include tests *.py
+include experiment_suite/*.ttl
+include generated_examples/shape_examples/*.ttl
+global-exclude *.py[cod]
+prune **/__pycache__
