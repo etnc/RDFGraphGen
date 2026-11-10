@@ -3,13 +3,14 @@
 @prefix schema: <http://schema.org/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.com/ns#> .
 
-schema:MovieShape
+ex:MovieShape
     a sh:NodeShape ;
     sh:targetClass schema:Movie;
     sh:property [
         sh:path schema:director;
-        sh:node schema:DirectorShape ;
+        sh:node ex:DirectorShape ;
     ] ;
     sh:property [
         sh:path schema:award ;
@@ -36,7 +37,7 @@ schema:MovieShape
         sh:minCount 1 ;
     ] .
 
-schema:DirectorShape
+ex:DirectorShape
   sh:targetClass schema:Person ;
   a sh:NodeShape ;
   sh:property [

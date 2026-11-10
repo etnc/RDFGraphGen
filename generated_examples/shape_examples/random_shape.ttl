@@ -3,7 +3,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex: <http://example.com/ns#> .
 
-schema:ExampleShape
+ex:ExampleShape
     a sh:NodeShape ;
     sh:property [
         sh:path ex:randomProperty ;

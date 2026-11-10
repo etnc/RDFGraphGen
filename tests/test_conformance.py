@@ -27,16 +27,11 @@ SHIPPED_SHAPES = [
     pytest.param("generated_examples/shape_examples/movie_shape.ttl"),
     pytest.param("generated_examples/shape_examples/random_shape.ttl"),
     pytest.param("generated_examples/shape_examples/person_shape.ttl",
-                 marks=known_bug("the example's sh:xone is unsatisfiable as written (no branch has a "
-                                         "sh:minCount); sh:or picks a string branch for postalCode although the "
-                                         "property also has sh:minInclusive/sh:maxInclusive; the provenance triple "
-                                         "breaks sh:closed")),
+                 marks=known_bug("the provenance triple (sh:description) is not allowed by the closed AddressShape")),
     pytest.param("generated_examples/shape_examples/test_value_generation.ttl",
                  marks=known_bug("xsd:decimal values are typed xsd:double; sh:pattern ignores "
                                          "sh:minLength/sh:maxLength")),
-    pytest.param("generated_examples/shape_examples/tv_series_shape.ttl",
-                 marks=known_bug("a value of 0 is treated as missing, so sh:equals does not copy it; sh:lessThan can "
-                                 "leave no valid range for numberOfSeasons")),
+    pytest.param("generated_examples/shape_examples/tv_series_shape.ttl"),
 ]
 
 
@@ -116,6 +111,15 @@ CASES = [
     case("equals-with-several-values", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:a ; sh:equals ex:b ] ;
             sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minCount 2 ; sh:maxCount 2 ] .""",
          known_bug("sh:equals copies only the first value of the other property")),
+    case("equals-copies-zero", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:a ; sh:equals ex:b ] ;
+            sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minInclusive 0 ; sh:maxInclusive 0 ] .""",
+         known_bug("a value of 0 is treated as missing, so sh:equals does not copy it")),
+    case("lessThan-leaves-a-valid-range", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:lo ; sh:datatype xsd:integer ; sh:minInclusive 0 ; sh:lessThan ex:hi ] ;
+            sh:property [ sh:path ex:hi ; sh:datatype xsd:integer ; sh:minInclusive 0 ; sh:maxInclusive 1 ] .""",
+         known_bug("the other value of sh:lessThan is chosen without regard to it, which can leave no valid range "
+                   "(here: ex:hi = 0)"),
+         pytest.mark.filterwarnings("ignore:Invalid int range")),
     case("disjoint-keeps-constraints-of-other-property", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:a ; sh:disjoint ex:b ] ;
             sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minInclusive 5 ; sh:maxInclusive 9 ] ."""),
     # a property that needs the values of another one is generated after it; generation must always end

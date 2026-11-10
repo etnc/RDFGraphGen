@@ -3,8 +3,9 @@
 @prefix schema: <http://schema.org/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.com/ns#> .
 
-schema:BookShape
+ex:BookShape
     a sh:NodeShape ;
     sh:targetClass schema:Book ;
     sh:property [
@@ -31,7 +32,7 @@ schema:BookShape
     ] ;
     sh:property [
         sh:path schema:author;
-        sh:node schema:AuthorShape ;
+        sh:node ex:AuthorShape ;
         sh:minCount 1 ;
         sh:maxCount 3 ;
     ] ;
@@ -47,17 +48,17 @@ schema:BookShape
         sh:path schema:genre ;
         sh:minCount 2 ;
         sh:maxCount 4 ;
-        sh:description "Each book has to have at least 3 genres, and a maximum of 8 genres(Test purpoes)" ;
+        sh:description "Each book has between 2 and 4 genres." ;
     ] ;
     sh:property [
         sh:path schema:award ;
     ];
     sh:property [
         sh:path schema:inLanguage ;
-        sh:in ("en-USA" "en-UK" )
+        sh:in ("en-US" "en-GB" )
     ] .
 
-schema:AuthorShape
+ex:AuthorShape
   sh:targetClass schema:Person ;
   a sh:NodeShape ;
   sh:property [

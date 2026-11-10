@@ -67,6 +67,25 @@ def test_per_batch_validation_checks_declared_target_nodes_once(tmp_path):
     assert summary.results_by_constraint[("sh:minCount", "ex:name")] == 1
 
 
+def test_person_heuristics_also_apply_to_shapes_with_sh_class():
+    # Shapes used via sh:node typically declare their class with sh:class instead of sh:targetClass
+    shapes = parse_turtle("""
+        ex:AuthorShape a sh:NodeShape ; sh:class schema:Person ;
+            sh:property [ sh:path schema:givenName ; sh:minCount 1 ; sh:maxCount 1 ] ;
+            sh:property [ sh:path schema:familyName ; sh:minCount 1 ; sh:maxCount 1 ] ;
+            sh:property [ sh:path schema:email ; sh:minCount 1 ; sh:maxCount 1 ] .
+    """)
+    graph = generate_graph(shapes, 10, seed=1)
+    schema = "http://schema.org/"
+    people = set(graph.subjects(URIRef(schema + "email"), None))
+    assert len(people) == 10
+    for person in people:
+        given = str(graph.value(person, URIRef(schema + "givenName")))
+        family = str(graph.value(person, URIRef(schema + "familyName")))
+        # the e-mail address is built from the generated name
+        assert str(graph.value(person, URIRef(schema + "email"))) == f"{given.lower()}_{family.lower()}@gmail.com"
+
+
 def test_person_dependencies_are_added_once():
     shapes = parse_turtle("""
         ex:PersonShape a sh:NodeShape ; sh:targetClass schema:Person ;

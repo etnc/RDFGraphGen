@@ -331,8 +331,9 @@ Note: This function assumes the presence of certain SHACL properties ('gender', 
 
 
 def define_dependencies(dictionary):
-    # Retrieve the target class and properties from the SHACL shape dictionary
-    t_class = dictionary.get(SH.targetClass)
+    # Retrieve the class of the generated entities (sh:targetClass, or sh:class as for shapes used via sh:node,
+    # the same way the generator assigns rdf:type) and the properties from the SHACL shape dictionary
+    t_class = dictionary.get(SH.targetClass, dictionary.get(SH['class']))
     properties = dictionary.get("properties")
 
     # This function is called for every generated entity, on shape dictionaries that are shared between

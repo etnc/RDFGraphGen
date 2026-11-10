@@ -3,8 +3,9 @@
 @prefix schema: <http://schema.org/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.com/ns#> .
 
-schema:PersonShape
+ex:PersonShape
     a sh:NodeShape ;
     sh:targetClass schema:Person ;
     sh:xone (
@@ -12,17 +13,20 @@ schema:PersonShape
             sh:property [
                 sh:path schema:givenName ;
                 sh:datatype xsd:string ;
+                sh:minCount 1 ;
                 sh:name "given name" ;
             ] ;
             sh:property [
                 sh:path schema:familyName ;
                 sh:datatype xsd:string ;
+                sh:minCount 1 ;
                 sh:name "last name" ;
             ] ;
         ]
         [
             sh:path schema:name ;
             sh:datatype xsd:string ;
+            sh:minCount 1 ;
             sh:name "full name" ;
         ]
     );
@@ -47,10 +51,10 @@ schema:PersonShape
     ] ;
     sh:property [
         sh:path schema:address ;
-        sh:node schema:AddressShape ;
+        sh:node ex:AddressShape ;
     ] .
 
-schema:AddressShape
+ex:AddressShape
     a sh:NodeShape ;
     sh:closed true ;
     sh:property [
@@ -59,7 +63,8 @@ schema:AddressShape
     ] ;
     sh:property [
         sh:path schema:postalCode ;
-        sh:or ( [ sh:datatype xsd:string ] [ sh:datatype xsd:integer ] ) ;
-        sh:minInclusive 10000 ;
-        sh:maxInclusive 99999 ;
+        sh:or (
+            [ sh:datatype xsd:string ; sh:pattern "^[0-9]{5}$" ]
+            [ sh:datatype xsd:integer ; sh:minInclusive 10000 ; sh:maxInclusive 99999 ]
+        ) ;
     ] .

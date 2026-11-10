@@ -3,7 +3,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex: <http://example.com/ns#> .
 
-schema:ExampleShape
+ex:ProductShape
     a sh:NodeShape ;
     sh:targetClass ex:Product;
     sh:property [

@@ -6,7 +6,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex: <http://example.com/ns#> .
 
-schema:PersonShape
+ex:ValueGenerationShape
     a sh:NodeShape ;
     sh:property [
         sh:path ex:date1 ;
@@ -77,12 +77,12 @@ schema:PersonShape
     sh:property [
         sh:path ex:string2 ;
         sh:datatype xsd:string;
-        sh:pattern '^([a-z])*' ;
+        sh:pattern '^[a-z]*$' ;
         sh:minLength 4;
         sh:maxLength 5;
     ] ;
     sh:property [
         sh:path ex:string3 ;
         sh:datatype xsd:string;
-        sh:pattern '^([a-z])*' ;
+        sh:pattern '^[a-z]*$' ;
     ] .

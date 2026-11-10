@@ -3,38 +3,33 @@
 @prefix schema: <http://schema.org/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.com/ns#> .
 
-schema:TVSeriesShape
+ex:TVSeriesShape
     a sh:NodeShape ;
     sh:targetClass schema:TVSeries;
     sh:property [
         sh:path schema:director;
-        sh:node schema:DirectorShape ;
+        sh:node ex:DirectorShape ;
     ] ;
     sh:property [
         sh:path schema:actor;
-        sh:node schema:ActorShape ;
+        sh:node ex:ActorShape ;
         sh:minCount 3 ;
     ] ;
     sh:property [
-        sh:path schema:season ;
-        sh:datatype xsd:integer ;
-        sh:equals schema:numberOfSeasons ;
-        sh:minInclusive 0 ;
-    ] ;
-    sh:property [
         sh:path schema:numberOfEpisodes ;
-        sh:minInclusive 0 ;
+        sh:minInclusive 1 ;
     ] ;
         sh:property [
         sh:path schema:numberOfSeasons ;
-        sh:lessThan schema:numberOfEpisodes ;
-        sh:minInclusive 0 ;
+        sh:lessThanOrEquals schema:numberOfEpisodes ;
+        sh:minInclusive 1 ;
     ] ;
     sh:property [
         sh:path schema:titleEIDR ;
         sh:datatype xsd:string ;
-        sh:pattern '[A-Z1-9.-/]{10,20}';
+        sh:pattern "^10\\.5240/([0-9A-F]{4}-){5}[0-9A-Z]$" ;
     ] ;
     sh:property [
         sh:path schema:name ;
@@ -57,8 +52,8 @@ schema:TVSeriesShape
         sh:path schema:genre ;
     ] .
 
-schema:DirectorShape
-  sh:targetClass schema:Person ;
+ex:DirectorShape
+  sh:class schema:Person ;
   a sh:NodeShape ;
   sh:property [
       sh:path schema:givenName ;
@@ -79,13 +74,13 @@ schema:DirectorShape
         sh:path schema:telephone ;
     ] .
 
-schema:ActorShape
-  sh:targetClass schema:Person ;
+ex:ActorShape
+  sh:class schema:Person ;
   a sh:NodeShape ;
   sh:property [
       sh:path schema:name ;
       sh:datatype xsd:string ;
-      sh:name "given name" ;
+      sh:name "name" ;
     ] ;
     sh:property [
         sh:path schema:gender ;
