@@ -51,6 +51,15 @@ def path_to_text(path, shapes_graph):
     return str(path)
 
 
+def predicate_sequence(path, shapes_graph):
+    """The predicates of a sequence path that consists of predicates only, e.g. ( ex:a ex:b ); otherwise None."""
+    if not isinstance(path, URIRef) and (path, RDF.first, None) in shapes_graph:
+        steps = get_list_from_shacl_list(path, shapes_graph)
+        if all(isinstance(step, URIRef) for step in steps):
+            return steps
+    return None
+
+
 def warn_unsupported_path(path, shapes_graph):
     warnings.warn(f"The property path {path_to_text(path, shapes_graph)} is not supported yet (only predicate paths "
                   f"are); the property is not generated.", stacklevel=2)
@@ -333,9 +342,9 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
         if p == SH.property:
             # Handle SH:path property and nested shapes
             property_path = next(shapes_graph.objects(o, SH.path))
-            if not isinstance(property_path, URIRef):
-                # a complex property path (e.g. a sequence or an inverse path): not supported yet, so the property
-                # is skipped (writing the path itself as a predicate would produce invalid RDF)
+            if not isinstance(property_path, URIRef) and predicate_sequence(property_path, shapes_graph) is None:
+                # a complex property path other than a sequence of predicates (e.g. an inverse path): not supported
+                # yet, so the property is skipped (writing the path itself as a predicate would be invalid RDF)
                 warn_unsupported_path(property_path, shapes_graph)
                 continue
 
@@ -374,8 +383,13 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
                 property_pair_constraint_components_parent.append(shape_dictionary)
 
             if p == SH.path and not isinstance(o, URIRef):
-                # a property shape used in sh:and, sh:or or sh:xone with a complex path (see above)
-                warn_unsupported_path(o, shapes_graph)
+                sequence = predicate_sequence(o, shapes_graph)
+                if sequence is not None:
+                    # a sequence path: its values are reached through the predicates of the sequence, one by one
+                    shape_dictionary["path_sequence"] = sequence
+                else:
+                    # a property shape used in sh:and, sh:or or sh:xone with an unsupported path (see above)
+                    warn_unsupported_path(o, shapes_graph)
 
             # a parameter can have several values (e.g. sh:class ex:A, ex:B), which must all hold
             add_parameter_value(shape_dictionary, p, o)

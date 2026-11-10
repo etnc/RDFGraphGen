@@ -176,9 +176,16 @@ CASES = [
          known_bug("a shape that references itself is not treated as top-level, so no entities are generated")),
 
     # property paths
-    case("sequence-path", "ex:S a sh:NodeShape ; sh:property [ sh:path ( ex:a ex:b ) ; sh:minCount 1 ] .",
-         known_bug("sequence paths are not supported yet (the property is not generated)"),
-         IGNORE_UNSUPPORTED_PATH_WARNING),
+    case("sequence-path", "ex:S a sh:NodeShape ; sh:property [ sh:path ( ex:a ex:b ) ; sh:minCount 1 ] ."),
+    case("sequence-path-of-three-predicates", "ex:S a sh:NodeShape ; sh:property [ sh:path ( ex:a ex:b ex:c ) ; sh:minCount 1 ] ."),
+    case("sequence-path-with-value-constraints", """ex:S a sh:NodeShape ; sh:property [ sh:path ( ex:address ex:postalCode ) ;
+            sh:datatype xsd:integer ; sh:minInclusive 1000 ; sh:maxInclusive 9999 ; sh:minCount 2 ; sh:maxCount 2 ] ."""),
+    case("sequence-path-with-distinct-values", """ex:S a sh:NodeShape ; sh:property [ sh:path ( ex:a ex:b ) ;
+            sh:in ("x" "y") ; sh:minCount 2 ; sh:maxCount 2 ] ."""),
+    case("sequence-path-to-a-node-shape", """ex:S a sh:NodeShape ; sh:property [ sh:path ( ex:a ex:b ) ; sh:node ex:T ; sh:minCount 1 ] .
+            ex:T a sh:NodeShape ; sh:property [ sh:path ex:q ; sh:datatype xsd:integer ; sh:minCount 1 ] ."""),
+    case("sequence-path-in-a-branch", """ex:S a sh:NodeShape ;
+            sh:xone ( [ sh:path ( ex:a ex:b ) ; sh:minCount 1 ] [ sh:path ex:c ; sh:minCount 1 ] ) ."""),
     case("inverse-path", "ex:S a sh:NodeShape ; sh:property [ sh:path [ sh:inversePath ex:p ] ; sh:minCount 1 ] .",
          known_bug("inverse paths are not supported yet (the property is not generated)"),
          IGNORE_UNSUPPORTED_PATH_WARNING),

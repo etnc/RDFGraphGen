@@ -46,9 +46,36 @@ def _branch_as_node_shape(branch):
     sh_path = branch.get(SH.path)
     if sh_path is None:
         return branch
-    if not isinstance(sh_path, URIRef):
+    if not isinstance(sh_path, URIRef) and not branch.get("path_sequence"):
         return None
     return {"properties": {sh_path: branch}}
+
+
+def _add_value(result, node, path, property_dictionary, value, batchID):
+    """
+    Add a value of a property to node. For a sequence path (e.g. ex:a/ex:b), the value is reached through fresh
+    intermediate nodes: node ex:a [ ex:b value ].
+    """
+    global BNODE_COUNTER
+    sequence = property_dictionary.get("path_sequence")
+    if not sequence:
+        result.add((node, path, value))
+        return
+    subject = node
+    for predicate in sequence[:-1]:
+        intermediate = BNode(f'{batchID}b{BNODE_COUNTER}')
+        BNODE_COUNTER += 1
+        result.add((subject, predicate, intermediate))
+        subject = intermediate
+    result.add((subject, sequence[-1], value))
+
+
+def _values(result, node, path, property_dictionary):
+    """The current values of a property of node (for a sequence path: the nodes reached through it)."""
+    nodes = {node}
+    for predicate in property_dictionary.get("path_sequence") or [path]:
+        nodes = {o for n in nodes for o in result.objects(n, predicate)}
+    return nodes
 
 
 def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictionary,
@@ -186,7 +213,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
             # sh:hasValue: each of its values must be one of the values (a property can have several)
             has_values = parameter_values(value, SH.hasValue)
             for has_value in has_values:
-                result.add((node, key, has_value))
+                _add_value(result, node, key, value, has_value, batchID)
             sh_max_count -= len(has_values)
             
             # decrease sh_max_count because one value is generated. If the new value is lesser than sh_min_count, decrease sh_min_count to sh_max_count 
@@ -198,7 +225,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
                 generated_prop = dictionary_to_rdf_graph(value, None, result, node, dictionary,
                                                          property_pair_constraint_components, sh_class, batchID)
                 if generated_prop is not None:
-                    result.add((node, key, generated_prop))
+                    _add_value(result, node, key, value, generated_prop, batchID)
                 elif len(property_pair_constraint_components) > postponed_before:
                     break  # postponed: all its values are generated later (postpone it once, not once per value)
 
@@ -218,7 +245,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
                                                              sh_class, batchID, final_attempt=value is forced)
                     if generated_prop is None:
                         break
-                    result.add((node, value.get(SH.path), generated_prop))
+                    _add_value(result, node, value.get(SH.path), value, generated_prop, batchID)
             forced = None
             if len(still_postponed) == len(postponed):  # no progress
                 waiting_for = {value.get(SH.path) for value in still_postponed}
@@ -230,7 +257,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     # if sh:in exists, return a value from it's predefined set. 
     # Check the parent shape so you dont add the same tuple multiple times.
     elif sh_in:
-        existing = {o for o in result.objects(parent, sh_path)}
+        existing = _values(result, parent, sh_path, shape_dictionary)
         # keep the order of the sh:in list (set order varies between runs, which breaks reproducibility);
         # prefer new values, and never values of the sh:disjoint property if that can be avoided
         candidates = ([value for value in sh_in if value not in existing and value not in disjoint_values]
@@ -251,7 +278,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
 
     # return a generated value based on multiple constarints; values of the sh:disjoint property are excluded
     # in the same way as the values that this property already has
-    existing_values = {o.toPython() for o in result.objects(parent, sh_path)}
+    existing_values = {o.toPython() for o in _values(result, parent, sh_path, shape_dictionary)}
     existing_values |= {o.toPython() for o in disjoint_values}
     return generate_default_value(existing_values, sh_datatype, sh_min_exclusive, sh_min_inclusive, sh_max_exclusive, sh_max_inclusive,
                                   sh_min_length, sh_max_length, sh_pattern, sh_equals, sh_disjoint, sh_less_than,

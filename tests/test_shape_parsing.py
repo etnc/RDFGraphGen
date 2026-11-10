@@ -1,5 +1,6 @@
 """Tests of how SHACL shapes are parsed into the generator's shape dictionaries (rdf_graph_gen.shacl_mapping_generator)."""
 import re
+import warnings
 
 import pytest
 from rdflib import Literal, SH, URIRef
@@ -60,8 +61,15 @@ def test_property_shapes_with_the_same_path_are_combined():
     assert p[SH.datatype] == URIRef("http://www.w3.org/2001/XMLSchema#integer")  # given in only one of them
 
 
+def test_a_sequence_path_of_predicates_is_supported():
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # no "not supported" warning
+        shape = parse_shape("ex:S a sh:NodeShape ; sh:property [ sh:path ( ex:a ex:b ex:c ) ; sh:minCount 1 ] .")
+    (property_dictionary,) = shape["properties"].values()
+    assert property_dictionary["path_sequence"] == [URIRef(EX + name) for name in ("a", "b", "c")]
+
+
 @pytest.mark.parametrize("path, text", [
-    ("( ex:a ex:b )", "ex:a/ex:b"),
     ("[ sh:inversePath ex:p ]", "^ex:p"),
     ("[ sh:alternativePath ( ex:a ex:b ) ]", "ex:a|ex:b"),
     ("[ sh:zeroOrMorePath ex:p ]", "ex:p*"),
