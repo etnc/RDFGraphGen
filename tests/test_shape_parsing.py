@@ -41,6 +41,23 @@ def test_repeated_values_are_all_kept():
     assert set(parameter_values(p, SH.hasValue)) == {Literal(1), Literal(2)}
 
 
+def test_property_shapes_with_the_same_path_are_combined():
+    # each property shape is a separate constraint, so all of them must hold
+    shape = parse_shape("""
+        ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:p ; sh:minCount 1 ; sh:maxCount 5 ; sh:datatype xsd:integer ;
+                          sh:minInclusive 10 ; sh:in (1 12 15 18) ; sh:hasValue 12 ] ;
+            sh:property [ sh:path ex:p ; sh:minCount 2 ; sh:maxCount 3 ; sh:minInclusive 5 ; sh:maxInclusive 20 ;
+                          sh:in (12 15 30) ; sh:hasValue 15 ] .
+    """)
+    p = shape["properties"][URIRef(EX + "p")]
+    assert (p[SH.minCount], p[SH.maxCount]) == (Literal(2), Literal(3))  # the strictest bounds
+    assert (p[SH.minInclusive], p[SH.maxInclusive]) == (Literal(10), Literal(20))
+    assert p[SH["in"]] == [Literal(12), Literal(15)]  # the values that both lists allow
+    assert set(parameter_values(p, SH.hasValue)) == {Literal(12), Literal(15)}
+    assert p[SH.datatype] == URIRef("http://www.w3.org/2001/XMLSchema#integer")  # given in only one of them
+
+
 def test_a_repeated_single_valued_parameter_warns_and_uses_the_first_value():
     # SHACL allows at most one value for parameters such as sh:maxCount, sh:datatype or sh:pattern
     with pytest.warns(UserWarning, match="several values in one shape, which SHACL does not allow"):

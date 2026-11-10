@@ -35,6 +35,58 @@ def parameter_values(shape_dictionary, parameter):
     if values:
         return list(values)
     return [shape_dictionary[parameter]] if shape_dictionary.get(parameter) is not None else []
+
+
+# Bounds: when two shapes that must both hold are combined, the strictest value applies
+LOWER_BOUND_PARAMETERS = (SH.minCount, SH.minLength, SH.minInclusive, SH.minExclusive)
+UPPER_BOUND_PARAMETERS = (SH.maxCount, SH.maxLength, SH.maxInclusive, SH.maxExclusive)
+
+
+def _strictest(current, value, lower_bound):
+    try:
+        if (value > current) if lower_bound else (value < current):
+            return value
+    except TypeError:  # values that cannot be compared
+        pass
+    return current
+
+
+def merge_shape_dictionaries(target, source):
+    """
+    Merge the shape dictionary `source` into `target` (in place) as a conjunction: the result requires everything
+    that each of them requires. This is used for property shapes with the same path (each property shape is a
+    separate constraint, so all of them must hold), and for the shapes of sh:and, sh:or and sh:xone that are
+    combined with a shape during generation.
+    - bounds (counts, lengths, value ranges): the strictest value
+    - sh:in: the values that are in both lists
+    - nested property shapes ("properties"): merged per path, in the same way
+    - all values of every parameter are kept ("values"), e.g. all classes and all sh:hasValue values
+    - any other parameter: the value of `target` is kept, if it has one (if the values differ, they cannot both
+      hold anyway)
+    """
+    for key, value in source.items():
+        if key == "properties":
+            properties = target.setdefault("properties", {})
+            for path, property_dictionary in value.items():
+                if path in properties:
+                    merge_shape_dictionaries(properties[path], property_dictionary)
+                else:
+                    properties[path] = property_dictionary
+        elif key in ("values", "depends_on"):
+            if key == "values":
+                merged = target.setdefault("values", {})
+                for parameter, values in value.items():
+                    kept = merged.setdefault(parameter, [])
+                    kept.extend(v for v in values if v not in kept)
+            else:
+                kept = target.setdefault("depends_on", [])
+                kept.extend(v for v in value if v not in kept)
+        elif target.get(key) is None:
+            target[key] = value
+        elif key in LOWER_BOUND_PARAMETERS or key in UPPER_BOUND_PARAMETERS:
+            target[key] = _strictest(target[key], value, lower_bound=key in LOWER_BOUND_PARAMETERS)
+        elif key == URIRef(SH['in']):
+            target[key] = [v for v in target[key] if v in value]  # the values that both lists allow
 """
 Function Explanation:
 ---------------------
@@ -262,7 +314,8 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
             new_prop_dict = shape_to_dictionary(o, shapes_graph, property_pair_constraint_components)
 
             # Update the existing property dictionary with the new old_shapes
-            update_dictionary(property_dict, new_prop_dict)
+            # several property shapes with the same path must all hold
+            merge_shape_dictionaries(property_dict, new_prop_dict)
 
             # Update the sh_properties dictionary with the updated property dictionary
             sh_properties[property_path] = property_dict

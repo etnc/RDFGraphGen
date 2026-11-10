@@ -73,7 +73,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
             sh_path = choice.get(SH.path)
             if sh_path:
                 choice = {"properties": {sh_path: choice}}
-            update_dictionary(shape_dictionary, choice)
+            merge_shape_dictionaries(shape_dictionary, choice)
 
     # if there is a sh:and for this dict, merge all the choices  with the existing properties
     if shape_dictionary.get(URIRef(SH['and'])):
@@ -83,7 +83,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
                 sh_path = choice.get(SH.path)
                 if sh_path:
                     choice = {"properties": {sh_path: choice}}
-                update_dictionary(shape_dictionary, choice)
+                merge_shape_dictionaries(shape_dictionary, choice)
 
     # if there is a sh:or for this dict, choose some of the choices and merge it with the existing properties
     if shape_dictionary.get(URIRef(SH['or'])):
@@ -94,7 +94,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
                 sh_path = choice.get(SH.path)
                 if sh_path:
                     choice = {"properties": {sh_path: choice}}
-                update_dictionary(shape_dictionary, choice)
+                merge_shape_dictionaries(shape_dictionary, choice)
 
     # Property pairs (sh:equals, sh:disjoint, sh:lessThan, sh:lessThanOrEquals) and the dependencies of the
     # realistic-value heuristics need the values of another property of the parent. While that property has no

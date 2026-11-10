@@ -185,6 +185,15 @@ CASES = [
     case("xone-of-property-groups", """ex:S a sh:NodeShape ; sh:xone (
             [ sh:property [ sh:path ex:givenName ; sh:minCount 1 ] ; sh:property [ sh:path ex:familyName ; sh:minCount 1 ] ]
             [ sh:path ex:fullName ; sh:minCount 1 ] ) ."""),
+    # several property shapes with the same path, and branches combined with a shape: all of them must hold
+    case("two-property-shapes-with-the-same-path", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:p ; sh:datatype xsd:integer ; sh:minInclusive 40 ; sh:minCount 3 ] ;
+            sh:property [ sh:path ex:p ; sh:minInclusive 1 ; sh:maxInclusive 45 ; sh:maxCount 3 ] ."""),
+    case("two-property-shapes-with-the-same-path-and-sh-in", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:p ; sh:in ("a" "b" "c") ] ; sh:property [ sh:path ex:p ; sh:in ("b" "c" "d") ] ."""),
+    case("and-keeps-the-stricter-bound", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:p ; sh:datatype xsd:integer ; sh:minInclusive 40 ; sh:maxInclusive 45 ] ;
+            sh:and ( [ sh:property [ sh:path ex:p ; sh:minInclusive 1 ] ] ) ."""),
     case("and", """ex:S a sh:NodeShape ; sh:and (
             [ sh:property [ sh:path ex:a ; sh:minCount 1 ] ] [ sh:property [ sh:path ex:b ; sh:minCount 1 ] ] ) ."""),
     # a shape can have several sh:and / sh:or / sh:xone lists, and each of them must hold
