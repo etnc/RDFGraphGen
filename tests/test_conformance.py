@@ -118,6 +118,21 @@ CASES = [
          known_bug("sh:equals copies only the first value of the other property")),
     case("disjoint-keeps-constraints-of-other-property", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:a ; sh:disjoint ex:b ] ;
             sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minInclusive 5 ; sh:maxInclusive 9 ] ."""),
+    # a property that needs the values of another one is generated after it; generation must always end
+    case("disjoint-other-property-declared-first", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minInclusive 1 ; sh:maxInclusive 3 ] ;
+            sh:property [ sh:path ex:a ; sh:datatype xsd:integer ; sh:minInclusive 1 ; sh:maxInclusive 3 ; sh:disjoint ex:b ] ."""),
+    case("equals-other-property-may-be-empty", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:a ; sh:equals ex:b ] ;
+            sh:property [ sh:path ex:b ; sh:minCount 0 ; sh:maxCount 1 ] ."""),
+    case("lessThan-other-property-may-be-empty", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:a ; sh:datatype xsd:integer ; sh:lessThan ex:b ] ;
+            sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minCount 0 ; sh:maxCount 1 ] ."""),
+    case("postponed-property-keeps-its-cardinality", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:a ; sh:datatype xsd:integer ; sh:lessThan ex:b ; sh:minCount 2 ; sh:maxCount 2 ] ;
+            sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minInclusive 100 ; sh:maxInclusive 200 ] ."""),
+    case("person-dependency-may-be-empty", """ex:S a sh:NodeShape ; sh:targetClass schema:Person ;
+            sh:property [ sh:path schema:givenName ; sh:minCount 1 ] ;
+            sh:property [ sh:path schema:gender ; sh:minCount 0 ; sh:maxCount 1 ] ."""),
 
     # shape references and node values
     case("node", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:node ex:T ; sh:minCount 1 ] .

@@ -32,8 +32,14 @@ rdflib.BNode or rdflib.URIRef: The RDF node representing the SHACL shape in the 
 """
 
 
+def _partners(shape_dictionary):
+    """The other properties whose values a property needs: property pairs and dependencies of the heuristics."""
+    pairs = {shape_dictionary.get(p) for p in (SH.equals, SH.disjoint, SH.lessThan, SH.lessThanOrEquals)}
+    return {p for p in pairs if p is not None} | set(shape_dictionary.get("depends_on", []))
+
+
 def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictionary,
-                            property_pair_constraint_components_parent, parent_class, batchID):
+                            property_pair_constraint_components_parent, parent_class, batchID, final_attempt=False):
     # initialization
     property_pair_constraint_components = []
     global COUNTER, BNODE_COUNTER
@@ -85,28 +91,35 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
                 choice = {"properties": {sh_path: choice}}
             update_dictionary(shape_dictionary, choice)
 
-    # get the dependent property for sh:equals
+    # Property pairs (sh:equals, sh:disjoint, sh:lessThan, sh:lessThanOrEquals) and the dependencies of the
+    # realistic-value heuristics need the values of another property of the parent. While that property has no
+    # values yet, this property is postponed: it is generated after the parent's other properties (see the end
+    # of the 'properties' branch below). In its final attempt, it uses the values that exist at that point.
+
+    # get the dependent property for sh:equals: this property must have the same values
     sh_equals = shape_dictionary.get(SH.equals)
     if sh_equals:
         sh_equals = next(result.objects(parent, sh_equals), None)
         if sh_equals is None:
+            if final_attempt:
+                return None  # the other property has no values, so this one must not have any either
             property_pair_constraint_components_parent.append(shape_dictionary)
             return None
 
-    # get the dependent property for sh:disjoint
+    # get the dependent property for sh:disjoint: this property must not have any of its values
     sh_disjoint = shape_dictionary.get(SH.disjoint)
     if sh_disjoint:
-        sh_disjoint = next(result.objects(parent, sh_disjoint), None)
-        if not sh_disjoint is None:
+        sh_disjoint = list(result.objects(parent, sh_disjoint))
+        if not sh_disjoint and not final_attempt:
             property_pair_constraint_components_parent.append(shape_dictionary)
             return None
+    disjoint_values = sh_disjoint or []
 
     # get the dependent property for sh:lessThan
     sh_less_than = shape_dictionary.get(SH.lessThan)
     if sh_less_than:
-        # sh_less_than = next(result.objects(parent, sh_less_than), None)
         sh_less_than = [o for o in result.objects(parent, sh_less_than)]
-        if len(sh_less_than) == 0:
+        if len(sh_less_than) == 0 and not final_attempt:
             property_pair_constraint_components_parent.append(shape_dictionary)
             return None
 
@@ -114,7 +127,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     sh_less_than_or_equals = shape_dictionary.get(SH.lessThanOrEquals)
     if sh_less_than_or_equals:
         sh_less_than_or_equals = [o for o in result.objects(parent, sh_less_than_or_equals)]
-        if len(sh_less_than_or_equals) == 0:
+        if len(sh_less_than_or_equals) == 0 and not final_attempt:
             property_pair_constraint_components_parent.append(shape_dictionary)
             return None
 
@@ -126,6 +139,8 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     for dep in depends_on:
         val = [o for o in result.objects(parent, dep)]
         if len(val) == 0:
+            if final_attempt:
+                continue  # generate without this dependency
             property_pair_constraint_components_parent.append(shape_dictionary)
             return None
         dependencies[dep] = val
@@ -164,34 +179,48 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
                 sh_min_count = sh_max_count
             
             for i in range(0, random.randint(sh_min_count, sh_max_count)):
+                postponed_before = len(property_pair_constraint_components)
                 generated_prop = dictionary_to_rdf_graph(value, None, result, node, dictionary,
                                                          property_pair_constraint_components, sh_class, batchID)
                 if generated_prop is not None:
                     result.add((node, key, generated_prop))
+                elif len(property_pair_constraint_components) > postponed_before:
+                    break  # postponed: all its values are generated later (postpone it once, not once per value)
 
-        # generate the properties that weren't generated due to a missing dependency
-        while property_pair_constraint_components:
-            value = property_pair_constraint_components.pop(0)
-            sh_min_count = int(value.get(SH.minCount, "1"))
-            sh_max_count = int(value.get(SH.maxCount, sh_min_count))
-            for i in range(0, random.randint(sh_min_count, sh_max_count)):
-                generated_prop = dictionary_to_rdf_graph(value, None, result, node, dictionary,
-                                                         property_pair_constraint_components, sh_class, batchID)
-                if generated_prop is not None:
+        # Generate the postponed properties. They are retried as long as some of them can be generated. When none
+        # can, the properties they wait for will not get values anymore, so one of them is generated in a final
+        # attempt with the values that exist at that point (preferably one that does not wait for another
+        # postponed property). This guarantees that generation ends.
+        postponed = property_pair_constraint_components
+        forced = None
+        while postponed:
+            still_postponed = []
+            for value in postponed:
+                sh_min_count = int(value.get(SH.minCount, "1"))
+                sh_max_count = int(value.get(SH.maxCount, sh_min_count))
+                for i in range(0, random.randint(sh_min_count, sh_max_count)):
+                    generated_prop = dictionary_to_rdf_graph(value, None, result, node, dictionary, still_postponed,
+                                                             sh_class, batchID, final_attempt=value is forced)
+                    if generated_prop is None:
+                        break
                     result.add((node, value.get(SH.path), generated_prop))
-                else:
-                    break
+            forced = None
+            if len(still_postponed) == len(postponed):  # no progress
+                waiting_for = {value.get(SH.path) for value in still_postponed}
+                forced = next((value for value in still_postponed if not _partners(value) & waiting_for),
+                              still_postponed[0])
+            postponed = still_postponed
         return node
 
     # if sh:in exists, return a value from it's predefined set. 
     # Check the parent shape so you dont add the same tuple multiple times.
     elif sh_in:
         existing = {o for o in result.objects(parent, sh_path)}
-        # keep the order of the sh:in list (set order varies between runs, which breaks reproducibility)
-        potential = [value for value in sh_in if value not in existing]
-        if len(potential) > 0:
-            return random.choice(potential)
-        return random.choice(sh_in)
+        # keep the order of the sh:in list (set order varies between runs, which breaks reproducibility);
+        # prefer new values, and never values of the sh:disjoint property if that can be avoided
+        candidates = ([value for value in sh_in if value not in existing and value not in disjoint_values]
+                      or [value for value in sh_in if value not in disjoint_values] or sh_in)
+        return random.choice(candidates)
     
     # if the property is described by a sh:node, generate a node and add it
     elif sh_node:
@@ -202,11 +231,13 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
 
     # check if a predefined value exists for this iteration
     predefined_value = generate_intuitive_value(sh_path, sh_class, dependencies)
-    if predefined_value:
+    if predefined_value and predefined_value not in disjoint_values:
         return predefined_value
 
-    # return a generated value based on multiple constarints
+    # return a generated value based on multiple constarints; values of the sh:disjoint property are excluded
+    # in the same way as the values that this property already has
     existing_values = {o.toPython() for o in result.objects(parent, sh_path)}
+    existing_values |= {o.toPython() for o in disjoint_values}
     return generate_default_value(existing_values, sh_datatype, sh_min_exclusive, sh_min_inclusive, sh_max_exclusive, sh_max_inclusive,
                                   sh_min_length, sh_max_length, sh_pattern, sh_equals, sh_disjoint, sh_less_than,
                                   sh_less_than_or_equals, sh_path, sh_class)
