@@ -1,4 +1,5 @@
 """Tests of the generation process: reproducibility, batching and parallelism, and per-batch validation."""
+import pytest
 from rdflib import Graph, SH, URIRef
 
 from support import REPO_ROOT, load_shapes, parse_turtle
@@ -65,6 +66,21 @@ def test_per_batch_validation_checks_declared_target_nodes_once(tmp_path):
                                     validate=True).generate()
     # ex:alice (no ex:name in the generated data) is reported once, not once per batch (4 batches)
     assert summary.results_by_constraint[("sh:minCount", "ex:name")] == 1
+
+
+def test_complex_property_paths_never_produce_invalid_rdf():
+    shapes = parse_turtle("""
+        ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:name ; sh:minCount 1 ] ;
+            sh:property [ sh:path ( ex:a ex:b ) ; sh:minCount 1 ] ;
+            sh:property [ sh:path [ sh:inversePath ex:c ] ; sh:minCount 1 ] ;
+            sh:xone ( [ sh:path [ sh:zeroOrMorePath ex:d ] ; sh:minCount 1 ] [ sh:path ex:e ; sh:minCount 1 ] ) .
+    """)
+    with pytest.warns(UserWarning, match="is not supported yet"):
+        graph = generate_graph(shapes, 20, seed=1)
+    # complex paths used to be written as (blank node) predicates, which is not valid RDF
+    assert all(isinstance(predicate, URIRef) for predicate in graph.predicates())
+    assert len(set(graph.subjects(URIRef("http://example.org/name"), None))) == 20  # other properties: generated
 
 
 def test_person_heuristics_also_apply_to_shapes_with_sh_class():

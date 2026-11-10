@@ -1,4 +1,6 @@
 """Tests of how SHACL shapes are parsed into the generator's shape dictionaries (rdf_graph_gen.shacl_mapping_generator)."""
+import re
+
 import pytest
 from rdflib import Literal, SH, URIRef
 
@@ -56,6 +58,23 @@ def test_property_shapes_with_the_same_path_are_combined():
     assert p[SH["in"]] == [Literal(12), Literal(15)]  # the values that both lists allow
     assert set(parameter_values(p, SH.hasValue)) == {Literal(12), Literal(15)}
     assert p[SH.datatype] == URIRef("http://www.w3.org/2001/XMLSchema#integer")  # given in only one of them
+
+
+@pytest.mark.parametrize("path, text", [
+    ("( ex:a ex:b )", "ex:a/ex:b"),
+    ("[ sh:inversePath ex:p ]", "^ex:p"),
+    ("[ sh:alternativePath ( ex:a ex:b ) ]", "ex:a|ex:b"),
+    ("[ sh:zeroOrMorePath ex:p ]", "ex:p*"),
+    ("[ sh:oneOrMorePath ex:p ]", "ex:p+"),
+    ("[ sh:zeroOrOnePath ex:p ]", "ex:p?"),
+    ("( ex:a [ sh:inversePath ex:b ] )", "ex:a/(^ex:b)"),
+])
+def test_complex_property_paths_are_skipped_with_a_warning(path, text):
+    with pytest.warns(UserWarning, match=re.escape(f"The property path {text} is not supported yet")):
+        shape = parse_shape(f"""
+            ex:S a sh:NodeShape ; sh:property [ sh:path ex:q ] ; sh:property [ sh:path {path} ; sh:minCount 1 ] .
+        """)
+    assert list(shape["properties"]) == [URIRef(EX + "q")]
 
 
 def test_a_repeated_single_valued_parameter_warns_and_uses_the_first_value():

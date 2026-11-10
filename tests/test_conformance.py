@@ -71,6 +71,8 @@ def case(name, shapes, *marks):
 
 # pySHACL warns when it validates recursive shapes (their semantics is not defined by the SHACL specification)
 IGNORE_RECURSION_WARNING = pytest.mark.filterwarnings("ignore:Warning, A Recursive Shape")
+# the generator warns about property paths that it does not support yet (the warning itself is tested elsewhere)
+IGNORE_UNSUPPORTED_PATH_WARNING = pytest.mark.filterwarnings("ignore:The property path")
 
 
 CASES = [
@@ -175,9 +177,11 @@ CASES = [
 
     # property paths
     case("sequence-path", "ex:S a sh:NodeShape ; sh:property [ sh:path ( ex:a ex:b ) ; sh:minCount 1 ] .",
-         known_bug("non-predicate paths produce blank nodes in predicate position")),
+         known_bug("sequence paths are not supported yet (the property is not generated)"),
+         IGNORE_UNSUPPORTED_PATH_WARNING),
     case("inverse-path", "ex:S a sh:NodeShape ; sh:property [ sh:path [ sh:inversePath ex:p ] ; sh:minCount 1 ] .",
-         known_bug("non-predicate paths produce blank nodes in predicate position")),
+         known_bug("inverse paths are not supported yet (the property is not generated)"),
+         IGNORE_UNSUPPORTED_PATH_WARNING),
 
     # logical constraints
     case("or-of-datatypes", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:postalCode ; sh:minCount 1 ;

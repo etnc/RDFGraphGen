@@ -29,6 +29,33 @@ def add_parameter_value(shape_dictionary, parameter, value):
                       f"one ({values[0]}).", stacklevel=2)
 
 
+def path_to_text(path, shapes_graph):
+    """A SHACL property path in SPARQL property path notation, e.g. ex:a/ex:b, ^ex:p, (ex:a|ex:b) or ex:p*."""
+    if isinstance(path, URIRef):
+        return path.n3(shapes_graph.namespace_manager)
+
+    def inner(p):
+        text = path_to_text(p, shapes_graph)
+        return text if isinstance(p, URIRef) else f"({text})"
+
+    if (path, RDF.first, None) in shapes_graph:  # sequence path: an RDF list of paths
+        return "/".join(inner(p) for p in get_list_from_shacl_list(path, shapes_graph))
+    alternatives = shapes_graph.value(path, SH.alternativePath)
+    if alternatives is not None:
+        return "|".join(inner(p) for p in get_list_from_shacl_list(alternatives, shapes_graph))
+    for predicate, template in ((SH.inversePath, "^{}"), (SH.zeroOrMorePath, "{}*"), (SH.oneOrMorePath, "{}+"),
+                                (SH.zeroOrOnePath, "{}?")):
+        argument = shapes_graph.value(path, predicate)
+        if argument is not None:
+            return template.format(inner(argument))
+    return str(path)
+
+
+def warn_unsupported_path(path, shapes_graph):
+    warnings.warn(f"The property path {path_to_text(path, shapes_graph)} is not supported yet (only predicate paths "
+                  f"are); the property is not generated.", stacklevel=2)
+
+
 def parameter_values(shape_dictionary, parameter):
     """All values of a constraint parameter in a shape dictionary (an empty list if it has none)."""
     values = shape_dictionary.get("values", {}).get(parameter)
@@ -306,6 +333,11 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
         if p == SH.property:
             # Handle SH:path property and nested shapes
             property_path = next(shapes_graph.objects(o, SH.path))
+            if not isinstance(property_path, URIRef):
+                # a complex property path (e.g. a sequence or an inverse path): not supported yet, so the property
+                # is skipped (writing the path itself as a predicate would produce invalid RDF)
+                warn_unsupported_path(property_path, shapes_graph)
+                continue
 
             # Retrieve or initialize property dictionary for the current property path
             property_dict = sh_properties.get(property_path, {})
@@ -340,6 +372,10 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
             if p == SH.lessThan or p == SH.lessThanOrEquals or p == SH.equals or p == SH.disjoint:
                 # Add the current shape_dictionary to the list of property pair constraint components
                 property_pair_constraint_components_parent.append(shape_dictionary)
+
+            if p == SH.path and not isinstance(o, URIRef):
+                # a property shape used in sh:and, sh:or or sh:xone with a complex path (see above)
+                warn_unsupported_path(o, shapes_graph)
 
             # a parameter can have several values (e.g. sh:class ex:A, ex:B), which must all hold
             add_parameter_value(shape_dictionary, p, o)

@@ -38,6 +38,19 @@ def _partners(shape_dictionary):
     return {p for p in pairs if p is not None} | set(shape_dictionary.get("depends_on", []))
 
 
+def _branch_as_node_shape(branch):
+    """
+    A shape of sh:and, sh:or or sh:xone, to be combined with a node shape: a property shape becomes a property of
+    the node. Returns None for a property shape with a complex path, which is not supported yet (the parser warns).
+    """
+    sh_path = branch.get(SH.path)
+    if sh_path is None:
+        return branch
+    if not isinstance(sh_path, URIRef):
+        return None
+    return {"properties": {sh_path: branch}}
+
+
 def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictionary,
                             property_pair_constraint_components_parent, parent_class, batchID, final_attempt=False):
     # initialization
@@ -69,21 +82,18 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     if shape_dictionary.get(URIRef(SH['xone'])):
         shape_dictionary = deepcopy(shape_dictionary)
         for sh_xone in parameter_values(shape_dictionary, URIRef(SH['xone'])):
-            choice = random.choice(sh_xone)
-            sh_path = choice.get(SH.path)
-            if sh_path:
-                choice = {"properties": {sh_path: choice}}
-            merge_shape_dictionaries(shape_dictionary, choice)
+            choice = _branch_as_node_shape(random.choice(sh_xone))
+            if choice is not None:
+                merge_shape_dictionaries(shape_dictionary, choice)
 
     # if there is a sh:and for this dict, merge all the choices  with the existing properties
     if shape_dictionary.get(URIRef(SH['and'])):
         shape_dictionary = deepcopy(shape_dictionary)
         for sh_and in parameter_values(shape_dictionary, URIRef(SH['and'])):
             for choice in sh_and:
-                sh_path = choice.get(SH.path)
-                if sh_path:
-                    choice = {"properties": {sh_path: choice}}
-                merge_shape_dictionaries(shape_dictionary, choice)
+                choice = _branch_as_node_shape(choice)
+                if choice is not None:
+                    merge_shape_dictionaries(shape_dictionary, choice)
 
     # if there is a sh:or for this dict, choose some of the choices and merge it with the existing properties
     if shape_dictionary.get(URIRef(SH['or'])):
@@ -91,10 +101,9 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         for sh_or in parameter_values(shape_dictionary, URIRef(SH['or'])):
             len_choices = len(sh_or)
             for choice in random.sample(sh_or, random.randint(1, len_choices)):
-                sh_path = choice.get(SH.path)
-                if sh_path:
-                    choice = {"properties": {sh_path: choice}}
-                merge_shape_dictionaries(shape_dictionary, choice)
+                choice = _branch_as_node_shape(choice)
+                if choice is not None:
+                    merge_shape_dictionaries(shape_dictionary, choice)
 
     # Property pairs (sh:equals, sh:disjoint, sh:lessThan, sh:lessThanOrEquals) and the dependencies of the
     # realistic-value heuristics need the values of another property of the parent. While that property has no
