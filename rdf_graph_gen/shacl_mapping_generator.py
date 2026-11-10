@@ -1,6 +1,40 @@
+import warnings
+
 from rdflib import SH, RDF, URIRef, Namespace
 
 SCH = Namespace("http://schema.org/")
+
+# Parameters that a shape can have at most one value for (SHACL syntax rules, as in the W3C SHACL-SHACL shapes).
+# Other parameters, such as sh:class, sh:node, sh:hasValue, sh:not, sh:and, sh:or and sh:xone, can have several
+# values in one shape, and each value is a separate constraint that must hold.
+SINGLE_VALUED_PARAMETERS = {
+    SH.path, SH.datatype, SH.nodeKind, SH.minCount, SH.maxCount, SH.minInclusive, SH.minExclusive, SH.maxInclusive,
+    SH.maxExclusive, SH.minLength, SH.maxLength, SH.pattern, SH.flags, SH.languageIn, SH.uniqueLang, URIRef(SH['in']),
+    SH.closed, SH.ignoredProperties, SH.qualifiedValueShape, SH.qualifiedMinCount, SH.qualifiedMaxCount,
+    SH.qualifiedValueShapesDisjoint, SH.deactivated, SH.severity,
+}
+
+
+def add_parameter_value(shape_dictionary, parameter, value):
+    """
+    Record a value of a constraint parameter in a shape dictionary. shape_dictionary[parameter] is the first
+    value; all values are kept in shape_dictionary["values"][parameter], in the order in which they are read.
+    """
+    values = shape_dictionary.setdefault("values", {}).setdefault(parameter, [])
+    values.append(value)
+    if len(values) == 1:
+        shape_dictionary[parameter] = value
+    elif parameter in SINGLE_VALUED_PARAMETERS:
+        warnings.warn(f"{parameter} has several values in one shape, which SHACL does not allow; using the first "
+                      f"one ({values[0]}).", stacklevel=2)
+
+
+def parameter_values(shape_dictionary, parameter):
+    """All values of a constraint parameter in a shape dictionary (an empty list if it has none)."""
+    values = shape_dictionary.get("values", {}).get(parameter)
+    if values:
+        return list(values)
+    return [shape_dictionary[parameter]] if shape_dictionary.get(parameter) is not None else []
 """
 Function Explanation:
 ---------------------
@@ -235,12 +269,13 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
 
         elif p == URIRef(SH['in']):
             # Handle SH:in property
-            shape_dictionary[p] = get_list_from_shacl_list(o, shapes_graph)
+            add_parameter_value(shape_dictionary, p, get_list_from_shacl_list(o, shapes_graph))
 
         elif p in {URIRef(SH['or']), URIRef(SH['and']), URIRef(SH['xone'])}:
-            # Handle SH:or, SH:and, SH:xone properties: their value is an RDF list of shapes
-            shape_dictionary[p] = get_dict_list_from_shacl_list(o, shapes_graph,
-                                                                property_pair_constraint_components_parent)
+            # Handle SH:or, SH:and, SH:xone properties: their value is an RDF list of shapes (a shape can have
+            # several such lists, and each must hold)
+            add_parameter_value(shape_dictionary, p, get_dict_list_from_shacl_list(
+                o, shapes_graph, property_pair_constraint_components_parent))
 
         elif p == URIRef(SH['not']):
             # Handle SH:not: its value is a single shape (not a list), and a shape can have several sh:not.
@@ -253,7 +288,8 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
                 # Add the current shape_dictionary to the list of property pair constraint components
                 property_pair_constraint_components_parent.append(shape_dictionary)
 
-            shape_dictionary[p] = o
+            # a parameter can have several values (e.g. sh:class ex:A, ex:B), which must all hold
+            add_parameter_value(shape_dictionary, p, o)
 
     # Add properties dictionary only if the node has properties
     if bool(sh_properties):

@@ -84,6 +84,7 @@ CASES = [
             sh:minInclusive "2020-01-01"^^xsd:date ; sh:maxInclusive "2020-12-31"^^xsd:date ] ."""),
     case("in", 'ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:in ("a" "b" "c") ; sh:minCount 1 ; sh:maxCount 2 ] .'),
     case("hasValue", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:hasValue ex:v ; sh:minCount 1 ] ."),
+    case("hasValue-with-several-values", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:hasValue ex:v1, ex:v2 ] ."),
     case("pattern-with-length", 'ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:pattern "^[a-z]+$" ; sh:maxLength 3 ] .',
          known_bug("sh:pattern ignores sh:minLength/sh:maxLength")),
     case("decimal-range-with-zero-bound", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:decimal ;
@@ -150,6 +151,8 @@ CASES = [
             ex:T a sh:NodeShape ; sh:property [ sh:path ex:t ; sh:minCount 1 ] .
             ex:U a sh:NodeShape ; sh:property [ sh:path ex:u ; sh:minCount 1 ] .""",
          known_bug("only one of several sh:node shapes is applied; values must conform to all of them")),
+    case("several-classes-on-node-shape", """ex:S a sh:NodeShape ; sh:targetClass ex:Thing ; sh:class ex:A, ex:B ;
+            sh:property [ sh:path ex:p ] ."""),
     case("class-on-property", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:class ex:Person ; sh:minCount 1 ] .",
          known_bug("a literal is generated instead of an instance of the class")),
     case("nodeKind-IRI", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:nodeKind sh:IRI ; sh:minCount 1 ] .",
@@ -184,6 +187,16 @@ CASES = [
             [ sh:path ex:fullName ; sh:minCount 1 ] ) ."""),
     case("and", """ex:S a sh:NodeShape ; sh:and (
             [ sh:property [ sh:path ex:a ; sh:minCount 1 ] ] [ sh:property [ sh:path ex:b ; sh:minCount 1 ] ] ) ."""),
+    # a shape can have several sh:and / sh:or / sh:xone lists, and each of them must hold
+    case("two-and-lists", """ex:S a sh:NodeShape ;
+            sh:and ( [ sh:property [ sh:path ex:a ; sh:minCount 1 ] ] ) ;
+            sh:and ( [ sh:property [ sh:path ex:b ; sh:minCount 1 ] ] ) ."""),
+    case("two-or-lists", """ex:S a sh:NodeShape ;
+            sh:or ( [ sh:property [ sh:path ex:a ; sh:minCount 1 ] ] [ sh:property [ sh:path ex:b ; sh:minCount 1 ] ] ) ;
+            sh:or ( [ sh:property [ sh:path ex:c ; sh:minCount 1 ] ] [ sh:property [ sh:path ex:d ; sh:minCount 1 ] ] ) ."""),
+    case("two-xone-lists", """ex:S a sh:NodeShape ;
+            sh:xone ( [ sh:property [ sh:path ex:a ; sh:minCount 1 ] ] [ sh:property [ sh:path ex:b ; sh:minCount 1 ] ] ) ;
+            sh:xone ( [ sh:property [ sh:path ex:c ; sh:minCount 1 ] ] [ sh:property [ sh:path ex:d ; sh:minCount 1 ] ] ) ."""),
     case("not", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:integer ;
             sh:minInclusive 1 ; sh:maxInclusive 3 ; sh:not [ sh:in (1 2) ] ] .""",
          known_bug("sh:not is not enforced")),

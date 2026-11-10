@@ -54,42 +54,47 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         node = BNode(f'{batchID}b{BNODE_COUNTER}')
         BNODE_COUNTER += 1
 
-    sh_class = shape_dictionary.get(SH.targetClass, shape_dictionary.get(URIRef(SH['class'])))
-    if sh_class:
-        result.add((node, RDF.type, sh_class))
-    else:
-        sh_class = parent_class
+    # The entity is an instance of every class given with sh:targetClass and sh:class (all of them must hold)
+    classes = []
+    for parameter in (SH.targetClass, URIRef(SH['class'])):
+        classes += [c for c in parameter_values(shape_dictionary, parameter) if c not in classes]
+    for c in classes:
+        result.add((node, RDF.type, c))
+    sh_class = classes[0] if classes else parent_class
+
+    # A shape can have several sh:xone, sh:and and sh:or lists, and each of them must hold, so each list is used.
+    # (The lists are read from the copy, so that merging never changes the shared shape dictionaries.)
 
     # if there is a sh:xone for this dict, choose one of the choices and merge it with the existing properties
-    sh_xone = shape_dictionary.get(URIRef(SH['xone']))
-    if sh_xone:
+    if shape_dictionary.get(URIRef(SH['xone'])):
         shape_dictionary = deepcopy(shape_dictionary)
-        choice = random.choice(sh_xone)
-        sh_path = choice.get(SH.path)
-        if sh_path:
-            choice = {"properties": {sh_path: choice}}
-        update_dictionary(shape_dictionary, choice)
+        for sh_xone in parameter_values(shape_dictionary, URIRef(SH['xone'])):
+            choice = random.choice(sh_xone)
+            sh_path = choice.get(SH.path)
+            if sh_path:
+                choice = {"properties": {sh_path: choice}}
+            update_dictionary(shape_dictionary, choice)
 
     # if there is a sh:and for this dict, merge all the choices  with the existing properties
-    sh_and = shape_dictionary.get(URIRef(SH['and']))
-    if sh_and:
+    if shape_dictionary.get(URIRef(SH['and'])):
         shape_dictionary = deepcopy(shape_dictionary)
-        for choice in sh_and:
-            sh_path = choice.get(SH.path)
-            if sh_path:
-                choice = {"properties": {sh_path: choice}}
-            update_dictionary(shape_dictionary, choice)
+        for sh_and in parameter_values(shape_dictionary, URIRef(SH['and'])):
+            for choice in sh_and:
+                sh_path = choice.get(SH.path)
+                if sh_path:
+                    choice = {"properties": {sh_path: choice}}
+                update_dictionary(shape_dictionary, choice)
 
     # if there is a sh:or for this dict, choose some of the choices and merge it with the existing properties
-    sh_or = shape_dictionary.get(URIRef(SH['or']))
-    if sh_or:
+    if shape_dictionary.get(URIRef(SH['or'])):
         shape_dictionary = deepcopy(shape_dictionary)
-        len_choices = len(sh_or)
-        for choice in random.sample(sh_or, random.randint(1, len_choices)):
-            sh_path = choice.get(SH.path)
-            if sh_path:
-                choice = {"properties": {sh_path: choice}}
-            update_dictionary(shape_dictionary, choice)
+        for sh_or in parameter_values(shape_dictionary, URIRef(SH['or'])):
+            len_choices = len(sh_or)
+            for choice in random.sample(sh_or, random.randint(1, len_choices)):
+                sh_path = choice.get(SH.path)
+                if sh_path:
+                    choice = {"properties": {sh_path: choice}}
+                update_dictionary(shape_dictionary, choice)
 
     # Property pairs (sh:equals, sh:disjoint, sh:lessThan, sh:lessThanOrEquals) and the dependencies of the
     # realistic-value heuristics need the values of another property of the parent. While that property has no
@@ -169,10 +174,11 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
             sh_max_count = int(value.get(SH.maxCount, sh_min_count))
             
             # check if property has hasValue, and if it has add one tuple and go on with that property
-            sh_has_value = value.get(SH.hasValue)
-            if sh_has_value is not None:
-                result.add((node, key, sh_has_value))
-                sh_max_count -= 1
+            # sh:hasValue: each of its values must be one of the values (a property can have several)
+            has_values = parameter_values(value, SH.hasValue)
+            for has_value in has_values:
+                result.add((node, key, has_value))
+            sh_max_count -= len(has_values)
             
             # decrease sh_max_count because one value is generated. If the new value is lesser than sh_min_count, decrease sh_min_count to sh_max_count 
             if sh_max_count < sh_min_count:
