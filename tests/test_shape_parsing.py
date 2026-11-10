@@ -61,21 +61,35 @@ def test_property_shapes_with_the_same_path_are_combined():
     assert p[SH.datatype] == URIRef("http://www.w3.org/2001/XMLSchema#integer")  # given in only one of them
 
 
-def test_a_sequence_path_of_predicates_is_supported():
+@pytest.mark.parametrize("path, steps", [
+    ("( ex:a ex:b ex:c )", [("a", False), ("b", False), ("c", False)]),
+    ("[ sh:inversePath ex:p ]", [("p", True)]),
+    ("( ex:a [ sh:inversePath ex:b ] )", [("a", False), ("b", True)]),
+    ("[ sh:inversePath ( ex:a ex:b ) ]", [("b", True), ("a", True)]),  # the inverse of a/b is ^b/^a
+])
+def test_sequence_and_inverse_paths_are_supported(path, steps):
     with warnings.catch_warnings():
         warnings.simplefilter("error")  # no "not supported" warning
-        shape = parse_shape("ex:S a sh:NodeShape ; sh:property [ sh:path ( ex:a ex:b ex:c ) ; sh:minCount 1 ] .")
+        shape = parse_shape(f"ex:S a sh:NodeShape ; sh:property [ sh:path {path} ; sh:minCount 1 ] .")
     (property_dictionary,) = shape["properties"].values()
-    assert property_dictionary["path_sequence"] == [URIRef(EX + name) for name in ("a", "b", "c")]
+    assert property_dictionary["path_steps"] == [(URIRef(EX + p), inverse) for p, inverse in steps]
+
+
+@pytest.mark.parametrize("constraint", ["sh:datatype xsd:string", 'sh:in ("a" "b")', 'sh:hasValue "a"',
+                                        "sh:nodeKind sh:Literal"])
+def test_literal_values_through_an_inverse_path_produce_a_warning(constraint):
+    # the values of an inverse path are subjects of triples, so they cannot be literals
+    with pytest.warns(UserWarning, match="cannot be literals"):
+        parse_shape(f"ex:S a sh:NodeShape ; sh:property [ sh:path [ sh:inversePath ex:p ] ; {constraint} ] .")
 
 
 @pytest.mark.parametrize("path, text", [
-    ("[ sh:inversePath ex:p ]", "^ex:p"),
     ("[ sh:alternativePath ( ex:a ex:b ) ]", "ex:a|ex:b"),
     ("[ sh:zeroOrMorePath ex:p ]", "ex:p*"),
     ("[ sh:oneOrMorePath ex:p ]", "ex:p+"),
     ("[ sh:zeroOrOnePath ex:p ]", "ex:p?"),
-    ("( ex:a [ sh:inversePath ex:b ] )", "ex:a/(^ex:b)"),
+    ("( ex:a [ sh:zeroOrMorePath ex:b ] )", "ex:a/(ex:b*)"),
+    ("[ sh:inversePath [ sh:alternativePath ( ex:a ex:b ) ] ]", "^(ex:a|ex:b)"),
 ])
 def test_complex_property_paths_are_skipped_with_a_warning(path, text):
     with pytest.warns(UserWarning, match=re.escape(f"The property path {text} is not supported yet")):

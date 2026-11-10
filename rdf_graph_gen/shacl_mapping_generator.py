@@ -1,6 +1,6 @@
 import warnings
 
-from rdflib import SH, RDF, URIRef, Namespace
+from rdflib import SH, RDF, URIRef, Namespace, Literal
 
 SCH = Namespace("http://schema.org/")
 
@@ -51,13 +51,44 @@ def path_to_text(path, shapes_graph):
     return str(path)
 
 
-def predicate_sequence(path, shapes_graph):
-    """The predicates of a sequence path that consists of predicates only, e.g. ( ex:a ex:b ); otherwise None."""
-    if not isinstance(path, URIRef) and (path, RDF.first, None) in shapes_graph:
-        steps = get_list_from_shacl_list(path, shapes_graph)
-        if all(isinstance(step, URIRef) for step in steps):
-            return steps
+def path_steps(path, shapes_graph):
+    """
+    The steps of a property path as a list of (predicate, inverse) pairs, e.g. ( ex:a [ sh:inversePath ex:b ] )
+    gives [(ex:a, False), (ex:b, True)]. Supported: predicates, sequence paths and inverse paths, also nested.
+    Returns None for other paths (alternative, zero-or-more, one-or-more and zero-or-one paths).
+    """
+    if isinstance(path, URIRef):
+        return [(path, False)]
+    if (path, RDF.first, None) in shapes_graph:  # sequence path
+        steps = []
+        for element in get_list_from_shacl_list(path, shapes_graph):
+            element_steps = path_steps(element, shapes_graph)
+            if element_steps is None:
+                return None
+            steps += element_steps
+        return steps
+    inverse = shapes_graph.value(path, SH.inversePath)
+    if inverse is not None:  # the steps of the inverted path in reverse order, each in the other direction
+        inverse_steps = path_steps(inverse, shapes_graph)
+        return None if inverse_steps is None else [(p, not backwards) for p, backwards in reversed(inverse_steps)]
     return None
+
+
+def warn_if_literal_values_are_required(property_dictionary, shapes_graph):
+    """
+    The values of a path that ends with an inverse step are the subjects of triples, so they cannot be literals:
+    warn if a property shape requires literal values for such a path, as that cannot be satisfied.
+    """
+    steps = property_dictionary.get("path_steps")
+    if not steps or not steps[-1][1]:
+        return
+    in_values = property_dictionary.get(URIRef(SH['in']))
+    if (property_dictionary.get(SH.datatype) is not None or property_dictionary.get(SH.nodeKind) == SH.Literal
+            or any(isinstance(v, Literal) for v in parameter_values(property_dictionary, SH.hasValue))
+            or (in_values and all(isinstance(v, Literal) for v in in_values))):
+        warnings.warn(f"The values of the property path {path_to_text(property_dictionary[SH.path], shapes_graph)} "
+                      f"are the subjects of triples (the path ends with an inverse step), so they cannot be literals; "
+                      f"its constraints that require literal values cannot be satisfied.", stacklevel=2)
 
 
 def warn_unsupported_path(path, shapes_graph):
@@ -342,9 +373,9 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
         if p == SH.property:
             # Handle SH:path property and nested shapes
             property_path = next(shapes_graph.objects(o, SH.path))
-            if not isinstance(property_path, URIRef) and predicate_sequence(property_path, shapes_graph) is None:
-                # a complex property path other than a sequence of predicates (e.g. an inverse path): not supported
-                # yet, so the property is skipped (writing the path itself as a predicate would be invalid RDF)
+            if not isinstance(property_path, URIRef) and path_steps(property_path, shapes_graph) is None:
+                # a complex property path other than sequence and inverse paths (e.g. an alternative path): not
+                # supported yet, so the property is skipped (writing the path as a predicate would be invalid RDF)
                 warn_unsupported_path(property_path, shapes_graph)
                 continue
 
@@ -383,10 +414,10 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
                 property_pair_constraint_components_parent.append(shape_dictionary)
 
             if p == SH.path and not isinstance(o, URIRef):
-                sequence = predicate_sequence(o, shapes_graph)
-                if sequence is not None:
-                    # a sequence path: its values are reached through the predicates of the sequence, one by one
-                    shape_dictionary["path_sequence"] = sequence
+                steps = path_steps(o, shapes_graph)
+                if steps is not None:
+                    # a sequence or inverse path: its values are reached through these steps, one by one
+                    shape_dictionary["path_steps"] = steps
                 else:
                     # a property shape used in sh:and, sh:or or sh:xone with an unsupported path (see above)
                     warn_unsupported_path(o, shapes_graph)
@@ -431,6 +462,7 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
             if min_constraint:
                 less_than_or_equals_dict[SH.minInclusive] = min_constraint
 
+    warn_if_literal_values_are_required(shape_dictionary, shapes_graph)
     return shape_dictionary
 
 

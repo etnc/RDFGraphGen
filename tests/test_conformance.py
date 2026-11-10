@@ -9,7 +9,8 @@ from pathlib import Path
 import pytest
 from rdflib import URIRef
 
-from support import REPO_ROOT, assert_conforms, generate, generate_and_validate, known_bug, load_shapes
+from support import (REPO_ROOT, assert_conforms, generate, generate_and_validate, known_bug, load_shapes,
+                     validator_bug)
 
 from rdf_graph_gen.value_generators import dataset_dictionary
 
@@ -71,9 +72,6 @@ def case(name, shapes, *marks):
 
 # pySHACL warns when it validates recursive shapes (their semantics is not defined by the SHACL specification)
 IGNORE_RECURSION_WARNING = pytest.mark.filterwarnings("ignore:Warning, A Recursive Shape")
-# the generator warns about property paths that it does not support yet (the warning itself is tested elsewhere)
-IGNORE_UNSUPPORTED_PATH_WARNING = pytest.mark.filterwarnings("ignore:The property path")
-
 
 CASES = [
     # cardinality, value ranges, strings
@@ -186,9 +184,22 @@ CASES = [
             ex:T a sh:NodeShape ; sh:property [ sh:path ex:q ; sh:datatype xsd:integer ; sh:minCount 1 ] ."""),
     case("sequence-path-in-a-branch", """ex:S a sh:NodeShape ;
             sh:xone ( [ sh:path ( ex:a ex:b ) ; sh:minCount 1 ] [ sh:path ex:c ; sh:minCount 1 ] ) ."""),
-    case("inverse-path", "ex:S a sh:NodeShape ; sh:property [ sh:path [ sh:inversePath ex:p ] ; sh:minCount 1 ] .",
-         known_bug("inverse paths are not supported yet (the property is not generated)"),
-         IGNORE_UNSUPPORTED_PATH_WARNING),
+    case("inverse-path", "ex:S a sh:NodeShape ; sh:property [ sh:path [ sh:inversePath ex:p ] ; sh:minCount 1 ] ."),
+    case("inverse-path-to-a-node-shape", """ex:PersonShape a sh:NodeShape ;
+            sh:property [ sh:path [ sh:inversePath ex:author ] ; sh:node ex:BookShape ; sh:minCount 1 ; sh:maxCount 3 ] .
+            ex:BookShape a sh:NodeShape ; sh:property [ sh:path ex:title ; sh:datatype xsd:string ; sh:minCount 1 ] ."""),
+    case("inverse-path-with-sh-in", """ex:S a sh:NodeShape ; sh:property [ sh:path [ sh:inversePath ex:member ] ;
+            sh:in ( ex:groupA ex:groupB "a literal cannot be a subject" ) ; sh:minCount 1 ; sh:maxCount 2 ] ."""),
+    case("inverse-path-with-sh-class", """ex:S a sh:NodeShape ; sh:property [ sh:path [ sh:inversePath ex:memberOf ] ;
+            sh:class ex:Group ; sh:minCount 1 ] ."""),
+    case("inverse-path-with-nested-properties", """ex:S a sh:NodeShape ; sh:property [ sh:path [ sh:inversePath ex:p ] ;
+            sh:minCount 1 ; sh:property [ sh:path ex:name ; sh:datatype xsd:string ; sh:minCount 1 ] ] ."""),
+    case("sequence-path-with-an-inverse-step", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ( ex:a [ sh:inversePath ex:b ] ) ; sh:minCount 1 ] ."""),
+    case("inverse-of-a-sequence-path", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path [ sh:inversePath ( ex:a ex:b ) ] ; sh:minCount 1 ] .""",
+         validator_bug("the inverse of the sequence path ex:a/ex:b is evaluated as ^ex:a/^ex:b instead of ^ex:b/^ex:a "
+                       "(checked with SPARQL in test_generation.py)")),
 
     # logical constraints
     case("or-of-datatypes", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:postalCode ; sh:minCount 1 ;

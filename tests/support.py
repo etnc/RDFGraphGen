@@ -55,3 +55,11 @@ def known_bug(description, raises=AssertionError):
     as a reminder to remove the marker.
     """
     return pytest.mark.xfail(strict=True, raises=raises, reason=f"known bug: {description}")
+
+
+def validator_bug(description):
+    """
+    Mark a conformance test as an expected failure caused by a bug in the validator (pySHACL), not in the generator;
+    the generated data is checked independently elsewhere. Strict: the test reports XPASS once pySHACL is fixed.
+    """
+    return pytest.mark.xfail(strict=True, raises=AssertionError, reason=f"pySHACL bug: {description}")

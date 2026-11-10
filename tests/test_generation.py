@@ -1,6 +1,6 @@
 """Tests of the generation process: reproducibility, batching and parallelism, and per-batch validation."""
 import pytest
-from rdflib import Graph, SH, URIRef
+from rdflib import Graph, Literal, SH, URIRef
 
 from support import REPO_ROOT, load_shapes, parse_turtle
 
@@ -81,6 +81,38 @@ def test_complex_property_paths_never_produce_invalid_rdf():
     # complex paths used to be written as (blank node) predicates, which is not valid RDF
     assert all(isinstance(predicate, URIRef) for predicate in graph.predicates())
     assert len(set(graph.subjects(URIRef("http://example.org/name"), None))) == 20  # other properties: generated
+
+
+@pytest.mark.parametrize("shacl_path, sparql_path", [
+    ("( ex:a ex:b )", "ex:a/ex:b"),
+    ("[ sh:inversePath ex:p ]", "^ex:p"),
+    ("( ex:a [ sh:inversePath ex:b ] )", "ex:a/^ex:b"),
+    ("[ sh:inversePath ( ex:a ex:b ) ]", "^(ex:a/ex:b)"),
+])
+def test_values_are_reachable_through_the_path(shacl_path, sparql_path):
+    # An independent check of the generated structure with SPARQL property paths (pySHACL evaluates the inverse of a
+    # sequence path incorrectly, see test_conformance.py)
+    shapes = parse_turtle(f"ex:S a sh:NodeShape ; sh:property [ sh:path {shacl_path} ; sh:minCount 2 ; sh:maxCount 2 ] .")
+    graph = generate_graph(shapes, 10, seed=1)
+    entities = set(graph.subjects(SH.description, None))
+    assert len(entities) == 10
+    query = f"PREFIX ex: <http://example.org/> SELECT (COUNT(DISTINCT ?v) AS ?n) WHERE {{ ?entity {sparql_path} ?v }}"
+    for entity in entities:
+        (row,) = graph.query(query, initBindings={"entity": entity})
+        assert row.n.toPython() == 2, f"{entity} has {row.n} values through {sparql_path}"
+
+
+def test_inverse_paths_never_make_a_literal_the_subject_of_a_triple():
+    shapes = parse_turtle("""
+        ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:name ; sh:minCount 1 ] ;
+            sh:property [ sh:path [ sh:inversePath ex:p ] ; sh:datatype xsd:string ; sh:minCount 1 ] ;
+            sh:property [ sh:path [ sh:inversePath ex:q ] ; sh:hasValue "a literal" ] .
+    """)
+    with pytest.warns(UserWarning, match="cannot be literals"):
+        graph = generate_graph(shapes, 10, seed=1)
+    assert not any(isinstance(subject, Literal) for subject in graph.subjects())
+    assert len(set(graph.subjects(URIRef("http://example.org/name"), None))) == 10  # other properties: generated
 
 
 def test_person_heuristics_also_apply_to_shapes_with_sh_class():

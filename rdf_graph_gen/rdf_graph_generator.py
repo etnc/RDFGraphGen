@@ -1,6 +1,6 @@
 import random
 from copy import deepcopy
-from rdflib import Graph, BNode
+from rdflib import Graph, BNode, Literal
 
 from rdf_graph_gen.shacl_mapping_generator import *
 from rdf_graph_gen.value_generators import *
@@ -46,35 +46,48 @@ def _branch_as_node_shape(branch):
     sh_path = branch.get(SH.path)
     if sh_path is None:
         return branch
-    if not isinstance(sh_path, URIRef) and not branch.get("path_sequence"):
+    if not isinstance(sh_path, URIRef) and not branch.get("path_steps"):
         return None
     return {"properties": {sh_path: branch}}
 
 
+def _ends_with_inverse_step(property_dictionary):
+    """Whether the values of the property are reached through an inverse step (they are subjects of triples)."""
+    steps = property_dictionary.get("path_steps")
+    return bool(steps) and steps[-1][1]
+
+
 def _add_value(result, node, path, property_dictionary, value, batchID):
     """
-    Add a value of a property to node. For a sequence path (e.g. ex:a/ex:b), the value is reached through fresh
-    intermediate nodes: node ex:a [ ex:b value ].
+    Add a value of a property to node, following the steps of its path: through fresh intermediate nodes for a
+    sequence path (node ex:a [ ex:b value ]), and in the other direction for an inverse step (value ex:p node).
     """
     global BNODE_COUNTER
-    sequence = property_dictionary.get("path_sequence")
-    if not sequence:
+    steps = property_dictionary.get("path_steps")
+    if not steps:
         result.add((node, path, value))
         return
-    subject = node
-    for predicate in sequence[:-1]:
-        intermediate = BNode(f'{batchID}b{BNODE_COUNTER}')
-        BNODE_COUNTER += 1
-        result.add((subject, predicate, intermediate))
-        subject = intermediate
-    result.add((subject, sequence[-1], value))
+    if steps[-1][1] and isinstance(value, Literal):
+        return  # a literal cannot be the subject of a triple (the parser warns about such shapes)
+    current = node
+    for index, (predicate, inverse) in enumerate(steps):
+        if index == len(steps) - 1:
+            target = value
+        else:
+            target = BNode(f'{batchID}b{BNODE_COUNTER}')
+            BNODE_COUNTER += 1
+        result.add((target, predicate, current) if inverse else (current, predicate, target))
+        current = target
 
 
 def _values(result, node, path, property_dictionary):
-    """The current values of a property of node (for a sequence path: the nodes reached through it)."""
+    """The current values of a property of node (the nodes reached through the steps of its path)."""
     nodes = {node}
-    for predicate in property_dictionary.get("path_sequence") or [path]:
-        nodes = {o for n in nodes for o in result.objects(n, predicate)}
+    for predicate, inverse in property_dictionary.get("path_steps") or [(path, False)]:
+        if inverse:
+            nodes = {s for n in nodes for s in result.subjects(predicate, n)}
+        else:
+            nodes = {o for n in nodes for o in result.objects(n, predicate)}
     return nodes
 
 
@@ -262,14 +275,25 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         # prefer new values, and never values of the sh:disjoint property if that can be avoided
         candidates = ([value for value in sh_in if value not in existing and value not in disjoint_values]
                       or [value for value in sh_in if value not in disjoint_values] or sh_in)
+        if _ends_with_inverse_step(shape_dictionary):
+            # values reached through an inverse step are subjects of triples, so they cannot be literals
+            candidates = ([value for value in candidates if not isinstance(value, Literal)]
+                          or [value for value in sh_in if not isinstance(value, Literal)])
+            if not candidates:
+                return None
         return random.choice(candidates)
-    
+
     # if the property is described by a sh:node, generate a node and add it
     elif sh_node:
         n = dictionary.get(sh_node)
         if not n:
             raise Exception("The SHACL shape " + sh_node + " cannot be found!")
         return dictionary_to_rdf_graph(n, sh_node, result, None, dictionary, [], sh_class, batchID)
+
+    # values reached through an inverse step are subjects of triples, so they cannot be literals: the value is the
+    # fresh node created above (with the classes of the shape, if any)
+    if _ends_with_inverse_step(shape_dictionary):
+        return node
 
     # check if a predefined value exists for this iteration
     predefined_value = generate_intuitive_value(sh_path, sh_class, dependencies)
