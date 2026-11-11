@@ -167,8 +167,19 @@ CASES = [
     case("required-recursion", """ex:A a sh:NodeShape ; sh:property [ sh:path ex:toB ; sh:node ex:B ; sh:minCount 1 ] .
             ex:B a sh:NodeShape ; sh:property [ sh:path ex:toA ; sh:node ex:A ; sh:minCount 1 ] .
             ex:Root a sh:NodeShape ; sh:property [ sh:path ex:r ; sh:node ex:A ] .""",
-         known_bug("endless recursion; needs a depth limit with links back to earlier entities",
-                   raises=RecursionError)),
+         IGNORE_RECURSION_WARNING),
+    case("optional-self-recursion", """ex:Root a sh:NodeShape ; sh:property [ sh:path ex:person ; sh:node ex:P ; sh:minCount 1 ] .
+            ex:P a sh:NodeShape ; sh:property [ sh:path ex:name ; sh:minCount 1 ; sh:maxCount 1 ] ;
+                sh:property [ sh:path ex:knows ; sh:node ex:P ; sh:minCount 0 ; sh:maxCount 2 ] .""",
+         IGNORE_RECURSION_WARNING),
+    case("required-self-recursion", """ex:Root a sh:NodeShape ; sh:property [ sh:path ex:person ; sh:node ex:P ; sh:minCount 1 ] .
+            ex:P a sh:NodeShape ; sh:property [ sh:path ex:name ; sh:minCount 1 ; sh:maxCount 1 ] ;
+                sh:property [ sh:path ex:knows ; sh:node ex:P ; sh:minCount 1 ; sh:maxCount 2 ] .""",
+         IGNORE_RECURSION_WARNING),
+    case("required-self-recursion-with-more-values-than-earlier-entities", """ex:Root a sh:NodeShape ;
+                sh:property [ sh:path ex:person ; sh:node ex:P ; sh:minCount 1 ] .
+            ex:P a sh:NodeShape ; sh:property [ sh:path ex:knows ; sh:node ex:P ; sh:minCount 3 ; sh:maxCount 3 ] .""",
+         IGNORE_RECURSION_WARNING),
     case("self-recursive-shape", """ex:P a sh:NodeShape ; sh:property [ sh:path ex:name ; sh:datatype xsd:string ] ;
             sh:property [ sh:path ex:knows ; sh:node ex:P ; sh:minCount 0 ; sh:maxCount 2 ] .""",
          known_bug("a shape that references itself is not treated as top-level, so no entities are generated")),

@@ -10,6 +10,11 @@ from rdf_graph_gen.value_generators import *
 COUNTER = 100
 BNODE_COUNTER = 0
 
+# Recursive shapes (e.g. a Person who knows a Person): a shape occurs at most this many times on the path from a
+# top-level entity to a generated entity. Beyond that, only the required number of values is generated for such a
+# property, using earlier entities of that shape where possible, so that generation always ends.
+RECURSION_LIMIT = 3
+
 """
 Function Explanation:
 ---------------------
@@ -91,8 +96,23 @@ def _values(result, node, path, property_dictionary):
     return nodes
 
 
+def _earlier_entities(ancestors, value_shape, node):
+    """
+    For a property whose values are entities of value_shape: None if that shape occurs fewer than RECURSION_LIMIT
+    times on the path from the top-level entity (new entities are generated as usual); otherwise the earlier
+    entities of that shape on the path, nearest first and without the current entity, to be used as values.
+    """
+    if value_shape is None:
+        return None
+    earlier = [entity for shape, entity in reversed(ancestors) if shape == value_shape]
+    if len(earlier) < RECURSION_LIMIT:
+        return None
+    return [entity for entity in earlier if entity != node]
+
+
 def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictionary,
-                            property_pair_constraint_components_parent, parent_class, batchID, final_attempt=False):
+                            property_pair_constraint_components_parent, parent_class, batchID, final_attempt=False,
+                            ancestors=()):
     # initialization
     property_pair_constraint_components = []
     global COUNTER, BNODE_COUNTER
@@ -106,6 +126,10 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         # deterministic blank node identifiers (rdflib's default ones are random)
         node = BNode(f'{batchID}b{BNODE_COUNTER}')
         BNODE_COUNTER += 1
+
+    # the generated entities on the path from the top-level entity to this one, with their shapes (see _earlier_entities)
+    if shape_name:
+        ancestors = ancestors + ((shape_name, node),)
 
     # The entity is an instance of every class given with sh:targetClass and sh:class (all of them must hold)
     classes = []
@@ -233,10 +257,19 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
             if sh_max_count < sh_min_count:
                 sh_min_count = sh_max_count
             
-            for i in range(0, random.randint(sh_min_count, sh_max_count)):
+            # Recursion: if the values are entities of a shape that already occurs RECURSION_LIMIT times on the path
+            # from the top-level entity, generate only the required number of values, using earlier entities of that
+            # shape where possible (e.g. a cycle P2 knows P1), so that generation ends
+            earlier = _earlier_entities(ancestors, value.get(SH.node), node)
+            count = max(sh_min_count, 0) if earlier is not None else random.randint(sh_min_count, sh_max_count)
+            for i in range(0, count):
                 postponed_before = len(property_pair_constraint_components)
-                generated_prop = dictionary_to_rdf_graph(value, None, result, node, dictionary,
-                                                         property_pair_constraint_components, sh_class, batchID)
+                if earlier:
+                    generated_prop = earlier.pop(0)
+                else:
+                    generated_prop = dictionary_to_rdf_graph(value, None, result, node, dictionary,
+                                                             property_pair_constraint_components, sh_class, batchID,
+                                                             ancestors=ancestors)
                 if generated_prop is not None:
                     _add_value(result, node, key, value, generated_prop, batchID)
                 elif len(property_pair_constraint_components) > postponed_before:
@@ -255,7 +288,8 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
                 sh_max_count = int(value.get(SH.maxCount, sh_min_count))
                 for i in range(0, random.randint(sh_min_count, sh_max_count)):
                     generated_prop = dictionary_to_rdf_graph(value, None, result, node, dictionary, still_postponed,
-                                                             sh_class, batchID, final_attempt=value is forced)
+                                                             sh_class, batchID, final_attempt=value is forced,
+                                                             ancestors=ancestors)
                     if generated_prop is None:
                         break
                     _add_value(result, node, value.get(SH.path), value, generated_prop, batchID)
@@ -288,7 +322,8 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         n = dictionary.get(sh_node)
         if not n:
             raise Exception("The SHACL shape " + sh_node + " cannot be found!")
-        return dictionary_to_rdf_graph(n, sh_node, result, None, dictionary, [], sh_class, batchID)
+        return dictionary_to_rdf_graph(n, sh_node, result, None, dictionary, [], sh_class, batchID,
+                                       ancestors=ancestors)
 
     # values reached through an inverse step are subjects of triples, so they cannot be literals: the value is the
     # fresh node created above (with the classes of the shape, if any)

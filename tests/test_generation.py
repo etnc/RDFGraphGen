@@ -102,6 +102,25 @@ def test_values_are_reachable_through_the_path(shacl_path, sparql_path):
         assert row.n.toPython() == 2, f"{entity} has {row.n} values through {sparql_path}"
 
 
+@pytest.mark.parametrize("min_count", [0, 1])
+def test_recursion_is_limited_and_reuses_earlier_entities(min_count):
+    shapes = parse_turtle(f"""
+        ex:Root a sh:NodeShape ; sh:property [ sh:path ex:person ; sh:node ex:P ; sh:minCount 1 ; sh:maxCount 1 ] .
+        ex:P a sh:NodeShape ;
+            sh:property [ sh:path ex:knows ; sh:node ex:P ; sh:minCount {min_count} ; sh:maxCount 2 ] .
+    """)
+    knows = URIRef("http://example.org/knows")
+    for seed in range(1, 6):
+        graph = generate_graph(shapes, 20, seed=seed)
+        people = set(graph.subjects(SH.description, URIRef("http://example.org/P")))
+        # per root entity: its Person, at most 2 new acquaintances, and at most 2 new acquaintances of each of
+        # them; at that point, the shape occurs RECURSION_LIMIT (3) times on the path, so no new Persons follow
+        assert 20 <= len(people) <= 20 * (1 + 2 + 4)
+        if min_count == 1:
+            # the Persons at the limit know an earlier Person on their path (here: the one that knows them)
+            assert any((b, knows, a) in graph for a, b in graph.subject_objects(knows))
+
+
 def test_inverse_paths_never_make_a_literal_the_subject_of_a_triple():
     shapes = parse_turtle("""
         ex:S a sh:NodeShape ;
