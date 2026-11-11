@@ -1,6 +1,6 @@
 import warnings
 
-from rdflib import SH, RDF, URIRef, Namespace, Literal
+from rdflib import SH, RDF, BNode, URIRef, Namespace, Literal
 
 SCH = Namespace("http://schema.org/")
 
@@ -220,10 +220,61 @@ def find_node_shapes(shapes_graph):
     return node_shapes
 
 
+# The parameters whose values are shapes that another shape uses, either for its property shapes or for the values of a
+# property (sh:node, sh:qualifiedValueShape), or for the shape itself (sh:not, and the lists of sh:and, sh:or, sh:xone)
+SHAPE_PARAMETERS = (SH.property, SH.node, SH.qualifiedValueShape, SH["not"])
+SHAPE_LIST_PARAMETERS = (SH["and"], SH["or"], SH["xone"])
+
+
+def _owner(node, shapes_graph):
+    """The shape that a blank node (e.g. a property shape, or a shape in an sh:or list) is part of."""
+    seen = set()
+    while isinstance(node, BNode) and node not in seen:
+        seen.add(node)
+        parent = next(shapes_graph.subjects(None, node), None)
+        if parent is None:
+            break
+        node = parent
+    return node
+
+
+def shape_uses(shapes_graph):
+    """
+    Map each shape to the shapes it uses: the shapes given (by name) as values of sh:property, sh:node,
+    sh:qualifiedValueShape or sh:not, or in the lists of sh:and, sh:or and sh:xone, in the shape or in any of its
+    blank-node parts (its property shapes, the shapes in its lists, ...).
+    """
+    uses = {}
+    for parameter in SHAPE_PARAMETERS:
+        for subject, shape in shapes_graph.subject_objects(parameter):
+            uses.setdefault(_owner(subject, shapes_graph), set()).add(shape)
+    for parameter in SHAPE_LIST_PARAMETERS:
+        for subject, shape_list in shapes_graph.subject_objects(parameter):
+            uses.setdefault(_owner(subject, shapes_graph), set()).update(shapes_graph.items(shape_list))
+    return uses
+
+
+def _reachable(shape, uses):
+    """The shapes that a shape uses, directly or through other shapes."""
+    reached, stack = set(), [shape]
+    while stack:
+        for used in uses.get(stack.pop(), ()):
+            if used not in reached:
+                reached.add(used)
+                stack.append(used)
+    return reached
+
+
 """
 Function Explanation:
 ---------------------
-The `find_independent_node_shapes` function identifies and returns unique SHACL Node Shapes that are independent (not pointed to by other shapes) within an RDF Shapes graph.
+The `find_independent_node_shapes` function returns the top-level SHACL Node Shapes of an RDF Shapes graph: the node
+shapes for which entities are generated directly. The entities of the other node shapes are generated as part of the
+entities of the shapes that use them (e.g. as the values of a property with sh:node).
+
+A node shape is top-level if no other shape uses it. A shape that only uses itself (e.g. a person who knows other
+persons) is top-level. Shapes that use each other in a cycle that no top-level shape uses (e.g. A uses B, and B uses A)
+would have no entities, so one shape of each such cycle (the first one, in IRI order) is top-level too.
 
 Parameters:
 -----------
@@ -231,19 +282,35 @@ shapes_graph (rdflib.Graph): The RDF Shapes graph to analyze.
 
 Returns:
 --------
-set: A set containing the unique independent SHACL Node Shapes in the given RDF Shapes graph.
+set: The top-level SHACL Node Shapes in the given RDF Shapes graph.
 """
 
 
 def find_independent_node_shapes(shapes_graph):
-    # Step 1: Retrieve all SHACL Node Shapes in the graph
     node_shapes = find_node_shapes(shapes_graph)
+    uses = shape_uses(shapes_graph)
 
-    # Step 2: Retrieve SHACL Node Shapes that are pointed to by other shapes
-    node_shapes_pointed = {s for s in shapes_graph.objects(None, SH.node)}
+    # the node shapes that another shape uses (a shape that uses itself does not count)
+    used = {shape for owner, shapes in uses.items() for shape in shapes if shape != owner}
+    top_level = node_shapes - used
 
-    # Step 3: Return the set difference to find independent SHACL Node Shapes
-    return node_shapes - node_shapes_pointed
+    reached = set(top_level)
+    for shape in top_level:
+        reached |= _reachable(shape, uses)
+    unreached = sorted(node_shapes - reached, key=str)
+    while unreached:
+        # start from a shape that no other unreached shape uses (the first shape of a cycle), so that all shapes of
+        # the cycle, and the shapes they use, are generated as its parts
+        shape = unreached[0]
+        while True:
+            upstream = [s for s in unreached if shape in _reachable(s, uses) and s not in _reachable(shape, uses)]
+            if not upstream:
+                break
+            shape = upstream[0]
+        top_level.add(shape)
+        reached |= {shape} | _reachable(shape, uses)
+        unreached = [s for s in unreached if s not in reached]
+    return top_level
 
 
 # given a rdf list, it returns a python list containing the items in the RDF list.

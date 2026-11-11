@@ -182,7 +182,13 @@ CASES = [
          IGNORE_RECURSION_WARNING),
     case("self-recursive-shape", """ex:P a sh:NodeShape ; sh:property [ sh:path ex:name ; sh:datatype xsd:string ] ;
             sh:property [ sh:path ex:knows ; sh:node ex:P ; sh:minCount 0 ; sh:maxCount 2 ] .""",
-         known_bug("a shape that references itself is not treated as top-level, so no entities are generated")),
+         IGNORE_RECURSION_WARNING),
+    case("required-self-recursive-shape", """ex:P a sh:NodeShape ; sh:property [ sh:path ex:name ; sh:minCount 1 ] ;
+            sh:property [ sh:path ex:knows ; sh:node ex:P ; sh:minCount 1 ; sh:maxCount 2 ] .""",
+         IGNORE_RECURSION_WARNING),
+    case("recursion-without-a-top-level-shape", """ex:A a sh:NodeShape ; sh:property [ sh:path ex:toB ; sh:node ex:B ; sh:minCount 1 ] .
+            ex:B a sh:NodeShape ; sh:property [ sh:path ex:toA ; sh:node ex:A ; sh:minCount 0 ; sh:maxCount 1 ] .""",
+         IGNORE_RECURSION_WARNING),
 
     # property paths
     case("sequence-path", "ex:S a sh:NodeShape ; sh:property [ sh:path ( ex:a ex:b ) ; sh:minCount 1 ] ."),

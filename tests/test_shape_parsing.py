@@ -7,7 +7,8 @@ from rdflib import Literal, SH, URIRef
 
 from support import parse_turtle
 
-from rdf_graph_gen.shacl_mapping_generator import generate_dictionary_from_shapes_graph, parameter_values
+from rdf_graph_gen.shacl_mapping_generator import (find_independent_node_shapes, generate_dictionary_from_shapes_graph,
+                                                   parameter_values)
 
 EX = "http://example.org/"
 
@@ -104,6 +105,48 @@ def test_a_repeated_single_valued_parameter_warns_and_uses_the_first_value():
     with pytest.warns(UserWarning, match="several values in one shape, which SHACL does not allow"):
         shape = parse_shape("ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:maxCount 3, 5 ] .")
     assert shape["properties"][URIRef(EX + "p")][SH.maxCount] == Literal(3)
+
+
+def top_level_shapes(ttl):
+    return {str(shape)[len(EX):] for shape in find_independent_node_shapes(parse_turtle(ttl))}
+
+
+def test_shapes_used_by_other_shapes_are_not_top_level():
+    assert top_level_shapes("""
+        ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:a ; sh:node ex:Node ] ;
+            sh:property [ sh:path ex:b ; sh:qualifiedValueShape ex:Qualified ; sh:qualifiedMinCount 1 ] ;
+            sh:property ex:NamedPropertyShape ;
+            sh:or ( ex:InOr [ sh:property [ sh:path ex:c ; sh:xone ( ex:InNestedXone ) ] ] ) ;
+            sh:not ex:Negated .
+        ex:NamedPropertyShape a sh:PropertyShape ; sh:path ex:d ; sh:node ex:ViaPropertyShape .
+        ex:Node a sh:NodeShape . ex:Qualified a sh:NodeShape . ex:InOr a sh:NodeShape .
+        ex:InNestedXone a sh:NodeShape . ex:Negated a sh:NodeShape . ex:ViaPropertyShape a sh:NodeShape .
+    """) == {"S"}
+
+
+def test_a_shape_that_uses_only_itself_is_top_level():
+    assert top_level_shapes("""
+        ex:Person a sh:NodeShape ; sh:property [ sh:path ex:knows ; sh:node ex:Person ] .
+        ex:Address a sh:NodeShape ; sh:or ( [ sh:property [ sh:path ex:partOf ; sh:node ex:Address ] ] ) .
+    """) == {"Person", "Address"}
+
+
+def test_one_shape_of_a_cycle_without_a_top_level_shape_is_top_level():
+    # each entity of the top-level shape includes entities of the other shapes of the cycle
+    assert top_level_shapes("""
+        ex:A a sh:NodeShape ; sh:property [ sh:path ex:toB ; sh:node ex:B ] .
+        ex:B a sh:NodeShape ; sh:property [ sh:path ex:toA ; sh:node ex:A ] .
+    """) == {"A"}
+    # a shape that a cycle uses is not top-level, and neither is a cycle used by a top-level shape
+    assert top_level_shapes("""
+        ex:A a sh:NodeShape .
+        ex:Y a sh:NodeShape ; sh:property [ sh:path ex:toZ ; sh:node ex:Z ] ; sh:property [ sh:path ex:a ; sh:node ex:A ] .
+        ex:Z a sh:NodeShape ; sh:property [ sh:path ex:toY ; sh:node ex:Y ] .
+        ex:Root a sh:NodeShape ; sh:property [ sh:path ex:c ; sh:node ex:C ] .
+        ex:C a sh:NodeShape ; sh:property [ sh:path ex:toD ; sh:node ex:D ] .
+        ex:D a sh:NodeShape ; sh:property [ sh:path ex:toC ; sh:node ex:C ] .
+    """) == {"Y", "Root"}
 
 
 def test_equals_and_disjoint_keep_the_constraints_of_the_other_property():
