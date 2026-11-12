@@ -496,6 +496,51 @@ def generate_string(existing_values, min_length, max_length, pattern):
     return None
 
 
+def _within(number, lower, upper):
+    """Whether a number is within the bounds given by _bounds."""
+    if lower is not None and (number < lower[0] or (lower[1] and number == lower[0])):
+        return False
+    return upper is None or not (number > upper[0] or (upper[1] and number == upper[0]))
+
+
+def generate_with_pattern(existing_values, datatype, pattern, min_length, max_length, bounds, generate):
+    """
+    A value of a datatype other than strings (e.g. xsd:integer) whose lexical form matches sh:pattern and has the
+    required length: a value generated as usual (with `generate`) that matches the pattern (e.g. for ^[0-9]+$), or
+    else a value generated from the pattern that is a valid value of the datatype within the bounds of the property
+    (e.g. 48213 for ^[0-9]{5}$). `bounds`: the value range constraints and the sh:lessThan(OrEquals) values.
+    Only values in canonical form are used: rdflib normalizes lexical forms (e.g. 04821 to 4821, 1 to true), also
+    when it reads the generated data, so other forms would no longer match the pattern.
+    """
+    if datatype in TEMPORAL_DATATYPES:
+        bound_values = [bound for bound in bounds[:4] if bound is not None] + list(bounds[4] or []) + list(bounds[5] or [])
+        to_number = _time_scale(datatype, bound_values).to_number
+    else:
+        to_number = _python
+    lower, upper = _bounds(*bounds, convert=to_number)
+
+    def acceptable(value):
+        text = str(value)
+        return (re.search(pattern, text) is not None and _has_length(text, min_length, max_length)
+                and value.toPython() not in existing_values)
+
+    for _ in range(20):
+        value = generate()
+        if value is not None and acceptable(value):
+            return value
+    parsed = parse(pattern)
+    for _ in range(200):
+        text = _randone(parsed)
+        value = Literal(text, datatype=datatype)
+        number = None if value.ill_typed or str(value) != text else to_number(value)
+        if (number is not None and not isinstance(number, Literal) and _within(number, lower, upper)
+                and acceptable(value)):
+            return value
+    warnings.warn(f"No {datatype} value that matches the pattern {pattern} was found within the constraints of the "
+                  f"property, so no value is generated.", stacklevel=3)
+    return None
+
+
 def _name(word):
     """A name (e.g. an xsd:NCName): a word that starts with a letter."""
     return word if word[:1].isalpha() else random.choice(string.ascii_letters) + word[1:]
@@ -657,20 +702,22 @@ def generate_default_value(existing_values, datatype, min_exclusive, min_inclusi
             datatype = XSD.integer
 
     # Generate values based on datatype and constraints
-    if datatype in INTEGER_DATATYPES:
-        return generate_integer(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
-                                less_than_or_equals, datatype, min_length, max_length)
-    elif datatype in DECIMAL_DATATYPES or datatype == XSD.boolean or datatype in TEMPORAL_DATATYPES:
+    if (datatype in INTEGER_DATATYPES or datatype in DECIMAL_DATATYPES or datatype == XSD.boolean
+            or datatype in TEMPORAL_DATATYPES):
+        bounds = (min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than, less_than_or_equals)
+
         def generate():
+            if datatype in INTEGER_DATATYPES:
+                return generate_integer(existing_values, *bounds, datatype, min_length, max_length)
             if datatype in DECIMAL_DATATYPES:
-                return generate_decimal(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive,
-                                        less_than, less_than_or_equals, datatype)
+                return generate_decimal(existing_values, *bounds, datatype)
             if datatype == XSD.boolean:
                 return Literal(bool(random.getrandbits(1)))
-            return generate_temporal(existing_values, datatype, min_exclusive, min_inclusive, max_exclusive,
-                                     max_inclusive, less_than, less_than_or_equals)
+            return generate_temporal(existing_values, datatype, *bounds)
 
-        if min_length is None and max_length is None:
+        if pattern:
+            return generate_with_pattern(existing_values, datatype, pattern, min_length, max_length, bounds, generate)
+        if datatype in INTEGER_DATATYPES or (min_length is None and max_length is None):
             return generate()
         # sh:minLength and sh:maxLength apply to the lexical form of any value (e.g. "true" and "false" have
         # different lengths): values of another length are discarded

@@ -5,7 +5,7 @@ does not check, and value ranges of datatypes whose values SPARQL (and pySHACL) 
 import re
 
 import pytest
-from rdflib import Literal, URIRef
+from rdflib import Graph, Literal, URIRef
 
 from support import parse_turtle
 
@@ -57,10 +57,23 @@ def test_values_of_unknown_datatypes_are_typed_strings_with_a_warning():
     ("xsd:integer", "sh:minInclusive 1 ; sh:maxInclusive 99 ; sh:minLength 3 ;", "No new integer with a length"),
     ("xsd:anyURI", "sh:maxLength 10 ;", "No http://www.w3.org/2001/XMLSchema#anyURI value with a length"),
     ("xsd:date", "sh:maxLength 8 ;", "No http://www.w3.org/2001/XMLSchema#date value with a length"),
+    ("xsd:integer", 'sh:pattern "^[a-z]+$" ;', "No http://www.w3.org/2001/XMLSchema#integer value that matches"),
+    # 1 and 0 are booleans, but rdflib writes them as true and false (see the next test)
+    ("xsd:boolean", 'sh:pattern "^[01]$" ;', "No http://www.w3.org/2001/XMLSchema#boolean value that matches"),
 ])
-def test_lengths_that_no_value_can_have_produce_a_warning_and_no_value(datatype, constraints, warning):
+def test_constraints_that_no_value_can_satisfy_produce_a_warning_and_no_value(datatype, constraints, warning):
     with pytest.warns(UserWarning, match=warning):
         assert generated_values(datatype, constraints, count=1, scale=1) == []
+
+
+def test_values_from_a_pattern_still_match_it_when_the_data_is_read_again():
+    # rdflib normalizes lexical forms when it reads data (e.g. 04821 becomes 4821), so values from a pattern must
+    # be in canonical form
+    shapes = parse_turtle("""ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:integer ;
+        sh:pattern "^[0-9]{5}$" ; sh:minCount 3 ; sh:maxCount 3 ] .""")
+    data = generate_graph(shapes, 30, seed=1).serialize(format="turtle")
+    values = list(Graph().parse(data=data, format="turtle").objects(None, P))
+    assert len(values) == 90 and all(re.fullmatch("[0-9]{5}", str(value)) for value in values)
 
 
 @pytest.mark.parametrize("datatype, minimum, maximum", [

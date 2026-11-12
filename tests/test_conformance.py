@@ -133,6 +133,24 @@ CASES = [
     case("base64Binary-with-length", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:base64Binary ;
             sh:maxLength 8 ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
 
+    # sh:pattern: the lexical form of any value matches it
+    case("integer-with-pattern", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:integer ;
+            sh:pattern "^[0-9]{5}$" ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("integer-with-a-loose-pattern", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:integer ;
+            sh:pattern "^[0-9]+$" ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("integer-with-pattern-and-range", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:integer ;
+            sh:pattern "^[1-9][0-9]{4}$" ; sh:minInclusive 10000 ; sh:maxInclusive 19999 ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("byte-with-pattern", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:byte ;
+            sh:pattern "^[0-9]{3}$" ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("decimal-with-pattern", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:decimal ;
+            sh:pattern "^[0-9]{3}[.]5$" ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("date-with-pattern", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:date ;
+            sh:pattern "^2021-0[1-6]-1[0-9]$" ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("gYear-with-pattern", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:gYear ;
+            sh:pattern "^19[0-9]{2}$" ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("boolean-with-pattern", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:boolean ;
+            sh:pattern "^t" ; sh:minCount 1 ; sh:maxCount 1 ] ."""),
+
     case("decimal-range-with-zero-bound", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:decimal ;
             sh:minInclusive -5 ; sh:maxInclusive 0 ] ."""),
     case("decimal-range-exclusive", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:decimal ;
