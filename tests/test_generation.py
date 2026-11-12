@@ -11,8 +11,14 @@ from rdf_graph_gen.validation import validate_generated
 
 # Nested node shapes, several datatypes, cardinality ranges and a sh:lessThan pair
 THREE_COMPLEX = str(REPO_ROOT / "experiment_suite" / "shape-three-complex.ttl")
-# Generates non-conforming data (a known bug): used to compare validation results
-THREE_SIMPLE = str(REPO_ROOT / "experiment_suite" / "shape-three-simple.ttl")
+# Shapes that no data can conform to (two distinct values, but sh:in allows only one), so the generated data has
+# validation results, including results of nested entities (ex:A) that propagate to their parents (ex:S)
+UNSATISFIABLE = """
+    @prefix sh: <http://www.w3.org/ns/shacl#> . @prefix ex: <http://example.org/> .
+    ex:S a sh:NodeShape ; sh:property [ sh:path ex:name ; sh:in ("a") ; sh:minCount 2 ] ;
+        sh:property [ sh:path ex:address ; sh:node ex:A ; sh:minCount 1 ; sh:maxCount 1 ] .
+    ex:A a sh:NodeShape ; sh:property [ sh:path ex:code ; sh:in ("x") ; sh:minCount 2 ] .
+"""
 
 
 def test_same_seed_same_graph():
@@ -46,10 +52,11 @@ def test_entity_identifiers_are_unique_across_batches(tmp_path):
 
 
 def test_per_batch_validation_equals_whole_graph_validation(tmp_path):
-    output = tmp_path / "out.ttl"
-    per_batch = MultiprocessGenerator(THREE_SIMPLE, str(output), 40, 7, processes=2, seed=3, validate=True).generate()
-    whole = validate_generated(load_shapes(path=THREE_SIMPLE), Graph().parse(output))
-    assert not whole.conforms
+    shapes, output = tmp_path / "shapes.ttl", tmp_path / "out.ttl"
+    shapes.write_text(UNSATISFIABLE, encoding="utf-8")
+    per_batch = MultiprocessGenerator(str(shapes), str(output), 40, 7, processes=2, seed=3, validate=True).generate()
+    whole = validate_generated(load_shapes(path=shapes), Graph().parse(output))
+    assert not whole.conforms and whole.propagated_results
     for name in ("conforms", "focus_nodes", "provenance_focus_nodes", "violating_focus_nodes",
                  "root_cause_focus_nodes", "results_by_constraint", "propagated_results"):
         assert getattr(per_batch, name) == getattr(whole, name), name

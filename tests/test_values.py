@@ -52,6 +52,17 @@ def test_values_of_unknown_datatypes_are_typed_strings_with_a_warning():
                           for value in values)
 
 
+@pytest.mark.parametrize("datatype, constraints, warning", [
+    ("xsd:string", 'sh:pattern "^[0-9]{6}$" ; sh:maxLength 3 ;', "No value of the pattern"),
+    ("xsd:integer", "sh:minInclusive 1 ; sh:maxInclusive 99 ; sh:minLength 3 ;", "No new integer with a length"),
+    ("xsd:anyURI", "sh:maxLength 10 ;", "No http://www.w3.org/2001/XMLSchema#anyURI value with a length"),
+    ("xsd:date", "sh:maxLength 8 ;", "No http://www.w3.org/2001/XMLSchema#date value with a length"),
+])
+def test_lengths_that_no_value_can_have_produce_a_warning_and_no_value(datatype, constraints, warning):
+    with pytest.warns(UserWarning, match=warning):
+        assert generated_values(datatype, constraints, count=1, scale=1) == []
+
+
 @pytest.mark.parametrize("datatype, minimum, maximum", [
     ("gYear", "1999", "2001"),
     ("gYearMonth", "1999-11", "2000-02"),

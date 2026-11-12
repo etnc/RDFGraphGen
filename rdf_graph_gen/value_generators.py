@@ -155,14 +155,45 @@ def _whole_number(min_n, max_n, is_new, kind, default_start=1, span=50, limits=(
 # The min_length, max_length, pattern, disjoint, has_value properties are not taken into account at this point for
 # integer generation
 def generate_integer(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
-                     less_than_or_equals, datatype=XSD.integer):
+                     less_than_or_equals, datatype=XSD.integer, min_length=None, max_length=None):
     lower, upper = _bounds(min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than, less_than_or_equals)
     min_int, max_int = _whole_number_bounds(lower, upper)
     limits = INTEGER_DATATYPES.get(datatype, (None, None))
-    # by default, small positive numbers; for xsd:negativeInteger and xsd:nonPositiveInteger, small negative ones
-    default_start = 1 if limits[1] is None else min(1, limits[1] - 50)
-    value = _whole_number(min_int, max_int, lambda n: n not in existing_values, "int", default_start, 50, limits)
+    if min_length is not None or max_length is not None:
+        value = _integer_with_length(min_int, max_int, limits, min_length, max_length,
+                                     lambda n: n not in existing_values)
+    else:
+        # by default, small positive numbers; for xsd:negativeInteger and xsd:nonPositiveInteger, small negative ones
+        default_start = 1 if limits[1] is None else min(1, limits[1] - 50)
+        value = _whole_number(min_int, max_int, lambda n: n not in existing_values, "int", default_start, 50, limits)
     return None if value is None else Literal(value, datatype=datatype)
+
+
+def _integer_with_length(min_int, max_int, limits, min_length, max_length, is_new):
+    """
+    An integer whose lexical form has a length from min_length to max_length (e.g. 6 to 12 digits), within the bounds
+    and the limits of the datatype: a length is chosen at random, then a number of that length.
+    """
+    lowest = max((bound for bound in (min_int, limits[0]) if bound is not None), default=None)
+    highest = min((bound for bound in (max_int, limits[1]) if bound is not None), default=None)
+    shortest = max(int(min_length), 1) if min_length is not None else 1
+    longest = int(max_length) if max_length is not None else shortest + 2
+    lengths = range(shortest, longest + 1)
+    for length in random.sample(lengths, len(lengths)):
+        # non-negative numbers with `length` digits, then negative numbers with length - 1 digits
+        ranges = [(0 if length == 1 else 10 ** (length - 1), 10 ** length - 1)]
+        if length >= 2:
+            ranges.append((-(10 ** (length - 1) - 1), -(10 ** (length - 2)) if length > 2 else -1))
+        for first, last in ranges:
+            first = first if lowest is None else max(first, lowest)
+            last = last if highest is None else min(last, highest)
+            if first <= last:
+                value = _whole_number(first, last, is_new, "int")
+                if value is not None:
+                    return value
+    warnings.warn(f"No new integer with a length {_length_range(min_length, max_length)} was found within the value "
+                  f"range of the property, so no value is generated.", stacklevel=3)
+    return None
 
 
 # The min_length, max_length, pattern, disjoint, has_value properties are not taken into account at this point for
@@ -394,21 +425,49 @@ def generate_temporal(existing_values, datatype, min_exclusive, min_inclusive, m
 
 # The min_exclusive, min_inclusive, max_exclusive, max_inclusive, disjoint, less_than, less_than_or_equals, has_value
 # properties are not taken into account at this point for string generation
+def _has_length(text, min_length, max_length):
+    """Whether a lexical form satisfies sh:minLength and sh:maxLength (None: no constraint)."""
+    return ((min_length is None or len(text) >= int(min_length))
+            and (max_length is None or len(text) <= int(max_length)))
+
+
+def _length_range(min_length, max_length):
+    if min_length is None:
+        return f"at most {max_length}"
+    return f"at least {min_length}" if max_length is None else f"from {min_length} to {max_length}"
+
+
 def generate_string(existing_values, min_length, max_length, pattern):
-    
-    # If pattern is present, generate a literal using it. 
+    min_length = None if min_length is None else int(min_length)
+    max_length = None if max_length is None else int(max_length)
+
+    # If pattern is present, generate a literal using it.
     # Try to find a value that is not allready generated 10 times, if u cant, give up.
-    if pattern:
+    if pattern and min_length is None and max_length is None:
         for i in range(10):
             literal = _randone(parse(pattern))
             if literal not in existing_values:
                 return Literal(literal)
         return None
-    
-    if min_length:
-        min_length = int(min_length)
-        if max_length:
-            max_length = int(max_length)
+    if pattern:
+        # with sh:minLength or sh:maxLength: the repetitions in the pattern are limited to the maximum length, and
+        # values of another length are discarded
+        parsed = parse(pattern)
+        limit = max_length + 1 if max_length is not None else max(20, min_length + 10)
+        found_length = False
+        for i in range(100):
+            literal = _randone(parsed, limit)
+            if _has_length(literal, min_length, max_length):
+                found_length = True
+                if literal not in existing_values:
+                    return Literal(literal)
+        if not found_length:
+            warnings.warn(f"No value of the pattern {pattern} with a length {_length_range(min_length, max_length)} "
+                          f"was found, so no value is generated.", stacklevel=2)
+        return None
+
+    if min_length is not None:
+        if max_length is not None:
             if min_length > max_length:
                 max_length_replacement = min_length + 10
                 warnings.warn(f"Invalid string length range: ({min_length}, {max_length}). The range will be changed to: ({min_length}, {max_length_replacement}).", stacklevel=2)
@@ -416,8 +475,7 @@ def generate_string(existing_values, min_length, max_length, pattern):
         else:
             max_length = min_length + 10
     else:
-        if max_length:
-            max_length = int(max_length)
+        if max_length is not None:
             min_length = max_length - 5 if max_length > 5 else 0
         else:
             min_length, max_length = 8, 15
@@ -477,32 +535,58 @@ def generate_typed_string(existing_values, datatype, min_length, max_length, pat
     """
     A value of a datatype whose values are written as strings (e.g. xsd:token, xsd:anyURI, xsd:hexBinary), typed
     with the datatype. With sh:pattern, the value is generated from the pattern. Values of other datatypes (e.g.
-    custom datatypes) are random words, with a warning.
+    custom datatypes) are random words, with a warning. sh:minLength and sh:maxLength apply to the whole lexical form
+    (e.g. including the http://example.org/ of an xsd:anyURI value).
     """
+    min_length = None if min_length is None else int(min_length)
+    max_length = None if max_length is None else int(max_length)
     if pattern:
         def lexical_form():
-            return _randone(parse(pattern))
+            word = generate_string(set(), min_length, max_length, pattern)
+            return None if word is None else str(word)
     elif datatype == XSD.language:
+        tags = [tag for tag in LANGUAGE_TAGS if _has_length(tag, min_length, max_length)]
+
         def lexical_form():
-            return random.choice(LANGUAGE_TAGS)
+            return random.choice(tags) if tags else None
     elif datatype in BINARY_DATATYPES:
+        encode = BINARY_DATATYPES[datatype]
+        # the numbers of bytes whose encoding has the required length (by default: 4 to 16 bytes)
+        sizes = None if min_length is None and max_length is None else [
+            size for size in range(1, 257) if _has_length(encode(bytes(size)), min_length, max_length)]
+
         def lexical_form():
-            return BINARY_DATATYPES[datatype](bytes(random.getrandbits(8) for _ in range(random.randint(4, 16))))
+            if sizes == []:
+                return None
+            size = random.randint(4, 16) if sizes is None else random.choice(sizes)
+            return encode(bytes(random.getrandbits(8) for _ in range(size)))
     else:
         if datatype not in STRING_DATATYPES:
             warnings.warn(f"The datatype {datatype} is not supported yet: its values are generated as random words, "
                           f"which may not be valid values of the datatype.", stacklevel=3)
         make = STRING_DATATYPES.get(datatype, str)
+        # the length of the word: the required length, without what is added to it (e.g. http://example.org/)
+        added = len(make("a")) - 1
+        word_min = None if min_length is None else max(min_length - added, 0)
+        word_max = None if max_length is None else max_length - added
 
         def lexical_form():
-            word = generate_string(set(), min_length, max_length, None)
+            if word_max is not None and word_max < 0:
+                return None
+            word = generate_string(set(), word_min, word_max, None)
             return None if word is None else make(str(word))
 
     # Try to find a value that has not been generated yet
+    found_length = False
     for _ in range(10):
         text = lexical_form()
-        if text is not None and Literal(text, datatype=datatype).toPython() not in existing_values:
-            return Literal(text, datatype=datatype)
+        if text is not None and _has_length(text, min_length, max_length):
+            found_length = True
+            if Literal(text, datatype=datatype).toPython() not in existing_values:
+                return Literal(text, datatype=datatype)
+    if not found_length and (min_length is not None or max_length is not None):
+        warnings.warn(f"No {datatype} value with a length {_length_range(min_length, max_length)} was found, so no "
+                      f"value is generated.", stacklevel=3)
     return None
 
 
@@ -575,15 +659,28 @@ def generate_default_value(existing_values, datatype, min_exclusive, min_inclusi
     # Generate values based on datatype and constraints
     if datatype in INTEGER_DATATYPES:
         return generate_integer(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
-                                less_than_or_equals, datatype)
-    elif datatype in DECIMAL_DATATYPES:
-        return generate_decimal(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
-                                less_than_or_equals, datatype)
-    elif datatype == XSD.boolean:
-        return Literal(bool(random.getrandbits(1)))
-    elif datatype in TEMPORAL_DATATYPES:
-        return generate_temporal(existing_values, datatype, min_exclusive, min_inclusive, max_exclusive, max_inclusive,
-                                 less_than, less_than_or_equals)
+                                less_than_or_equals, datatype, min_length, max_length)
+    elif datatype in DECIMAL_DATATYPES or datatype == XSD.boolean or datatype in TEMPORAL_DATATYPES:
+        def generate():
+            if datatype in DECIMAL_DATATYPES:
+                return generate_decimal(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive,
+                                        less_than, less_than_or_equals, datatype)
+            if datatype == XSD.boolean:
+                return Literal(bool(random.getrandbits(1)))
+            return generate_temporal(existing_values, datatype, min_exclusive, min_inclusive, max_exclusive,
+                                     max_inclusive, less_than, less_than_or_equals)
+
+        if min_length is None and max_length is None:
+            return generate()
+        # sh:minLength and sh:maxLength apply to the lexical form of any value (e.g. "true" and "false" have
+        # different lengths): values of another length are discarded
+        for _ in range(100):
+            value = generate()
+            if value is None or _has_length(str(value), min_length, max_length):
+                return value
+        warnings.warn(f"No {datatype} value with a length {_length_range(min_length, max_length)} was found, so no "
+                      f"value is generated.", stacklevel=2)
+        return None
     elif datatype not in (None, XSD.string, RDF.langString):
         return generate_typed_string(existing_values, datatype, min_length, max_length, pattern)
 

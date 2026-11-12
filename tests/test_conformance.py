@@ -20,8 +20,7 @@ from rdf_graph_gen.value_generators import dataset_dictionary
 SHIPPED_SHAPES = [
     pytest.param("experiment_suite/shape-single-simple.ttl"),
     pytest.param("experiment_suite/shape-single-complex.ttl"),
-    pytest.param("experiment_suite/shape-three-simple.ttl",
-                 marks=known_bug("sh:minLength/sh:maxLength are ignored for xsd:integer values")),
+    pytest.param("experiment_suite/shape-three-simple.ttl"),
     pytest.param("experiment_suite/shape-three-complex.ttl"),
     pytest.param("generated_examples/shape_examples/book_shape.ttl"),
     pytest.param("generated_examples/shape_examples/example_product_shape.ttl"),
@@ -29,8 +28,7 @@ SHIPPED_SHAPES = [
     pytest.param("generated_examples/shape_examples/random_shape.ttl"),
     pytest.param("generated_examples/shape_examples/person_shape.ttl",
                  marks=known_bug("the provenance triple (sh:description) is not allowed by the closed AddressShape")),
-    pytest.param("generated_examples/shape_examples/test_value_generation.ttl",
-                 marks=known_bug("sh:pattern ignores sh:minLength/sh:maxLength")),
+    pytest.param("generated_examples/shape_examples/test_value_generation.ttl"),
     pytest.param("generated_examples/shape_examples/tv_series_shape.ttl"),
 ]
 
@@ -111,8 +109,30 @@ CASES = [
     case("in", 'ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:in ("a" "b" "c") ; sh:minCount 1 ; sh:maxCount 2 ] .'),
     case("hasValue", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:hasValue ex:v ; sh:minCount 1 ] ."),
     case("hasValue-with-several-values", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:hasValue ex:v1, ex:v2 ] ."),
-    case("pattern-with-length", 'ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:pattern "^[a-z]+$" ; sh:maxLength 3 ] .',
-         known_bug("sh:pattern ignores sh:minLength/sh:maxLength")),
+
+    # sh:minLength and sh:maxLength: the length of the lexical form of any value
+    case("pattern-with-length", 'ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:pattern "^[a-z]+$" ; sh:maxLength 3 ] .'),
+    case("pattern-with-minimum-and-maximum-length", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:string ;
+            sh:pattern "^[a-z]*$" ; sh:minLength 4 ; sh:maxLength 5 ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("string-with-maximum-length-zero", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:string ;
+            sh:maxLength 0 ; sh:minCount 1 ; sh:maxCount 1 ] ."""),
+    case("integer-with-length", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:integer ;
+            sh:minLength 6 ; sh:maxLength 12 ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("negative-integer-with-length", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:integer ;
+            sh:minInclusive -50 ; sh:maxInclusive -5 ; sh:maxLength 2 ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("decimal-with-length", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:decimal ;
+            sh:maxLength 4 ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("boolean-with-length", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:boolean ;
+            sh:maxLength 4 ; sh:minCount 1 ; sh:maxCount 1 ] ."""),
+    case("anyURI-with-length", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:anyURI ;
+            sh:maxLength 24 ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("language-with-length", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:language ;
+            sh:minLength 5 ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("hexBinary-with-length", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:hexBinary ;
+            sh:minLength 4 ; sh:maxLength 6 ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("base64Binary-with-length", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:base64Binary ;
+            sh:maxLength 8 ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+
     case("decimal-range-with-zero-bound", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:decimal ;
             sh:minInclusive -5 ; sh:maxInclusive 0 ] ."""),
     case("decimal-range-exclusive", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:decimal ;
