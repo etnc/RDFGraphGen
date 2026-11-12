@@ -5,6 +5,7 @@ from exrex import *
 from exrex import _randone
 from rdflib import XSD, Literal, URIRef, Namespace
 from datetime import date
+from decimal import Decimal
 from dateutil.relativedelta import relativedelta
 from rdf_graph_gen.shacl_mapping_generator import SCH
 from importlib.resources import files
@@ -121,18 +122,58 @@ def generate_date(existing_values, min_exclusive, min_inclusive, max_exclusive, 
 
 
 
+# The value ranges of the XSD integer datatypes (None: unbounded)
+INTEGER_DATATYPES = {
+    XSD.integer: (None, None),
+    XSD.nonNegativeInteger: (0, None), XSD.positiveInteger: (1, None),
+    XSD.nonPositiveInteger: (None, 0), XSD.negativeInteger: (None, -1),
+    XSD.long: (-2 ** 63, 2 ** 63 - 1), XSD.int: (-2 ** 31, 2 ** 31 - 1),
+    XSD.short: (-2 ** 15, 2 ** 15 - 1), XSD.byte: (-2 ** 7, 2 ** 7 - 1),
+    XSD.unsignedLong: (0, 2 ** 64 - 1), XSD.unsignedInt: (0, 2 ** 32 - 1),
+    XSD.unsignedShort: (0, 2 ** 16 - 1), XSD.unsignedByte: (0, 2 ** 8 - 1),
+}
+
+# The XSD datatypes of numbers with a fractional part: xsd:decimal values are generated as decimal numbers, and
+# xsd:double and xsd:float values as floating-point numbers
+DECIMAL_DATATYPES = {XSD.decimal, XSD.double, XSD.float}
+
+
+def _python(value):
+    return value.toPython() if isinstance(value, Literal) else value
+
+
+def _numeric_bounds(min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than, less_than_or_equals):
+    """
+    The strictest lower and upper bound of a number, each as (value, exclusive) or None, from the value range
+    constraints and the values of the sh:lessThan and sh:lessThanOrEquals properties.
+    """
+    lower = [(_python(bound), exclusive) for bound, exclusive in ((min_inclusive, False), (min_exclusive, True))
+             if bound is not None]
+    upper = [(_python(bound), exclusive) for bound, exclusive in ((max_inclusive, False), (max_exclusive, True))
+             if bound is not None]
+    upper += [(_python(value), True) for value in less_than or []]
+    upper += [(_python(value), False) for value in less_than_or_equals or []]
+    # the highest lower bound and the lowest upper bound; of two equal bounds, the exclusive one
+    return max(lower, default=None), min(upper, key=lambda bound: (bound[0], not bound[1]), default=None)
+
+
 # The min_length, max_length, pattern, disjoint, has_value properties are not taken into account at this point for
 # integer generation
-def generate_integer(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than, less_than_or_equals):
-    min_int, max_int = None, None
-    if min_inclusive is not None or min_exclusive is not None:
-        min_int = int(min_inclusive) if min_inclusive is not None else int(min_exclusive) + 1
-    if max_inclusive is not None or max_exclusive is not None:
-        max_int = int(max_inclusive) if max_inclusive is not None else int(max_exclusive) - 1
-    if less_than_or_equals and len(less_than_or_equals) > 0:
-        max_int = int(min(less_than_or_equals))
-    if less_than and len(less_than) > 0:
-        max_int = int(min(less_than) - 1)
+def generate_integer(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
+                     less_than_or_equals, datatype=XSD.integer):
+    lower, upper = _numeric_bounds(min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
+                                   less_than_or_equals)
+    min_int = None if lower is None else math.floor(lower[0]) + 1 if lower[1] else math.ceil(lower[0])
+    max_int = None if upper is None else math.ceil(upper[0]) - 1 if upper[1] else math.floor(upper[0])
+
+    # the value range of the datatype; a lower limit of 0 or more (e.g. of xsd:positiveInteger) and an upper limit
+    # of 0 or less (e.g. of xsd:negativeInteger) also apply when the shape gives no bound
+    lowest, highest = INTEGER_DATATYPES.get(datatype, (None, None))
+    if lowest is not None and (min_int is not None or lowest >= 0):
+        min_int = lowest if min_int is None else max(min_int, lowest)
+    if highest is not None and (max_int is not None or highest <= 0):
+        max_int = highest if max_int is None else min(max_int, highest)
+
     if max_int is not None:
         if min_int is not None:
             if max_int < min_int:
@@ -145,54 +186,81 @@ def generate_integer(existing_values, min_exclusive, min_inclusive, max_exclusiv
         if min_int is None:
             min_int = 1
         max_int = min_int + 50
-        
+
+    # the default range of values may exceed the range of the datatype (e.g. xsd:byte with sh:minInclusive 100)
+    if lowest is not None:
+        min_int = max(min_int, lowest)
+    if highest is not None:
+        max_int = min(max_int, highest)
+    if min_int > max_int:
+        warnings.warn(f"The value range of the property is outside the range of {datatype}, so no value is "
+                      f"generated.", stacklevel=2)
+        return None
+
     # Find a value in interval that is not allready generated
     int_value_down = int_value_up = random.randint(min_int, max_int)
 
     while int_value_up <= max_int:
         if int_value_up not in existing_values:
-            return Literal(int_value_up)
+            return Literal(int_value_up, datatype=datatype)
         int_value_up += 1
-        
+
     while int_value_down >= min_int:
         if int_value_down not in existing_values:
-            return Literal(int_value_down)
+            return Literal(int_value_down, datatype=datatype)
         int_value_down -= 1
-        
+
     return None
 
 
 # The min_length, max_length, pattern, disjoint, has_value properties are not taken into account at this point for
 # decimal generation
-def generate_decimal(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than, less_than_or_equals):
-    min_float, max_float = None, None
-    if min_inclusive is not None or min_exclusive is not None:
-        min_float = float(min_inclusive) if min_inclusive is not None else math.nextafter(float(min_exclusive), +math.inf)
-    if max_inclusive or max_exclusive:
-        max_float = float(max_inclusive) if max_inclusive is not None else math.nextafter(float(max_exclusive), -math.inf)
-    if less_than_or_equals and len(less_than_or_equals) > 0:
-        max_float = float(min(less_than_or_equals))
-    if less_than and len(less_than) > 0:
-        max_float = math.nextafter(float(min(less_than)), -math.inf)
-    if max_float is not None:
-        if min_float is not None:
-            if max_float < min_float:
-                min_float_replacement = max_float - 50
-                warnings.warn(f"Invalid float range: ({min_float}, {max_float}). The range will be changed to: ({min_float_replacement}, {max_float}).", stacklevel=2)
-                min_float = min_float_replacement
+def generate_decimal(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
+                     less_than_or_equals, datatype=XSD.decimal):
+    lower, upper = _numeric_bounds(min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
+                                   less_than_or_equals)
+    lower = None if lower is None else (Decimal(str(lower[0])), lower[1])
+    upper = None if upper is None else (Decimal(str(upper[0])), upper[1])
+    if upper is not None:
+        if lower is not None:
+            if upper[0] < lower[0] or (upper[0] == lower[0] and (upper[1] or lower[1])):
+                lower_replacement = (upper[0] - 50, False)
+                warnings.warn(f"Invalid decimal range: ({lower[0]}, {upper[0]}). The range will be changed to: "
+                              f"({lower_replacement[0]}, {upper[0]}).", stacklevel=2)
+                lower = lower_replacement
         else:
-            min_float = max_float - 50
+            lower = (upper[0] - 50, False)
     else:
-        if min_float is None:
-            min_float = 1
-        max_float = min_float + 50
-        
-    # Prevention from regenerating the same float value again. 
-    # Should not be stuck in an infinite loop, its a 4-decimal float
-    float_value = random.uniform(min_float, max_float)
-    while float_value in existing_values:
-        float_value = random.uniform(min_float, max_float, 4)
-    return Literal(float_value)
+        if lower is None:
+            lower = (Decimal(1), False)
+        upper = (lower[0] + 50, False)
+
+    # values with two decimal places, or with more if the range has no such values (e.g. between 0.001 and 0.002)
+    for places in range(2, 16):
+        scale = Decimal(10) ** places
+        first = math.floor(lower[0] * scale) + 1 if lower[1] else math.ceil(lower[0] * scale)
+        last = math.ceil(upper[0] * scale) - 1 if upper[1] else math.floor(upper[0] * scale)
+        if first <= last:
+            break
+    else:
+        return None
+
+    def literal(scaled):
+        value = Decimal(scaled).scaleb(-places)
+        # xsd:double and xsd:float values are floating-point numbers
+        return Literal(value) if datatype == XSD.decimal else Literal(float(value), datatype=datatype)
+
+    # Find a value in the range that has not been generated yet
+    value_down = value_up = random.randint(first, last)
+    while value_up <= last:
+        if literal(value_up).toPython() not in existing_values:
+            return literal(value_up)
+        value_up += 1
+    while value_down >= first:
+        if literal(value_down).toPython() not in existing_values:
+            return literal(value_down)
+        value_down -= 1
+    return None
 
 
 # The min_exclusive, min_inclusive, max_exclusive, max_inclusive, disjoint, less_than, less_than_or_equals, has_value
@@ -308,12 +376,12 @@ def generate_default_value(existing_values, datatype, min_exclusive, min_inclusi
             datatype = XSD.integer
 
     # Generate values based on datatype and constraints
-    if datatype == XSD.integer:
+    if datatype in INTEGER_DATATYPES:
         return generate_integer(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
-                                less_than_or_equals)
-    elif datatype == XSD.decimal:
+                                less_than_or_equals, datatype)
+    elif datatype in DECIMAL_DATATYPES:
         return generate_decimal(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
-                                less_than_or_equals)
+                                less_than_or_equals, datatype)
     elif datatype == XSD.boolean:
         return Literal(bool(random.getrandbits(1)))
     elif datatype == XSD.date:

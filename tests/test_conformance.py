@@ -30,8 +30,7 @@ SHIPPED_SHAPES = [
     pytest.param("generated_examples/shape_examples/person_shape.ttl",
                  marks=known_bug("the provenance triple (sh:description) is not allowed by the closed AddressShape")),
     pytest.param("generated_examples/shape_examples/test_value_generation.ttl",
-                 marks=known_bug("xsd:decimal values are typed xsd:double; sh:pattern ignores "
-                                         "sh:minLength/sh:maxLength")),
+                 marks=known_bug("sh:pattern ignores sh:minLength/sh:maxLength")),
     pytest.param("generated_examples/shape_examples/tv_series_shape.ttl"),
 ]
 
@@ -45,15 +44,15 @@ def test_shipped_shapes(relative_path):
 
 NOT_GENERATED_AS_TYPED_LITERAL = "generated as a plain xsd:string literal"
 DATATYPES = [
-    pytest.param("xsd:string"),
-    pytest.param("xsd:integer"),
-    pytest.param("xsd:boolean"),
-    pytest.param("xsd:date"),
-    pytest.param("xsd:decimal", marks=known_bug("generated as xsd:double")),
+    "xsd:string", "xsd:boolean", "xsd:date",
+    # numbers; a value outside the value range of the datatype (e.g. 300 for xsd:byte) does not conform
+    "xsd:integer", "xsd:decimal", "xsd:double", "xsd:float",
+    "xsd:long", "xsd:int", "xsd:short", "xsd:byte",
+    "xsd:nonNegativeInteger", "xsd:positiveInteger", "xsd:nonPositiveInteger", "xsd:negativeInteger",
+    "xsd:unsignedLong", "xsd:unsignedInt", "xsd:unsignedShort", "xsd:unsignedByte",
 ] + [
     pytest.param(datatype, marks=known_bug(NOT_GENERATED_AS_TYPED_LITERAL))
-    for datatype in ["xsd:double", "xsd:float", "xsd:int", "xsd:long", "xsd:nonNegativeInteger",
-                     "xsd:positiveInteger", "xsd:dateTime", "xsd:time", "xsd:gYear", "xsd:anyURI", "rdf:langString"]
+    for datatype in ["xsd:dateTime", "xsd:time", "xsd:gYear", "xsd:anyURI", "rdf:langString"]
 ]
 
 
@@ -88,15 +87,27 @@ CASES = [
     case("pattern-with-length", 'ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:pattern "^[a-z]+$" ; sh:maxLength 3 ] .',
          known_bug("sh:pattern ignores sh:minLength/sh:maxLength")),
     case("decimal-range-with-zero-bound", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:decimal ;
-            sh:minInclusive -5 ; sh:maxInclusive 0 ] .""",
-         known_bug("a bound of 0 is treated as 'no bound'; xsd:decimal generated as xsd:double")),
+            sh:minInclusive -5 ; sh:maxInclusive 0 ] ."""),
+    case("decimal-range-exclusive", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:decimal ;
+            sh:minExclusive 0.1 ; sh:maxExclusive 0.2 ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("decimal-range-narrower-than-two-decimal-places", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ;
+            sh:datatype xsd:decimal ; sh:minExclusive 0.001 ; sh:maxExclusive 0.002 ; sh:minCount 2 ; sh:maxCount 2 ] ."""),
+    case("double-range", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:double ;
+            sh:minInclusive -1.5 ; sh:maxInclusive 1.5 ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("integer-range-with-decimal-bounds", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:integer ;
+            sh:minInclusive 1.5 ; sh:maxInclusive 3.5 ; sh:minCount 2 ; sh:maxCount 2 ] ."""),
+    case("byte-with-a-lower-bound", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:byte ;
+            sh:minInclusive 100 ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
     case("languageIn-uniqueLang", 'ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:languageIn ("en" "de") ; sh:uniqueLang true ; sh:minCount 1 ] .',
          known_bug("language tags are not generated")),
 
     # property pairs
     case("lessThan-integers", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:lo ; sh:datatype xsd:integer ; sh:lessThan ex:hi ] ;
             sh:property [ sh:path ex:hi ; sh:datatype xsd:integer ] ."""),
-    case("lessThanOrEquals-integers", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:lo ; sh:datatype xsd:integer ; sh:lessThanOrEquals ex:hi ] ;
+    case("lessThan-with-a-maximum", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:lo ; sh:datatype xsd:integer ; sh:maxInclusive 10 ; sh:lessThan ex:hi ] ;
+            sh:property [ sh:path ex:hi ; sh:datatype xsd:integer ; sh:minInclusive 100 ; sh:maxInclusive 200 ] ."""),
+    case("lessThanOrEquals-integers","""ex:S a sh:NodeShape ; sh:property [ sh:path ex:lo ; sh:datatype xsd:integer ; sh:lessThanOrEquals ex:hi ] ;
             sh:property [ sh:path ex:hi ; sh:datatype xsd:integer ] ."""),
     case("lessThan-dates-is-strict", """ex:S a sh:NodeShape ;
             sh:property [ sh:path ex:lo ; sh:datatype xsd:date ; sh:minInclusive "2020-01-02"^^xsd:date ; sh:lessThan ex:hi ] ;
