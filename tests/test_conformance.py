@@ -44,15 +44,18 @@ def test_shipped_shapes(relative_path):
 
 NOT_GENERATED_AS_TYPED_LITERAL = "generated as a plain xsd:string literal"
 DATATYPES = [
-    "xsd:string", "xsd:boolean", "xsd:date",
+    "xsd:string", "xsd:boolean",
     # numbers; a value outside the value range of the datatype (e.g. 300 for xsd:byte) does not conform
     "xsd:integer", "xsd:decimal", "xsd:double", "xsd:float",
     "xsd:long", "xsd:int", "xsd:short", "xsd:byte",
     "xsd:nonNegativeInteger", "xsd:positiveInteger", "xsd:nonPositiveInteger", "xsd:negativeInteger",
     "xsd:unsignedLong", "xsd:unsignedInt", "xsd:unsignedShort", "xsd:unsignedByte",
+    # dates and times
+    "xsd:date", "xsd:dateTime", "xsd:dateTimeStamp", "xsd:time",
+    "xsd:gYear", "xsd:gYearMonth", "xsd:gMonth", "xsd:gDay", "xsd:gMonthDay",
 ] + [
     pytest.param(datatype, marks=known_bug(NOT_GENERATED_AS_TYPED_LITERAL))
-    for datatype in ["xsd:dateTime", "xsd:time", "xsd:gYear", "xsd:anyURI", "rdf:langString"]
+    for datatype in ["xsd:anyURI", "rdf:langString"]
 ]
 
 
@@ -81,6 +84,16 @@ CASES = [
             sh:minInclusive 10 ; sh:maxExclusive 20 ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
     case("date-range", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:date ;
             sh:minInclusive "2020-01-01"^^xsd:date ; sh:maxInclusive "2020-12-31"^^xsd:date ] ."""),
+    case("date-range-exclusive", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:date ;
+            sh:minExclusive "2020-02-27"^^xsd:date ; sh:maxExclusive "2020-03-02"^^xsd:date ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("dateTime-range", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:dateTime ;
+            sh:minExclusive "2024-03-01T12:00:00"^^xsd:dateTime ; sh:maxInclusive "2024-03-01T12:00:03"^^xsd:dateTime ;
+            sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("dateTime-range-with-time-zones", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:dateTime ;
+            sh:minInclusive "2024-03-01T12:00:00+01:00"^^xsd:dateTime ; sh:maxInclusive "2024-03-01T11:00:02Z"^^xsd:dateTime ;
+            sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("time-range", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:time ;
+            sh:minInclusive "23:59:57"^^xsd:time ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
     case("in", 'ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:in ("a" "b" "c") ; sh:minCount 1 ; sh:maxCount 2 ] .'),
     case("hasValue", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:hasValue ex:v ; sh:minCount 1 ] ."),
     case("hasValue-with-several-values", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:hasValue ex:v1, ex:v2 ] ."),
@@ -110,9 +123,13 @@ CASES = [
     case("lessThanOrEquals-integers","""ex:S a sh:NodeShape ; sh:property [ sh:path ex:lo ; sh:datatype xsd:integer ; sh:lessThanOrEquals ex:hi ] ;
             sh:property [ sh:path ex:hi ; sh:datatype xsd:integer ] ."""),
     case("lessThan-dates-is-strict", """ex:S a sh:NodeShape ;
-            sh:property [ sh:path ex:lo ; sh:datatype xsd:date ; sh:minInclusive "2020-01-02"^^xsd:date ; sh:lessThan ex:hi ] ;
-            sh:property [ sh:path ex:hi ; sh:datatype xsd:date ; sh:minInclusive "2020-01-02"^^xsd:date ; sh:maxInclusive "2020-01-03"^^xsd:date ] .""",
-         known_bug("the upper bound from sh:lessThan is inclusive for dates")),
+            sh:property [ sh:path ex:lo ; sh:datatype xsd:date ; sh:minInclusive "2020-01-01"^^xsd:date ; sh:lessThan ex:hi ;
+                          sh:minCount 2 ; sh:maxCount 2 ] ;
+            sh:property [ sh:path ex:hi ; sh:datatype xsd:date ; sh:minInclusive "2020-01-03"^^xsd:date ;
+                          sh:maxInclusive "2020-01-03"^^xsd:date ; sh:minCount 1 ; sh:maxCount 1 ] ."""),
+    case("lessThan-dates-with-a-maximum", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:lo ; sh:datatype xsd:date ; sh:maxInclusive "2000-01-01"^^xsd:date ; sh:lessThan ex:hi ] ;
+            sh:property [ sh:path ex:hi ; sh:datatype xsd:date ; sh:minInclusive "2020-01-01"^^xsd:date ] ."""),
     case("disjoint", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:a ; sh:datatype xsd:string ; sh:disjoint ex:b ] ;
             sh:property [ sh:path ex:b ; sh:datatype xsd:string ] ."""),
     case("equals-keeps-constraints-of-other-property", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:a ; sh:equals ex:b ] ;

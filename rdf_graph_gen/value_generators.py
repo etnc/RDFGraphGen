@@ -4,9 +4,10 @@ import random
 from exrex import *
 from exrex import _randone
 from rdflib import XSD, Literal, URIRef, Namespace
-from datetime import date
+import re
+from collections import namedtuple
+from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
-from dateutil.relativedelta import relativedelta
 from rdf_graph_gen.shacl_mapping_generator import SCH
 from importlib.resources import files
 import warnings
@@ -58,70 +59,6 @@ def getBookFormat():
     return URIRef(SCH[random.choice(["AudiobookFormat", "EBook", "GraphicNovel", "Hardcover", "Paperback"])])
 
 
-def get_date_between_two_dates(date1, date2):
-    days_between = relativedelta(date2, date1).days
-    months_between = relativedelta(date2, date1).months
-    years_between = relativedelta(date2, date1).years
-
-    increase = random.random()
-    new_days = relativedelta(days=int(days_between * increase))
-    new_months = relativedelta(months=int(months_between * increase))
-    new_years = relativedelta(years=int(years_between * increase))
-
-    between_date = date1 + new_years + new_months + new_days
-    return between_date
-
-
-def add_to_date(date1, years, months, days):
-    time_addition = relativedelta(days=days, months=months, years=years)
-    return time_addition + date1
-
-
-# The min_length, max_length, pattern, disjoint, has_value properties are not taken into account at this point for date
-# generation
-def generate_date(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than, less_than_or_equals):
-    min_date, max_date = None, None
-    if min_inclusive or min_exclusive:
-        min_date = date.fromisoformat(min_inclusive) if min_inclusive else add_to_date(
-            date.fromisoformat(min_exclusive), 0, 0, +1)
-    if max_inclusive or max_exclusive:
-        max_date = date.fromisoformat(max_inclusive) if max_inclusive else add_to_date(
-            date.fromisoformat(max_exclusive), 0, 0, -1)
-    if less_than_or_equals and len(less_than_or_equals) > 0:
-        max_date = date.fromisoformat(min(less_than_or_equals))
-    if less_than and len(less_than) > 0:
-        max_date = date.fromisoformat(min(less_than))
-    if max_date:
-        if min_date:
-            if max_date < min_date:
-                # raise Exception("A conflicting date definition")
-                min_date_replacement = add_to_date(max_date, -50, 0, 0)
-                warnings.warn(f"Invalid date range: ({min_date}, {max_date}). The range will be changed to: ({min_date_replacement}, {max_date}).", stacklevel=2)
-                min_date = min_date_replacement
-        else:
-            min_date = add_to_date(max_date, -50, 0, 0)
-    else:
-        if not min_date:
-            min_date = date.fromisoformat('1970-07-07')
-        max_date = add_to_date(min_date, 50, 0, 0)
-    
-    # Find a value in interval that is not allready generated
-    date_value_down = date_value_up = get_date_between_two_dates(min_date, max_date)
-
-    while date_value_up <= max_date:
-        if date_value_up not in existing_values:
-            return date_value_up
-        date_value_up = add_to_date(date_value_up, 0, 0, 1)
-        
-    while date_value_down >= min_date:
-        if date_value_down not in existing_values:
-            return date_value_down
-        date_value_down = add_to_date(date_value_down, 0, 0, -1)
-
-    return None
-
-
-
 # The value ranges of the XSD integer datatypes (None: unbounded)
 INTEGER_DATATYPES = {
     XSD.integer: (None, None),
@@ -142,83 +79,94 @@ def _python(value):
     return value.toPython() if isinstance(value, Literal) else value
 
 
-def _numeric_bounds(min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than, less_than_or_equals):
+def _bounds(min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than, less_than_or_equals,
+            convert=_python):
     """
-    The strictest lower and upper bound of a number, each as (value, exclusive) or None, from the value range
-    constraints and the values of the sh:lessThan and sh:lessThanOrEquals properties.
+    The strictest lower and upper bound of a value, each as (number, exclusive) or None, from the value range
+    constraints and the values of the sh:lessThan and sh:lessThanOrEquals properties. `convert` turns a bound into a
+    number (None: a bound that cannot be used).
     """
-    lower = [(_python(bound), exclusive) for bound, exclusive in ((min_inclusive, False), (min_exclusive, True))
+    lower = [(convert(bound), exclusive) for bound, exclusive in ((min_inclusive, False), (min_exclusive, True))
              if bound is not None]
-    upper = [(_python(bound), exclusive) for bound, exclusive in ((max_inclusive, False), (max_exclusive, True))
+    upper = [(convert(bound), exclusive) for bound, exclusive in ((max_inclusive, False), (max_exclusive, True))
              if bound is not None]
-    upper += [(_python(value), True) for value in less_than or []]
-    upper += [(_python(value), False) for value in less_than_or_equals or []]
+    upper += [(convert(value), True) for value in less_than or []]
+    upper += [(convert(value), False) for value in less_than_or_equals or []]
+    lower = [bound for bound in lower if bound[0] is not None]
+    upper = [bound for bound in upper if bound[0] is not None]
     # the highest lower bound and the lowest upper bound; of two equal bounds, the exclusive one
     return max(lower, default=None), min(upper, key=lambda bound: (bound[0], not bound[1]), default=None)
+
+
+def _whole_number_bounds(lower, upper):
+    """The lowest and the highest whole number within the bounds given by _bounds (None: unbounded)."""
+    lowest = None if lower is None else math.floor(lower[0]) + 1 if lower[1] else math.ceil(lower[0])
+    highest = None if upper is None else math.ceil(upper[0]) - 1 if upper[1] else math.floor(upper[0])
+    return lowest, highest
+
+
+def _whole_number(min_n, max_n, is_new, kind, default_start=1, span=50, limits=(None, None), describe=str):
+    """
+    A random whole number from min_n to max_n (None: unbounded) for which is_new is true, or None. With one bound,
+    the number is at most `span` away from it, and without bounds, it is from default_start to default_start + span.
+    The number is always within `limits` (the value range of the datatype).
+    """
+    if max_n is not None:
+        if min_n is not None:
+            if max_n < min_n:
+                replacement = max_n - span
+                warnings.warn(f"Invalid {kind} range: ({describe(min_n)}, {describe(max_n)}). The range will be "
+                              f"changed to: ({describe(replacement)}, {describe(max_n)}).", stacklevel=3)
+                min_n = replacement
+        else:
+            min_n = max_n - span
+    else:
+        if min_n is None:
+            min_n = default_start
+        max_n = min_n + span
+
+    # the default range of values may exceed the range of the datatype (e.g. xsd:byte with sh:minInclusive 100)
+    lowest, highest = limits
+    if lowest is not None:
+        min_n = max(min_n, lowest)
+    if highest is not None:
+        max_n = min(max_n, highest)
+    if min_n > max_n:
+        warnings.warn(f"Invalid {kind} range: the value range of the property is outside the range of its datatype, "
+                      f"so no value is generated.", stacklevel=3)
+        return None
+
+    # Find a value in the range that has not been generated yet
+    value_down = value_up = random.randint(min_n, max_n)
+    while value_up <= max_n:
+        if is_new(value_up):
+            return value_up
+        value_up += 1
+    while value_down >= min_n:
+        if is_new(value_down):
+            return value_down
+        value_down -= 1
+    return None
 
 
 # The min_length, max_length, pattern, disjoint, has_value properties are not taken into account at this point for
 # integer generation
 def generate_integer(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
                      less_than_or_equals, datatype=XSD.integer):
-    lower, upper = _numeric_bounds(min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
-                                   less_than_or_equals)
-    min_int = None if lower is None else math.floor(lower[0]) + 1 if lower[1] else math.ceil(lower[0])
-    max_int = None if upper is None else math.ceil(upper[0]) - 1 if upper[1] else math.floor(upper[0])
-
-    # the value range of the datatype; a lower limit of 0 or more (e.g. of xsd:positiveInteger) and an upper limit
-    # of 0 or less (e.g. of xsd:negativeInteger) also apply when the shape gives no bound
-    lowest, highest = INTEGER_DATATYPES.get(datatype, (None, None))
-    if lowest is not None and (min_int is not None or lowest >= 0):
-        min_int = lowest if min_int is None else max(min_int, lowest)
-    if highest is not None and (max_int is not None or highest <= 0):
-        max_int = highest if max_int is None else min(max_int, highest)
-
-    if max_int is not None:
-        if min_int is not None:
-            if max_int < min_int:
-                min_int_replacement = max_int - 50
-                warnings.warn(f"Invalid int range: ({min_int}, {max_int}). The range will be changed to: ({min_int_replacement}, {max_int}).", stacklevel=2)
-                min_int = min_int_replacement
-        else:
-            min_int = max_int - 50
-    else:
-        if min_int is None:
-            min_int = 1
-        max_int = min_int + 50
-
-    # the default range of values may exceed the range of the datatype (e.g. xsd:byte with sh:minInclusive 100)
-    if lowest is not None:
-        min_int = max(min_int, lowest)
-    if highest is not None:
-        max_int = min(max_int, highest)
-    if min_int > max_int:
-        warnings.warn(f"The value range of the property is outside the range of {datatype}, so no value is "
-                      f"generated.", stacklevel=2)
-        return None
-
-    # Find a value in interval that is not allready generated
-    int_value_down = int_value_up = random.randint(min_int, max_int)
-
-    while int_value_up <= max_int:
-        if int_value_up not in existing_values:
-            return Literal(int_value_up, datatype=datatype)
-        int_value_up += 1
-
-    while int_value_down >= min_int:
-        if int_value_down not in existing_values:
-            return Literal(int_value_down, datatype=datatype)
-        int_value_down -= 1
-
-    return None
+    lower, upper = _bounds(min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than, less_than_or_equals)
+    min_int, max_int = _whole_number_bounds(lower, upper)
+    limits = INTEGER_DATATYPES.get(datatype, (None, None))
+    # by default, small positive numbers; for xsd:negativeInteger and xsd:nonPositiveInteger, small negative ones
+    default_start = 1 if limits[1] is None else min(1, limits[1] - 50)
+    value = _whole_number(min_int, max_int, lambda n: n not in existing_values, "int", default_start, 50, limits)
+    return None if value is None else Literal(value, datatype=datatype)
 
 
 # The min_length, max_length, pattern, disjoint, has_value properties are not taken into account at this point for
 # decimal generation
 def generate_decimal(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
                      less_than_or_equals, datatype=XSD.decimal):
-    lower, upper = _numeric_bounds(min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
-                                   less_than_or_equals)
+    lower, upper = _bounds(min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than, less_than_or_equals)
     lower = None if lower is None else (Decimal(str(lower[0])), lower[1])
     upper = None if upper is None else (Decimal(str(upper[0])), upper[1])
     if upper is not None:
@@ -261,6 +209,131 @@ def generate_decimal(existing_values, min_exclusive, min_inclusive, max_exclusiv
             return literal(value_down)
         value_down -= 1
     return None
+
+
+# The XSD date and time datatypes. Their values are generated as whole numbers of a unit (e.g. days for xsd:date,
+# seconds for xsd:dateTime), in the same way as integers.
+TEMPORAL_DATATYPES = {XSD.date, XSD.dateTime, XSD.dateTimeStamp, XSD.time,
+                      XSD.gYear, XSD.gYearMonth, XSD.gMonth, XSD.gDay, XSD.gMonthDay}
+
+# Without bounds, dates are generated in the 50 years from this day
+DEFAULT_FIRST_DAY = date(1970, 7, 7)
+DEFAULT_DAYS = (date(2020, 7, 7) - DEFAULT_FIRST_DAY).days
+EPOCH = datetime(1970, 1, 1)
+SECONDS_PER_DAY = 24 * 60 * 60
+TIME_ZONE = r"(?:Z|[+-]\d{2}:\d{2})?"
+
+# to_number: a bound (a literal) as a whole number, or None; to_literal: a whole number as a literal of the datatype;
+# without bounds, the numbers are from default_start to default_start + span; limits: the range of the numbers
+_TimeScale = namedtuple("_TimeScale", "to_number to_literal default_start span limits")
+
+
+def _parts(pattern, combine=lambda first: first):
+    """A to_number function: the numbers in the lexical form of a bound (with an optional time zone), combined."""
+    def to_number(bound):
+        match = re.fullmatch(pattern + TIME_ZONE, str(bound))
+        if match is None:
+            return None
+        try:
+            return combine(*(int(part) for part in match.groups()))
+        except ValueError:  # e.g. 2023-02-30
+            return None
+    return to_number
+
+
+def _typed(lexical_form, datatype):
+    return lambda number: Literal(lexical_form(number), datatype=datatype)
+
+
+def _python_value(bound, datatype, python_type):
+    """The value of a bound as converted by rdflib, or None if it is not a valid value of the datatype."""
+    value = Literal(str(bound), datatype=datatype).toPython()
+    return value if isinstance(value, python_type) else None
+
+
+def _month_day(number):
+    """The --MM-DD form of a day of the year 2000 (a leap year, so 29 February is included)."""
+    day = date(2000, 1, 1) + timedelta(days=number - 1)
+    return f"--{day.month:02d}-{day.day:02d}"
+
+
+SIMPLE_TIME_SCALES = {
+    XSD.date: _TimeScale(_parts(r"(\d{4})-(\d{2})-(\d{2})", lambda y, m, d: date(y, m, d).toordinal()),
+                         lambda number: Literal(date.fromordinal(number)),
+                         DEFAULT_FIRST_DAY.toordinal(), DEFAULT_DAYS, (1, date.max.toordinal())),
+    XSD.gYear: _TimeScale(_parts(r"(\d{4})"), _typed(lambda y: f"{y:04d}", XSD.gYear),
+                          DEFAULT_FIRST_DAY.year, 50, (1, 9999)),
+    XSD.gYearMonth: _TimeScale(_parts(r"(\d{4})-(\d{2})", lambda y, m: 12 * y + m - 1 if 1 <= m <= 12 else None),
+                               _typed(lambda n: f"{n // 12:04d}-{n % 12 + 1:02d}", XSD.gYearMonth),
+                               12 * DEFAULT_FIRST_DAY.year + DEFAULT_FIRST_DAY.month - 1, 12 * 50, (12, 12 * 9999 + 11)),
+    XSD.gMonth: _TimeScale(_parts(r"--(\d{2})"), _typed(lambda m: f"--{m:02d}", XSD.gMonth), 1, 11, (1, 12)),
+    XSD.gDay: _TimeScale(_parts(r"---(\d{2})"), _typed(lambda d: f"---{d:02d}", XSD.gDay), 1, 30, (1, 31)),
+    XSD.gMonthDay: _TimeScale(_parts(r"--(\d{2})-(\d{2})", lambda m, d: date(2000, m, d).timetuple().tm_yday),
+                              _typed(_month_day, XSD.gMonthDay), 1, 365, (1, 366)),
+}
+
+
+def _time_scale(datatype, bounds):
+    """
+    How the values of a date or time datatype are generated. The values of xsd:dateTime and xsd:time have the time
+    zone of the first bound that has one (xsd:dateTimeStamp values always have a time zone, by default UTC).
+    """
+    if datatype in SIMPLE_TIME_SCALES:
+        return SIMPLE_TIME_SCALES[datatype]
+    if datatype == XSD.time:
+        values = [_python_value(bound, XSD.time, time) for bound in bounds]
+        zone = next((value.tzinfo for value in values if value is not None and value.tzinfo is not None), None)
+
+        def to_number(bound):
+            value = _python_value(bound, XSD.time, time)
+            if value is None:
+                return None
+            return value.hour * 3600 + value.minute * 60 + value.second + value.microsecond / 1e6
+
+        def to_literal(number):
+            return Literal(time(number // 3600, number % 3600 // 60, number % 60, tzinfo=zone))
+
+        return _TimeScale(to_number, to_literal, 0, SECONDS_PER_DAY - 1, (0, SECONDS_PER_DAY - 1))
+
+    # xsd:dateTime and xsd:dateTimeStamp
+    values = [_python_value(bound, XSD.dateTime, datetime) for bound in bounds]
+    zone = next((value.tzinfo for value in values if value is not None and value.tzinfo is not None),
+                timezone.utc if datatype == XSD.dateTimeStamp else None)
+
+    def to_number(bound):
+        value = _python_value(bound, XSD.dateTime, datetime)
+        if value is None:
+            return None
+        if value.tzinfo is not None:
+            value = value.astimezone(zone)
+        return (value.replace(tzinfo=None) - EPOCH).total_seconds()
+
+    def to_literal(number):
+        return Literal((EPOCH + timedelta(seconds=number)).replace(tzinfo=zone), datatype=datatype)
+
+    second = timedelta(seconds=1)
+    return _TimeScale(to_number, to_literal, (datetime.combine(DEFAULT_FIRST_DAY, time()) - EPOCH) // second,
+                      DEFAULT_DAYS * SECONDS_PER_DAY, ((datetime.min - EPOCH) // second, (datetime.max - EPOCH) // second))
+
+
+def generate_temporal(existing_values, datatype, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
+                      less_than_or_equals):
+    bounds = [bound for bound in (min_inclusive, min_exclusive, max_inclusive, max_exclusive) if bound is not None]
+    bounds += list(less_than or []) + list(less_than_or_equals or [])
+    scale = _time_scale(datatype, bounds)
+    lower, upper = _bounds(min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than, less_than_or_equals,
+                           convert=scale.to_number)
+    min_n, max_n = _whole_number_bounds(lower, upper)
+
+    def describe(number):
+        try:
+            return str(scale.to_literal(number))
+        except (ValueError, OverflowError):  # outside the range of the datatype
+            return str(number)
+
+    value = _whole_number(min_n, max_n, lambda n: scale.to_literal(n).toPython() not in existing_values,
+                          datatype.split("#")[-1], scale.default_start, scale.span, scale.limits, describe)
+    return None if value is None else scale.to_literal(value)
 
 
 # The min_exclusive, min_inclusive, max_exclusive, max_inclusive, disjoint, less_than, less_than_or_equals, has_value
@@ -384,12 +457,9 @@ def generate_default_value(existing_values, datatype, min_exclusive, min_inclusi
                                 less_than_or_equals, datatype)
     elif datatype == XSD.boolean:
         return Literal(bool(random.getrandbits(1)))
-    elif datatype == XSD.date:
-        date = generate_date(existing_values, min_exclusive, min_inclusive, max_exclusive, max_inclusive, less_than,
-                                     less_than_or_equals)
-        if date: 
-            return Literal(date)
-        return None
+    elif datatype in TEMPORAL_DATATYPES:
+        return generate_temporal(existing_values, datatype, min_exclusive, min_inclusive, max_exclusive, max_inclusive,
+                                 less_than, less_than_or_equals)
 
     # Default case: Generate a string value
     return generate_string(existing_values, min_length, max_length, pattern)
