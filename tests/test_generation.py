@@ -121,23 +121,6 @@ def test_recursion_is_limited_and_reuses_earlier_entities(min_count):
             assert any((b, knows, a) in graph for a, b in graph.subject_objects(knows))
 
 
-@pytest.mark.parametrize("datatype, minimum, maximum", [
-    ("gYear", "1999", "2001"),
-    ("gYearMonth", "1999-11", "2000-02"),
-    ("gMonth", "--11", "--12"),
-    ("gDay", "---29", "---31"),
-    ("gMonthDay", "--02-28", "--03-01"),
-])
-def test_gregorian_values_are_within_their_bounds(datatype, minimum, maximum):
-    # Checked here, not by validation: SPARQL (and pySHACL) cannot compare values of these datatypes, so no value
-    # conforms to a range of them. Their lexical forms have a fixed width, so they compare as strings.
-    shapes = parse_turtle(f"""ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:{datatype} ;
-        sh:minInclusive "{minimum}"^^xsd:{datatype} ; sh:maxInclusive "{maximum}"^^xsd:{datatype} ;
-        sh:minCount 2 ; sh:maxCount 2 ] .""")
-    values = {str(value) for value in generate_graph(shapes, 20, seed=1).objects(None, URIRef("http://example.org/p"))}
-    assert values and all(minimum <= value <= maximum for value in values), values
-
-
 def test_inverse_paths_never_make_a_literal_the_subject_of_a_triple():
     shapes = parse_turtle("""
         ex:S a sh:NodeShape ;

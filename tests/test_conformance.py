@@ -50,12 +50,16 @@ DATATYPES = [
     "xsd:long", "xsd:int", "xsd:short", "xsd:byte",
     "xsd:nonNegativeInteger", "xsd:positiveInteger", "xsd:nonPositiveInteger", "xsd:negativeInteger",
     "xsd:unsignedLong", "xsd:unsignedInt", "xsd:unsignedShort", "xsd:unsignedByte",
-    # dates and times
+    # dates, times and durations
     "xsd:date", "xsd:dateTime", "xsd:dateTimeStamp", "xsd:time",
     "xsd:gYear", "xsd:gYearMonth", "xsd:gMonth", "xsd:gDay", "xsd:gMonthDay",
-] + [
-    pytest.param(datatype, marks=known_bug(NOT_GENERATED_AS_TYPED_LITERAL))
-    for datatype in ["xsd:anyURI", "rdf:langString"]
+    "xsd:duration", "xsd:dayTimeDuration", "xsd:yearMonthDuration",
+    # strings of a certain form (pySHACL does not check the form of most of them, see test_values.py), binary data
+    "xsd:normalizedString", "xsd:token", "xsd:language", "xsd:Name", "xsd:NCName", "xsd:NMTOKEN", "xsd:NMTOKENS",
+    "xsd:ID", "xsd:IDREF", "xsd:IDREFS", "xsd:ENTITY", "xsd:ENTITIES", "xsd:anyURI",
+    "rdf:XMLLiteral", "rdf:HTML", "rdf:JSON",
+    "xsd:hexBinary", "xsd:base64Binary",
+    pytest.param("rdf:langString", marks=known_bug(NOT_GENERATED_AS_TYPED_LITERAL)),
 ]
 
 
@@ -94,6 +98,16 @@ CASES = [
             sh:minCount 3 ; sh:maxCount 3 ] ."""),
     case("time-range", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:time ;
             sh:minInclusive "23:59:57"^^xsd:time ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("dayTimeDuration-range", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:dayTimeDuration ;
+            sh:minInclusive "PT1H"^^xsd:dayTimeDuration ; sh:maxExclusive "PT1H0M3S"^^xsd:dayTimeDuration ;
+            sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("yearMonthDuration-range", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:yearMonthDuration ;
+            sh:minExclusive "P1Y"^^xsd:yearMonthDuration ; sh:maxInclusive "P1Y3M"^^xsd:yearMonthDuration ;
+            sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("negative-duration-range", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:duration ;
+            sh:maxInclusive "-P1D"^^xsd:duration ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("anyURI-with-pattern", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:anyURI ;
+            sh:pattern "^https://example[.]org/[a-z]{5}$" ; sh:minCount 2 ; sh:maxCount 2 ] ."""),
     case("in", 'ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:in ("a" "b" "c") ; sh:minCount 1 ; sh:maxCount 2 ] .'),
     case("hasValue", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:hasValue ex:v ; sh:minCount 1 ] ."),
     case("hasValue-with-several-values", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:hasValue ex:v1, ex:v2 ] ."),

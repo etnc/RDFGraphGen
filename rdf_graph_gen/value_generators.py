@@ -1,9 +1,12 @@
+import base64
 import csv
+import json
 import math
 import random
+import string
 from exrex import *
 from exrex import _randone
-from rdflib import XSD, Literal, URIRef, Namespace
+from rdflib import RDF, XSD, Literal, URIRef, Namespace
 import re
 from collections import namedtuple
 from datetime import date, datetime, time, timedelta, timezone
@@ -213,8 +216,9 @@ def generate_decimal(existing_values, min_exclusive, min_inclusive, max_exclusiv
 
 # The XSD date and time datatypes. Their values are generated as whole numbers of a unit (e.g. days for xsd:date,
 # seconds for xsd:dateTime), in the same way as integers.
+DURATION_DATATYPES = {XSD.duration, XSD.dayTimeDuration, XSD.yearMonthDuration}
 TEMPORAL_DATATYPES = {XSD.date, XSD.dateTime, XSD.dateTimeStamp, XSD.time,
-                      XSD.gYear, XSD.gYearMonth, XSD.gMonth, XSD.gDay, XSD.gMonthDay}
+                      XSD.gYear, XSD.gYearMonth, XSD.gMonth, XSD.gDay, XSD.gMonthDay} | DURATION_DATATYPES
 
 # Without bounds, dates are generated in the 50 years from this day
 DEFAULT_FIRST_DAY = date(1970, 7, 7)
@@ -273,6 +277,49 @@ SIMPLE_TIME_SCALES = {
 }
 
 
+DURATION = r"(-)?P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?"
+
+
+def _duration_parts(bound):
+    """The sign (1 or -1), years, months, days, hours, minutes and seconds of a duration, or None."""
+    match = re.fullmatch(DURATION, str(bound))
+    if match is None:
+        return None
+    sign, years, months, days, hours, minutes, seconds = match.groups()
+    return ((-1 if sign else 1,) + tuple(int(part or 0) for part in (years, months, days, hours, minutes))
+            + (float(seconds or 0),))
+
+
+def _duration_seconds(bound):
+    parts = _duration_parts(bound)
+    if parts is None or parts[1] or parts[2]:  # years and months do not have a fixed number of seconds
+        return None
+    sign, _, _, days, hours, minutes, seconds = parts
+    return sign * (((days * 24 + hours) * 60 + minutes) * 60 + seconds)
+
+
+def _duration_months(bound):
+    parts = _duration_parts(bound)
+    if parts is None or any(parts[3:]):  # days and times do not have a fixed number of months
+        return None
+    return parts[0] * (12 * parts[1] + parts[2])
+
+
+def _day_time_duration(seconds):
+    sign, seconds = "-" if seconds < 0 else "", abs(seconds)
+    days, seconds = divmod(seconds, SECONDS_PER_DAY)
+    hours, seconds = divmod(seconds, 3600)
+    minutes, seconds = divmod(seconds, 60)
+    time_part = "".join(f"{value}{unit}" for value, unit in ((hours, "H"), (minutes, "M"), (seconds, "S")) if value)
+    return f"{sign}P" + ((f"{days}D" if days else "") + (f"T{time_part}" if time_part else "") or "T0S")
+
+
+def _year_month_duration(months):
+    sign, months = "-" if months < 0 else "", abs(months)
+    years, months = divmod(months, 12)
+    return f"{sign}P" + ((f"{years}Y" if years else "") + (f"{months}M" if months else "") or "0M")
+
+
 def _time_scale(datatype, bounds):
     """
     How the values of a date or time datatype are generated. The values of xsd:dateTime and xsd:time have the time
@@ -280,6 +327,15 @@ def _time_scale(datatype, bounds):
     """
     if datatype in SIMPLE_TIME_SCALES:
         return SIMPLE_TIME_SCALES[datatype]
+    if datatype in DURATION_DATATYPES:
+        # durations of up to 30 days (as seconds), or of up to 10 years (as months, for xsd:yearMonthDuration);
+        # negative durations only if a bound is negative
+        to_number = _duration_months if datatype == XSD.yearMonthDuration else _duration_seconds
+        numbers = [to_number(bound) for bound in bounds]
+        limits = (None if any(number is not None and number < 0 for number in numbers) else 0, None)
+        if datatype == XSD.yearMonthDuration:
+            return _TimeScale(to_number, _typed(_year_month_duration, datatype), 1, 12 * 10 - 1, limits)
+        return _TimeScale(to_number, _typed(_day_time_duration, datatype), 1, 30 * SECONDS_PER_DAY, limits)
     if datatype == XSD.time:
         values = [_python_value(bound, XSD.time, time) for bound in bounds]
         zone = next((value.tzinfo for value in values if value is not None and value.tzinfo is not None), None)
@@ -378,7 +434,61 @@ def generate_string(existing_values, min_length, max_length, pattern):
             strp = strp[:length]
         if strp not in existing_values:
             return Literal(strp)
-        
+
+    return None
+
+
+def _name(word):
+    """A name (e.g. an xsd:NCName): a word that starts with a letter."""
+    return word if word[:1].isalpha() else random.choice(string.ascii_letters) + word[1:]
+
+
+# Datatypes whose values are strings of a certain form, made from a random word of letters and digits
+STRING_DATATYPES = {
+    XSD.normalizedString: str, XSD.token: str, XSD.NMTOKEN: str, XSD.NMTOKENS: str,
+    XSD.Name: _name, XSD.NCName: _name, XSD.ID: _name, XSD.IDREF: _name, XSD.IDREFS: _name,
+    XSD.ENTITY: _name, XSD.ENTITIES: _name,
+    XSD.anyURI: lambda word: f"http://example.org/{word}",
+    RDF.XMLLiteral: str, RDF.HTML: str,
+    URIRef(str(RDF) + "JSON"): json.dumps,  # a JSON string
+}
+LANGUAGE_TAGS = ["en", "de", "fr", "es", "it", "nl", "pt", "en-US", "en-GB", "de-AT", "pt-BR"]
+BINARY_DATATYPES = {
+    XSD.hexBinary: lambda data: data.hex().upper(),
+    XSD.base64Binary: lambda data: base64.b64encode(data).decode("ascii"),
+}
+
+
+def generate_typed_string(existing_values, datatype, min_length, max_length, pattern):
+    """
+    A value of a datatype whose values are written as strings (e.g. xsd:token, xsd:anyURI, xsd:hexBinary), typed
+    with the datatype. With sh:pattern, the value is generated from the pattern. Values of other datatypes (e.g.
+    custom datatypes) are random words, with a warning.
+    """
+    if pattern:
+        def lexical_form():
+            return _randone(parse(pattern))
+    elif datatype == XSD.language:
+        def lexical_form():
+            return random.choice(LANGUAGE_TAGS)
+    elif datatype in BINARY_DATATYPES:
+        def lexical_form():
+            return BINARY_DATATYPES[datatype](bytes(random.getrandbits(8) for _ in range(random.randint(4, 16))))
+    else:
+        if datatype not in STRING_DATATYPES:
+            warnings.warn(f"The datatype {datatype} is not supported yet: its values are generated as random words, "
+                          f"which may not be valid values of the datatype.", stacklevel=3)
+        make = STRING_DATATYPES.get(datatype, str)
+
+        def lexical_form():
+            word = generate_string(set(), min_length, max_length, None)
+            return None if word is None else make(str(word))
+
+    # Try to find a value that has not been generated yet
+    for _ in range(10):
+        text = lexical_form()
+        if text is not None and Literal(text, datatype=datatype).toPython() not in existing_values:
+            return Literal(text, datatype=datatype)
     return None
 
 
@@ -460,6 +570,8 @@ def generate_default_value(existing_values, datatype, min_exclusive, min_inclusi
     elif datatype in TEMPORAL_DATATYPES:
         return generate_temporal(existing_values, datatype, min_exclusive, min_inclusive, max_exclusive, max_inclusive,
                                  less_than, less_than_or_equals)
+    elif datatype not in (None, XSD.string, RDF.langString):
+        return generate_typed_string(existing_values, datatype, min_length, max_length, pattern)
 
     # Default case: Generate a string value
     return generate_string(existing_values, min_length, max_length, pattern)
