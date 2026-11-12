@@ -100,6 +100,16 @@ def test_complex_property_paths_are_skipped_with_a_warning(path, text):
     assert list(shape["properties"]) == [URIRef(EX + "q")]
 
 
+def test_languageIn_is_parsed_as_a_list_and_combined_with_the_tags_both_lists_allow():
+    shape = parse_shape("""
+        ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:p ; sh:languageIn ("en" "de" "fr-CA") ] ;
+            sh:property [ sh:path ex:p ; sh:languageIn ("en-US" "de" "fr") ] .
+    """)
+    # en-US is allowed by en, and fr-CA by fr
+    assert sorted(shape["properties"][URIRef(EX + "p")][SH.languageIn]) == ["de", "en-US", "fr-CA"]
+
+
 def test_a_repeated_single_valued_parameter_warns_and_uses_the_first_value():
     # SHACL allows at most one value for parameters such as sh:maxCount, sh:datatype or sh:pattern
     with pytest.warns(UserWarning, match="several values in one shape, which SHACL does not allow"):

@@ -125,7 +125,7 @@ def merge_shape_dictionaries(target, source):
     separate constraint, so all of them must hold), and for the shapes of sh:and, sh:or and sh:xone that are
     combined with a shape during generation.
     - bounds (counts, lengths, value ranges): the strictest value
-    - sh:in: the values that are in both lists
+    - sh:in: the values that are in both lists; sh:languageIn: the language tags that both lists allow
     - nested property shapes ("properties"): merged per path, in the same way
     - all values of every parameter are kept ("values"), e.g. all classes and all sh:hasValue values
     - any other parameter: the value of `target` is kept, if it has one (if the values differ, they cannot both
@@ -154,6 +154,18 @@ def merge_shape_dictionaries(target, source):
             target[key] = _strictest(target[key], value, lower_bound=key in LOWER_BOUND_PARAMETERS)
         elif key == URIRef(SH['in']):
             target[key] = [v for v in target[key] if v in value]  # the values that both lists allow
+        elif key == SH.languageIn:
+            # the language tags that both lists allow (e.g. en-US is allowed by en)
+            target[key] = ([tag for tag in target[key] if language_matches(tag, value)]
+                           + [tag for tag in value if language_matches(tag, target[key]) and tag not in target[key]])
+
+
+def language_matches(tag, ranges):
+    """Whether a language tag matches one of the language ranges, as in SPARQL's langMatches (e.g. en-US matches en)."""
+    tag = tag.lower()
+    return any(tag == r.lower() or tag.startswith(r.lower() + "-") for r in ranges)
+
+
 """
 Function Explanation:
 ---------------------
@@ -462,6 +474,10 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
         elif p == URIRef(SH['in']):
             # Handle SH:in property
             add_parameter_value(shape_dictionary, p, get_list_from_shacl_list(o, shapes_graph))
+
+        elif p == SH.languageIn:
+            # a list of language tags
+            add_parameter_value(shape_dictionary, p, [str(tag) for tag in shapes_graph.items(o)])
 
         elif p in {URIRef(SH['or']), URIRef(SH['and']), URIRef(SH['xone'])}:
             # Handle SH:or, SH:and, SH:xone properties: their value is an RDF list of shapes (a shape can have

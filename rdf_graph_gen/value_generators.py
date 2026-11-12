@@ -453,6 +453,20 @@ STRING_DATATYPES = {
     URIRef(str(RDF) + "JSON"): json.dumps,  # a JSON string
 }
 LANGUAGE_TAGS = ["en", "de", "fr", "es", "it", "nl", "pt", "en-US", "en-GB", "de-AT", "pt-BR"]
+def add_language_tag(value, used_languages, language_in=None, unique_lang=False):
+    """
+    The value (a string) as a language-tagged string (rdf:langString), with a tag from sh:languageIn, or else a common
+    one. With sh:uniqueLang, the tag is one that the other values of the property (used_languages, in lower case) do
+    not have yet; None if there is no such tag left.
+    """
+    tags = list(language_in) if language_in is not None else LANGUAGE_TAGS
+    if unique_lang:
+        tags = [tag for tag in tags if tag.lower() not in used_languages]
+    if not tags:
+        return None
+    return Literal(str(value), lang=random.choice(tags))
+
+
 BINARY_DATATYPES = {
     XSD.hexBinary: lambda data: data.hex().upper(),
     XSD.base64Binary: lambda data: base64.b64encode(data).decode("ascii"),

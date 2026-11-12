@@ -42,7 +42,6 @@ def test_shipped_shapes(relative_path):
 
 # --- sh:datatype ----------------------------------------------------------------------------------------------------
 
-NOT_GENERATED_AS_TYPED_LITERAL = "generated as a plain xsd:string literal"
 DATATYPES = [
     "xsd:string", "xsd:boolean",
     # numbers; a value outside the value range of the datatype (e.g. 300 for xsd:byte) does not conform
@@ -59,7 +58,8 @@ DATATYPES = [
     "xsd:ID", "xsd:IDREF", "xsd:IDREFS", "xsd:ENTITY", "xsd:ENTITIES", "xsd:anyURI",
     "rdf:XMLLiteral", "rdf:HTML", "rdf:JSON",
     "xsd:hexBinary", "xsd:base64Binary",
-    pytest.param("rdf:langString", marks=known_bug(NOT_GENERATED_AS_TYPED_LITERAL)),
+    # strings with a language tag
+    "rdf:langString",
 ]
 
 
@@ -125,8 +125,22 @@ CASES = [
             sh:minInclusive 1.5 ; sh:maxInclusive 3.5 ; sh:minCount 2 ; sh:maxCount 2 ] ."""),
     case("byte-with-a-lower-bound", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:byte ;
             sh:minInclusive 100 ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
-    case("languageIn-uniqueLang", 'ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:languageIn ("en" "de") ; sh:uniqueLang true ; sh:minCount 1 ] .',
-         known_bug("language tags are not generated")),
+
+    # language-tagged strings
+    case("languageIn-uniqueLang", 'ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:languageIn ("en" "de") ; sh:uniqueLang true ; sh:minCount 1 ] .'),
+    case("languageIn-uniqueLang-with-as-many-values-as-tags", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ;
+            sh:languageIn ("en" "de" "fr") ; sh:uniqueLang true ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    case("languageIn-uniqueLang-with-more-values-allowed-than-tags", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ;
+            sh:languageIn ("en" "de") ; sh:uniqueLang true ; sh:minCount 1 ; sh:maxCount 5 ] ."""),
+    case("langString-uniqueLang", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype rdf:langString ;
+            sh:uniqueLang true ; sh:minCount 4 ; sh:maxCount 4 ] ."""),
+    case("langString-with-length", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype rdf:langString ;
+            sh:minLength 3 ; sh:maxLength 6 ; sh:minCount 2 ; sh:maxCount 2 ] ."""),
+    case("languageIn-on-a-realistic-value", """ex:S a sh:NodeShape ; sh:targetClass schema:Person ;
+            sh:property [ sh:path schema:givenName ; sh:languageIn ("de") ; sh:minCount 1 ; sh:maxCount 1 ] ."""),
+    case("languageIn-of-two-property-shapes", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:p ; sh:languageIn ("en" "de") ; sh:minCount 1 ] ;
+            sh:property [ sh:path ex:p ; sh:languageIn ("en-US" "fr") ] ."""),
 
     # property pairs
     case("lessThan-integers", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:lo ; sh:datatype xsd:integer ; sh:lessThan ex:hi ] ;

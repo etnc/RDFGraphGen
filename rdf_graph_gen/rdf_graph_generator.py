@@ -331,17 +331,25 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         return node
 
     # check if a predefined value exists for this iteration
-    predefined_value = generate_intuitive_value(sh_path, sh_class, dependencies)
-    if predefined_value and predefined_value not in disjoint_values:
-        return predefined_value
+    value = generate_intuitive_value(sh_path, sh_class, dependencies)
+    if not value or value in disjoint_values:
+        # a generated value based on multiple constarints; values of the sh:disjoint property are excluded in the
+        # same way as the values that this property already has
+        existing_values = {o.toPython() for o in _values(result, parent, sh_path, shape_dictionary)}
+        existing_values |= {o.toPython() for o in disjoint_values}
+        value = generate_default_value(existing_values, sh_datatype, sh_min_exclusive, sh_min_inclusive, sh_max_exclusive, sh_max_inclusive,
+                                       sh_min_length, sh_max_length, sh_pattern, sh_equals, sh_disjoint, sh_less_than,
+                                       sh_less_than_or_equals, sh_path, sh_class)
 
-    # return a generated value based on multiple constarints; values of the sh:disjoint property are excluded
-    # in the same way as the values that this property already has
-    existing_values = {o.toPython() for o in _values(result, parent, sh_path, shape_dictionary)}
-    existing_values |= {o.toPython() for o in disjoint_values}
-    return generate_default_value(existing_values, sh_datatype, sh_min_exclusive, sh_min_inclusive, sh_max_exclusive, sh_max_inclusive,
-                                  sh_min_length, sh_max_length, sh_pattern, sh_equals, sh_disjoint, sh_less_than,
-                                  sh_less_than_or_equals, sh_path, sh_class)
+    # language-tagged strings (sh:datatype rdf:langString, or sh:languageIn): the string gets a language tag; with
+    # sh:uniqueLang, one that the other values of the property do not have
+    language_in = shape_dictionary.get(SH.languageIn)
+    if ((language_in is not None or sh_datatype == RDF.langString) and sh_datatype in (None, RDF.langString)
+            and isinstance(value, Literal) and value.datatype is None and value.language is None):
+        used_languages = {o.language.lower() for o in _values(result, parent, sh_path, shape_dictionary)
+                          if isinstance(o, Literal) and o.language}
+        value = add_language_tag(value, used_languages, language_in, bool(shape_dictionary.get(SH.uniqueLang)))
+    return value
 
 
 """
