@@ -313,11 +313,31 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     sh_min_length = shape_dictionary.get(SH.minLength)
     sh_max_length = shape_dictionary.get(SH.maxLength)
     sh_pattern = shape_dictionary.get(SH.pattern)
-    sh_node = shape_dictionary.get(SH.node)
     sh_path = shape_dictionary.get(SH.path)
 
     # get the nested properties
     properties = shape_dictionary.get("properties")
+
+    # sh:node on a property shape (on a node shape, it is combined with the shape, see _with_node_shapes): each value
+    # is an entity that conforms to all shapes of sh:node, and to the nested property shapes of the property, if any.
+    # It is linked to each of these shapes (sh:description), so that it is validated against each of them.
+    node_shapes = parameter_values(shape_dictionary, SH.node)
+    if node_shapes:
+        for name in node_shapes:
+            if dictionary.get(name) is None:
+                raise Exception("The SHACL shape " + name + " cannot be found!")
+        if len(node_shapes) == 1 and not properties:
+            entity_shape = dictionary[node_shapes[0]]
+        else:
+            entity_shape = {SH.node: node_shapes[0], "values": {SH.node: list(node_shapes)}}
+            if properties:
+                entity_shape["properties"] = properties
+        entity = dictionary_to_rdf_graph(entity_shape, node_shapes[0], result, None, dictionary, [], sh_class, batchID,
+                                         ancestors=ancestors, node_kind=shape_dictionary.get(SH.nodeKind))
+        for name in node_shapes[1:]:
+            result.add((entity, SH.description, name))
+        return typed(entity)
+
     # for each nested property generate a rdf graph recursively
     if properties:
         for key, value in properties.items():
@@ -400,14 +420,6 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
             if not candidates:
                 return None
         return typed(random.choice(candidates))
-
-    # if the property is described by a sh:node, generate a node and add it
-    elif sh_node:
-        n = dictionary.get(sh_node)
-        if not n:
-            raise Exception("The SHACL shape " + sh_node + " cannot be found!")
-        return typed(dictionary_to_rdf_graph(n, sh_node, result, None, dictionary, [], sh_class, batchID,
-                                             ancestors=ancestors, node_kind=shape_dictionary.get(SH.nodeKind)))
 
     # The value is the fresh node created above, with the classes of the shape: for an entity of a node shape (e.g.
     # one without properties), for values that must be instances of a class (sh:class), for values of a node kind

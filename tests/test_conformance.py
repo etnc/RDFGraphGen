@@ -272,8 +272,19 @@ CASES = [
             ex:T a sh:NodeShape ; sh:property [ sh:path ex:q ; sh:datatype xsd:integer ; sh:minCount 1 ] ."""),
     case("two-nodes-on-one-property", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:node ex:T, ex:U ; sh:minCount 2 ; sh:maxCount 2 ] .
             ex:T a sh:NodeShape ; sh:property [ sh:path ex:t ; sh:minCount 1 ] .
-            ex:U a sh:NodeShape ; sh:property [ sh:path ex:u ; sh:minCount 1 ] .""",
-         known_bug("only one of several sh:node shapes is applied; values must conform to all of them")),
+            ex:U a sh:NodeShape ; sh:property [ sh:path ex:u ; sh:minCount 1 ] ."""),
+    case("two-nodes-on-one-property-with-the-same-path", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:p ; sh:node ex:T, ex:U ; sh:minCount 1 ] .
+            ex:T a sh:NodeShape ; sh:property [ sh:path ex:age ; sh:datatype xsd:integer ; sh:minInclusive 18 ; sh:minCount 1 ] .
+            ex:U a sh:NodeShape ; sh:property [ sh:path ex:age ; sh:maxInclusive 30 ; sh:maxCount 1 ] ."""),
+    case("node-and-nested-properties-on-one-property", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ;
+            sh:node ex:T ; sh:minCount 1 ; sh:property [ sh:path ex:extra ; sh:minCount 1 ] ] .
+            ex:T a sh:NodeShape ; sh:property [ sh:path ex:t ; sh:minCount 1 ] ."""),
+    case("two-nodes-on-one-property-in-two-property-shapes", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:p ; sh:node ex:T ; sh:minCount 1 ] ;
+            sh:property [ sh:path ex:p ; sh:node ex:U ] .
+            ex:T a sh:NodeShape ; sh:property [ sh:path ex:t ; sh:minCount 1 ] .
+            ex:U a sh:NodeShape ; sh:class ex:C ."""),
     case("several-classes-on-node-shape", """ex:S a sh:NodeShape ; sh:targetClass ex:Thing ; sh:class ex:A, ex:B ;
             sh:property [ sh:path ex:p ] ."""),
     case("class-on-property", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:class ex:Person ; sh:minCount 1 ] ."),
