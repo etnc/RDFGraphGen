@@ -277,8 +277,26 @@ CASES = [
             sh:class ex:Person ; sh:minCount 2 ; sh:maxCount 2 ; sh:property [ sh:path ex:name ; sh:minCount 1 ] ] ."""),
     case("node-shape-without-properties", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:node ex:T ; sh:minCount 1 ] .
             ex:T a sh:NodeShape ; sh:class ex:C ."""),
-    case("nodeKind-IRI", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:nodeKind sh:IRI ; sh:minCount 1 ] .",
-         known_bug("sh:nodeKind is ignored")),
+    case("nodeKind-IRI", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:nodeKind sh:IRI ; sh:minCount 1 ] ."),
+    case("nodeKind-BlankNode", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:nodeKind sh:BlankNode ; sh:minCount 1 ] ."),
+    case("nodeKind-BlankNodeOrIRI", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:nodeKind sh:BlankNodeOrIRI ;
+            sh:minCount 1 ] ."""),
+    case("nodeKind-Literal", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:nodeKind sh:Literal ; sh:minCount 1 ] ."),
+    case("nodeKind-IRIOrLiteral", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:nodeKind sh:IRIOrLiteral ; sh:minCount 1 ] ."),
+    case("nodeKind-IRI-with-class", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:nodeKind sh:IRI ;
+            sh:class ex:Person ; sh:minCount 1 ] ."""),
+    case("nodeKind-IRI-with-nested-properties", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:nodeKind sh:IRI ;
+            sh:minCount 1 ; sh:property [ sh:path ex:name ; sh:minCount 1 ] ] ."""),
+    case("nodeKind-IRI-with-in", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:nodeKind sh:IRI ;
+            sh:in ( "x" ex:a "y" ) ; sh:minCount 1 ] ."""),
+    case("nodeKind-BlankNode-with-node", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:nodeKind sh:BlankNode ;
+            sh:node ex:T ; sh:minCount 1 ] .
+            ex:T a sh:NodeShape ; sh:property [ sh:path ex:name ; sh:minCount 1 ] ."""),
+    case("nodeKind-BlankNode-on-node-shape", """ex:S a sh:NodeShape ; sh:nodeKind sh:BlankNode ;
+            sh:property [ sh:path ex:p ; sh:minCount 1 ] ."""),
+    case("nodeKind-IRI-on-node-shape-used-as-blank-node", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:p ; sh:node ex:T ; sh:nodeKind sh:BlankNodeOrIRI ; sh:minCount 1 ] .
+            ex:T a sh:NodeShape ; sh:nodeKind sh:IRI ; sh:property [ sh:path ex:name ; sh:minCount 1 ] ."""),
     case("two-shapes-targeting-one-class", """ex:A a sh:NodeShape ; sh:targetClass ex:C ; sh:property [ sh:path ex:p ; sh:datatype xsd:integer ] .
             ex:B a sh:NodeShape ; sh:targetClass ex:C ; sh:property [ sh:path ex:q ; sh:minCount 1 ] .""",
          known_bug("entities of class C must conform to every shape that targets C")),

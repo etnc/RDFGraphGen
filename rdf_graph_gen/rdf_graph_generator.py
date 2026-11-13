@@ -96,6 +96,19 @@ def _values(result, node, path, property_dictionary):
     return nodes
 
 
+# sh:nodeKind: the kinds of nodes that each node kind allows
+NODE_KINDS = {
+    SH.IRI: (URIRef,), SH.BlankNode: (BNode,), SH.Literal: (Literal,),
+    SH.BlankNodeOrIRI: (BNode, URIRef), SH.BlankNodeOrLiteral: (BNode, Literal), SH.IRIOrLiteral: (URIRef, Literal),
+}
+NON_LITERAL_NODE_KINDS = {SH.IRI, SH.BlankNode, SH.BlankNodeOrIRI}
+
+
+def _has_node_kind(value, kinds):
+    """Whether a value is of every node kind in kinds (e.g. an IRI for sh:IRI)."""
+    return all(isinstance(value, NODE_KINDS[kind]) for kind in kinds if kind in NODE_KINDS)
+
+
 def _number_of_equal_values(property_dictionary, result, node):
     """
     For a property with sh:equals: the number of values of the other property (0 while it has none). The property
@@ -121,20 +134,28 @@ def _earlier_entities(ancestors, value_shape, node):
 
 def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictionary,
                             property_pair_constraint_components_parent, parent_class, batchID, final_attempt=False,
-                            ancestors=()):
+                            ancestors=(), node_kind=None):
     # initialization
     property_pair_constraint_components = []
     global COUNTER, BNODE_COUNTER
 
-    if shape_name:
+    # sh:nodeKind of the shape (of a node shape: its entities; of a property shape: its values), and node_kind: the
+    # node kind that the property whose value this entity is requires (for sh:node)
+    kinds = {kind for kind in (shape_dictionary.get(SH.nodeKind), node_kind) if kind is not None}
+    blank = bool(kinds & {SH.BlankNode, SH.BlankNodeOrLiteral})
+
+    # Entities of a named shape are IRIs, and other nodes (e.g. values with nested properties) blank nodes, unless
+    # the node kind requires the other kind
+    if (shape_name or kinds & {SH.IRI, SH.IRIOrLiteral}) and not blank:
         node = URIRef(f'http://example.org/ns#Node{batchID}_{COUNTER}')
         COUNTER += 1
-        # as SH.description add the name of the shape that this node was generated from
-        result.add((node, SH.description, shape_name))
     else:
         # deterministic blank node identifiers (rdflib's default ones are random)
         node = BNode(f'{batchID}b{BNODE_COUNTER}')
         BNODE_COUNTER += 1
+    if shape_name:
+        # as SH.description add the name of the shape that this node was generated from
+        result.add((node, SH.description, shape_name))
 
     # the generated entities on the path from the top-level entity to this one, with their shapes (see _earlier_entities)
     if shape_name:
@@ -330,10 +351,12 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         # prefer new values, and never values of the sh:disjoint property if that can be avoided
         candidates = ([value for value in sh_in if value not in existing and value not in disjoint_values]
                       or [value for value in sh_in if value not in disjoint_values] or sh_in)
-        if _ends_with_inverse_step(shape_dictionary):
-            # values reached through an inverse step are subjects of triples, so they cannot be literals
-            candidates = ([value for value in candidates if not isinstance(value, Literal)]
-                          or [value for value in sh_in if not isinstance(value, Literal)])
+        # only values of the node kind; values reached through an inverse step are subjects of triples, so they
+        # cannot be literals
+        allowed_kinds = kinds | ({SH.BlankNodeOrIRI} if _ends_with_inverse_step(shape_dictionary) else set())
+        if allowed_kinds:
+            candidates = ([value for value in candidates if _has_node_kind(value, allowed_kinds)]
+                          or [value for value in sh_in if _has_node_kind(value, allowed_kinds)])
             if not candidates:
                 return None
         return typed(random.choice(candidates))
@@ -344,12 +367,14 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         if not n:
             raise Exception("The SHACL shape " + sh_node + " cannot be found!")
         return typed(dictionary_to_rdf_graph(n, sh_node, result, None, dictionary, [], sh_class, batchID,
-                                             ancestors=ancestors))
+                                             ancestors=ancestors, node_kind=shape_dictionary.get(SH.nodeKind)))
 
     # The value is the fresh node created above, with the classes of the shape: for an entity of a node shape (e.g.
-    # one without properties), for values that must be instances of a class (sh:class), and for values reached
-    # through an inverse step (they are subjects of triples, so they cannot be literals)
-    if shape_name or classes or _ends_with_inverse_step(shape_dictionary):
+    # one without properties), for values that must be instances of a class (sh:class), for values of a node kind
+    # other than literals (sh:nodeKind), and for values reached through an inverse step (they are subjects of
+    # triples, so they cannot be literals)
+    if (shape_name or classes or kinds & NON_LITERAL_NODE_KINDS
+            or _ends_with_inverse_step(shape_dictionary)):
         return typed(node)
 
     # check if a predefined value exists for this iteration
