@@ -141,6 +141,64 @@ def _with_node_shapes(shape_dictionary, dictionary):
     return combined
 
 
+def _classes(shape_dictionary):
+    """The classes of a shape's entities (or of a property shape's values): sh:targetClass and sh:class."""
+    classes = []
+    for parameter in (SH.targetClass, URIRef(SH['class'])):
+        classes += [c for c in parameter_values(shape_dictionary, parameter) if c not in classes]
+    return classes
+
+
+# The shapes that target each class (sh:targetClass), per shapes dictionary (it is the same one for a whole run)
+_TARGETING_SHAPES = {}
+
+
+def _targeting_shapes(dictionary):
+    if id(dictionary) not in _TARGETING_SHAPES:
+        _TARGETING_SHAPES.clear()
+        targeting = _TARGETING_SHAPES.setdefault(id(dictionary), {})
+        for name in sorted(dictionary, key=str):
+            for target_class in parameter_values(dictionary[name], SH.targetClass):
+                targeting.setdefault(target_class, []).append(name)
+    return _TARGETING_SHAPES[id(dictionary)]
+
+
+def _with_class_shapes(shape_dictionary, dictionary, shape_name):
+    """
+    Every instance of a class must conform to all shapes that target the class (sh:targetClass), whichever shape it
+    is generated from: e.g. the entities of another shape with the same target class, or the values of a property with
+    sh:class. So these shapes are combined with the shape (also for the classes that they add in turn, each shape
+    once). Returns the shape (a combined copy, if shapes were added) and the names of the added shapes.
+    """
+    targeting = _targeting_shapes(dictionary)
+    added = []
+    while targeting:
+        names = [name for c in _classes(shape_dictionary) for name in targeting.get(c, ())
+                 if name != shape_name and name not in added]
+        if not names:
+            break
+        if not added:
+            shape_dictionary = deepcopy(shape_dictionary)
+        for name in names:
+            if name not in added:
+                added.append(name)
+                merge_shape_dictionaries(shape_dictionary, deepcopy(dictionary[name]))
+    return shape_dictionary, added
+
+
+def _value_shape(property_dictionary, dictionary):
+    """
+    The shape of a property's values, if they are entities of a shape: the (first) shape of sh:node, or else the
+    first shape that targets a class of the values (sh:class). Used to limit recursion.
+    """
+    shape = property_dictionary.get(SH.node)
+    if shape is None:
+        targeting = _targeting_shapes(dictionary)
+        shape = next((name for c in parameter_values(property_dictionary, URIRef(SH['class']))
+                      for name in targeting.get(c, ())), None)
+    return shape
+
+
 def _number_of_equal_values(property_dictionary, result, node):
     """
     For a property with sh:equals: the number of values of the other property (0 while it has none). The property
@@ -173,6 +231,14 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
 
     # sh:node on a node shape: its entities conform to the shapes of sh:node as well
     shape_dictionary = _with_node_shapes(shape_dictionary, dictionary)
+
+    # Instances of a class conform to all shapes that target the class. (For values of sh:node, this is done when
+    # the entity is generated, see below; values of sh:in are used as they are.)
+    class_shapes = []
+    if (shape_dictionary.get(SH.path) is None
+            or not (parameter_values(shape_dictionary, SH.node) or shape_dictionary.get(URIRef(SH + "in")))):
+        shape_dictionary, class_shapes = _with_class_shapes(shape_dictionary, dictionary, shape_name)
+        shape_dictionary = _with_node_shapes(shape_dictionary, dictionary)
 
     # A shape can have several sh:xone, sh:and and sh:or lists, and each of them must hold, so each list is used.
     # (The lists are read from the copy, so that merging never changes the shared shape dictionaries.)
@@ -228,15 +294,13 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         result.add((node, SH.description, shape_name))
 
     # the generated entities on the path from the top-level entity to this one, with their shapes (see _earlier_entities)
-    if shape_name:
-        ancestors = ancestors + ((shape_name, node),)
+    for name in ([shape_name] if shape_name else []) + class_shapes:
+        ancestors = ancestors + ((name, node),)
 
     # The entity (or, for a property shape, each value) is an instance of every class given with sh:targetClass and
     # sh:class (all of them must hold). The classes are added to the value that is returned (see typed), which is
     # this node, or e.g. an entity of sh:node or a value of sh:in.
-    classes = []
-    for parameter in (SH.targetClass, URIRef(SH['class'])):
-        classes += [c for c in parameter_values(shape_dictionary, parameter) if c not in classes]
+    classes = _classes(shape_dictionary)
     sh_class = classes[0] if classes else parent_class
 
     def typed(value):
@@ -326,10 +390,13 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         for name in node_shapes:
             if dictionary.get(name) is None:
                 raise Exception("The SHACL shape " + name + " cannot be found!")
-        if len(node_shapes) == 1 and not properties:
+        if len(node_shapes) == 1 and not properties and not classes:
             entity_shape = dictionary[node_shapes[0]]
         else:
             entity_shape = {SH.node: node_shapes[0], "values": {SH.node: list(node_shapes)}}
+            if classes:  # the entity is an instance of the classes of the property, and conforms to their shapes
+                entity_shape[URIRef(SH['class'])] = classes[0]
+                entity_shape["values"][URIRef(SH['class'])] = list(classes)
             if properties:
                 entity_shape["properties"] = properties
         entity = dictionary_to_rdf_graph(entity_shape, node_shapes[0], result, None, dictionary, [], sh_class, batchID,
@@ -360,7 +427,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
             # Recursion: if the values are entities of a shape that already occurs RECURSION_LIMIT times on the path
             # from the top-level entity, generate only the required number of values, using earlier entities of that
             # shape where possible (e.g. a cycle P2 knows P1), so that generation ends
-            earlier = _earlier_entities(ancestors, value.get(SH.node), node)
+            earlier = _earlier_entities(ancestors, _value_shape(value, dictionary), node)
             count = max(sh_min_count, 0) if earlier is not None else random.randint(sh_min_count, sh_max_count)
             count = max(count, _number_of_equal_values(value, result, node))
             for i in range(0, count):

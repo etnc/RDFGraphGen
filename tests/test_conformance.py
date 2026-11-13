@@ -318,8 +318,26 @@ CASES = [
             sh:property [ sh:path ex:p ; sh:node ex:T ; sh:nodeKind sh:BlankNodeOrIRI ; sh:minCount 1 ] .
             ex:T a sh:NodeShape ; sh:nodeKind sh:IRI ; sh:property [ sh:path ex:name ; sh:minCount 1 ] ."""),
     case("two-shapes-targeting-one-class", """ex:A a sh:NodeShape ; sh:targetClass ex:C ; sh:property [ sh:path ex:p ; sh:datatype xsd:integer ] .
-            ex:B a sh:NodeShape ; sh:targetClass ex:C ; sh:property [ sh:path ex:q ; sh:minCount 1 ] .""",
-         known_bug("entities of class C must conform to every shape that targets C")),
+            ex:B a sh:NodeShape ; sh:targetClass ex:C ; sh:property [ sh:path ex:q ; sh:minCount 1 ] ."""),
+    # every instance of a class conforms to the shapes that target the class
+    case("class-on-property-with-a-shape-for-the-class", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:author ; sh:class ex:Person ; sh:minCount 1 ] .
+            ex:PersonShape a sh:NodeShape ; sh:targetClass ex:Person ; sh:property [ sh:path ex:name ; sh:minCount 1 ] ."""),
+    case("class-and-node-on-property-with-a-shape-for-the-class", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:author ; sh:node ex:T ; sh:class ex:Person ; sh:minCount 1 ] .
+            ex:T a sh:NodeShape ; sh:property [ sh:path ex:t ; sh:minCount 1 ] .
+            ex:PersonShape a sh:NodeShape ; sh:targetClass ex:Person ; sh:property [ sh:path ex:name ; sh:minCount 1 ] ."""),
+    case("class-of-a-node-shape-with-a-shape-for-the-class", """ex:S a sh:NodeShape ; sh:class ex:Person ;
+            sh:property [ sh:path ex:p ; sh:minCount 1 ] .
+            ex:PersonShape a sh:NodeShape ; sh:targetClass ex:Person ; sh:property [ sh:path ex:name ; sh:minCount 1 ] ."""),
+    case("shape-for-a-class-that-adds-another-class", """ex:S a sh:NodeShape ; sh:targetClass ex:Student ;
+            sh:property [ sh:path ex:p ; sh:minCount 1 ] .
+            ex:StudentShape a sh:NodeShape ; sh:targetClass ex:Student ; sh:class ex:Person .
+            ex:PersonShape a sh:NodeShape ; sh:targetClass ex:Person ; sh:property [ sh:path ex:name ; sh:minCount 1 ] ."""),
+    case("recursion-through-a-class", """ex:PersonShape a sh:NodeShape ; sh:targetClass ex:Person ;
+            sh:property [ sh:path ex:name ; sh:minCount 1 ] ;
+            sh:property [ sh:path ex:knows ; sh:class ex:Person ; sh:minCount 1 ; sh:maxCount 2 ] .""",
+         IGNORE_RECURSION_WARNING),
     case("optional-recursion", """ex:A a sh:NodeShape ; sh:property [ sh:path ex:toB ; sh:node ex:B ; sh:minCount 0 ; sh:maxCount 1 ] .
             ex:B a sh:NodeShape ; sh:property [ sh:path ex:toA ; sh:node ex:A ; sh:minCount 0 ; sh:maxCount 1 ] .
             ex:Root a sh:NodeShape ; sh:property [ sh:path ex:r ; sh:node ex:A ] .""",
