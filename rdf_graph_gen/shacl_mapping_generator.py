@@ -514,11 +514,9 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
 
     # Fix dependencies caused by Property Pair Constraint Components
     for d in property_pair_constraint_components:
-        # Handle SH:equals, SH:disjoint, SH:lessThan, SH:lessThanOrEquals constraints
+        # Handle SH:equals, SH:disjoint constraints (sh:lessThan and sh:lessThanOrEquals: see below)
         equals = d.get(SH.equals)
         disjoint = d.get(SH.disjoint)
-        less_than = d.get(SH.lessThan)
-        less_than_or_equals = d.get(SH.lessThanOrEquals)
 
         # Additional handling for constraints
         # Make sure the other property of the pair is generated; if the shape declares it, keep its constraints
@@ -526,24 +524,26 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
             sh_properties[equals] = {SH.path: equals}
         if disjoint and not sh_properties.get(disjoint):
             sh_properties[disjoint] = {SH.path: disjoint}
-        if less_than and not sh_properties.get(less_than):
-            less_than_dict = sh_properties.get(less_than, {})
-            less_than_dict[SH.path] = less_than
-            if not less_than_dict.get(SH.datatype) and d.get(SH.datatype):
-                less_than_dict[SH.datatype] = d.get(SH.datatype)
-            sh_properties[less_than] = less_than_dict
-            min_constraint = d.get(SH.minInclusive, d.get(SH.minExclusive))
-            if min_constraint:
-                less_than_dict[SH.minInclusive] = min_constraint
-        if less_than_or_equals and not sh_properties.get(less_than_or_equals):
-            less_than_or_equals_dict = sh_properties.get(less_than_or_equals, {})
-            less_than_or_equals_dict[SH.path] = less_than_or_equals
-            if not less_than_or_equals_dict.get(SH.datatype) and d.get(SH.datatype):
-                less_than_or_equals_dict[SH.datatype] = d.get(SH.datatype)
-            sh_properties[less_than_or_equals] = less_than_or_equals_dict
-            min_constraint = d.get(SH.minInclusive, d.get(SH.minExclusive))
-            if min_constraint:
-                less_than_or_equals_dict[SH.minInclusive] = min_constraint
+
+    # sh:lessThan and sh:lessThanOrEquals: the values of the other property must be greater than (or equal to) the
+    # values of this property, so they are also above its lower bound. Otherwise, the other property could get a
+    # value that leaves this one no valid value (e.g. 0, when this property is at least 0). The other property gets
+    # the datatype of this one if it has none. Repeated, so that chains (a < b < c) are handled as well.
+    for _ in range(len(property_pair_constraint_components)):
+        for d in property_pair_constraint_components:
+            this = sh_properties.get(d.get(SH.path), d)  # all property shapes of this path, combined
+            for pair, strict in ((SH.lessThan, True), (SH.lessThanOrEquals, False)):
+                other = d.get(pair)
+                if other is None:
+                    continue
+                other_dictionary = sh_properties.setdefault(other, {SH.path: other})
+                if other_dictionary.get(SH.datatype) is None and this.get(SH.datatype) is not None:
+                    other_dictionary[SH.datatype] = this[SH.datatype]
+                if this.get(SH.minInclusive) is not None:
+                    merge_shape_dictionaries(other_dictionary,
+                                             {SH.minExclusive if strict else SH.minInclusive: this[SH.minInclusive]})
+                if this.get(SH.minExclusive) is not None:
+                    merge_shape_dictionaries(other_dictionary, {SH.minExclusive: this[SH.minExclusive]})
 
     warn_if_literal_values_are_required(shape_dictionary, shapes_graph)
     return shape_dictionary

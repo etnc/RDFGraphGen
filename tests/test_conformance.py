@@ -215,10 +215,26 @@ CASES = [
             sh:property [ sh:path ex:b ; sh:in ("x" "y" "z") ; sh:minCount 2 ; sh:maxCount 2 ] ."""),
     case("lessThan-leaves-a-valid-range", """ex:S a sh:NodeShape ;
             sh:property [ sh:path ex:lo ; sh:datatype xsd:integer ; sh:minInclusive 0 ; sh:lessThan ex:hi ] ;
-            sh:property [ sh:path ex:hi ; sh:datatype xsd:integer ; sh:minInclusive 0 ; sh:maxInclusive 1 ] .""",
-         known_bug("the other value of sh:lessThan is chosen without regard to it, which can leave no valid range "
-                   "(here: ex:hi = 0)"),
+            sh:property [ sh:path ex:hi ; sh:datatype xsd:integer ; sh:minInclusive 0 ; sh:maxInclusive 1 ] ."""),
+    # the other property must not get a value that leaves this one no valid value: ex:hi = 0, or ex:hi < 5
+    case("lessThan-leaves-a-valid-range-for-dates", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:lo ; sh:datatype xsd:date ; sh:minInclusive "2020-01-01"^^xsd:date ; sh:lessThan ex:hi ] ;
+            sh:property [ sh:path ex:hi ; sh:datatype xsd:date ; sh:maxInclusive "2020-01-02"^^xsd:date ] ."""),
+    case("lessThanOrEquals-leaves-a-valid-range", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:lo ; sh:datatype xsd:integer ; sh:minInclusive 5 ; sh:lessThanOrEquals ex:hi ] ;
+            sh:property [ sh:path ex:hi ; sh:datatype xsd:integer ; sh:minInclusive 0 ; sh:maxInclusive 5 ] ."""),
+    case("lessThan-leaves-a-valid-range-in-a-chain", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:a ; sh:datatype xsd:integer ; sh:minInclusive 0 ; sh:lessThan ex:b ] ;
+            sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:maxInclusive 2 ; sh:lessThan ex:c ] ;
+            sh:property [ sh:path ex:c ; sh:datatype xsd:integer ; sh:maxInclusive 2 ] .""",
+         known_bug("a lower bound is passed along a chain as it is (ex:a >= 0 gives ex:b > 0 and ex:c > 0), not raised "
+                   "by the steps between integers (ex:c > 1), so ex:c = 1 leaves no integer for ex:b"),
          pytest.mark.filterwarnings("ignore:Invalid int range")),
+    case("lessThan-other-property-not-declared", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:lo ; sh:datatype xsd:integer ; sh:minInclusive 10 ; sh:lessThan ex:hi ] ."""),
+    case("lessThan-other-property-declared-without-datatype", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:lo ; sh:datatype xsd:integer ; sh:lessThan ex:hi ] ;
+            sh:property [ sh:path ex:hi ; sh:minCount 1 ] ."""),
     case("disjoint-keeps-constraints-of-other-property", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:a ; sh:disjoint ex:b ] ;
             sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minInclusive 5 ; sh:maxInclusive 9 ] ."""),
     # a property that needs the values of another one is generated after it; generation must always end
