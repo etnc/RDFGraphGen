@@ -96,6 +96,15 @@ def _values(result, node, path, property_dictionary):
     return nodes
 
 
+def _number_of_equal_values(property_dictionary, result, node):
+    """
+    For a property with sh:equals: the number of values of the other property (0 while it has none). The property
+    gets at least that many values, since it must have all of them, whatever its own count would have been.
+    """
+    other = property_dictionary.get(SH.equals)
+    return 0 if other is None else len(set(result.objects(node, other)))
+
+
 def _earlier_entities(ancestors, value_shape, node):
     """
     For a property whose values are entities of value_shape: None if that shape occurs fewer than RECURSION_LIMIT
@@ -177,12 +186,16 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     # get the dependent property for sh:equals: this property must have the same values
     sh_equals = shape_dictionary.get(SH.equals)
     if sh_equals:
-        sh_equals = next(result.objects(parent, sh_equals), None)
-        if sh_equals is None:
+        equal_values = list(result.objects(parent, sh_equals))
+        if not equal_values:
             if final_attempt:
                 return None  # the other property has no values, so this one must not have any either
             property_pair_constraint_components_parent.append(shape_dictionary)
             return None
+        # the values of the other property, one by one (see _number_of_equal_values); this takes precedence over
+        # the other constraints of this property, which the values must satisfy anyway
+        existing = _values(result, parent, shape_dictionary.get(SH.path), shape_dictionary)
+        return next((value for value in equal_values if value not in existing), None)
 
     # get the dependent property for sh:disjoint: this property must not have any of its values
     sh_disjoint = shape_dictionary.get(SH.disjoint)
@@ -262,6 +275,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
             # shape where possible (e.g. a cycle P2 knows P1), so that generation ends
             earlier = _earlier_entities(ancestors, value.get(SH.node), node)
             count = max(sh_min_count, 0) if earlier is not None else random.randint(sh_min_count, sh_max_count)
+            count = max(count, _number_of_equal_values(value, result, node))
             for i in range(0, count):
                 postponed_before = len(property_pair_constraint_components)
                 if earlier:
@@ -286,7 +300,8 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
             for value in postponed:
                 sh_min_count = int(value.get(SH.minCount, "1"))
                 sh_max_count = int(value.get(SH.maxCount, sh_min_count))
-                for i in range(0, random.randint(sh_min_count, sh_max_count)):
+                count = max(random.randint(sh_min_count, sh_max_count), _number_of_equal_values(value, result, node))
+                for i in range(0, count):
                     generated_prop = dictionary_to_rdf_graph(value, None, result, node, dictionary, still_postponed,
                                                              sh_class, batchID, final_attempt=value is forced,
                                                              ancestors=ancestors)

@@ -666,7 +666,7 @@ def generate_default_value(existing_values, datatype, min_exclusive, min_inclusi
                            pattern, equals, disjoint, less_than, less_than_or_equals, path, sh_class):
 
     # Return specified value if 'equals' constraint is present
-    if equals:
+    if equals is not None:
         return equals
 
     # Extract the class and property path from URIs

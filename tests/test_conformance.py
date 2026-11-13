@@ -204,11 +204,15 @@ CASES = [
             sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minInclusive 5 ; sh:maxInclusive 9 ] ;
             sh:property [ sh:path ex:a ; sh:equals ex:b ] ."""),
     case("equals-with-several-values", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:a ; sh:equals ex:b ] ;
-            sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minCount 2 ; sh:maxCount 2 ] .""",
-         known_bug("sh:equals copies only the first value of the other property")),
+            sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minCount 2 ; sh:maxCount 2 ] ."""),
+    case("equals-with-several-values-declared-first", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minCount 3 ; sh:maxCount 3 ] ;
+            sh:property [ sh:path ex:a ; sh:equals ex:b ] ."""),
     case("equals-copies-zero", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:a ; sh:equals ex:b ] ;
-            sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minInclusive 0 ; sh:maxInclusive 0 ] .""",
-         known_bug("a value of 0 is treated as missing, so sh:equals does not copy it")),
+            sh:property [ sh:path ex:b ; sh:datatype xsd:integer ; sh:minInclusive 0 ; sh:maxInclusive 0 ] ."""),
+    case("equals-with-sh-in", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:a ; sh:in ("x" "y" "z") ; sh:equals ex:b ] ;
+            sh:property [ sh:path ex:b ; sh:in ("x" "y" "z") ; sh:minCount 2 ; sh:maxCount 2 ] ."""),
     case("lessThan-leaves-a-valid-range", """ex:S a sh:NodeShape ;
             sh:property [ sh:path ex:lo ; sh:datatype xsd:integer ; sh:minInclusive 0 ; sh:lessThan ex:hi ] ;
             sh:property [ sh:path ex:hi ; sh:datatype xsd:integer ; sh:minInclusive 0 ; sh:maxInclusive 1 ] .""",
