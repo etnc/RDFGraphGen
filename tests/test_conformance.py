@@ -259,8 +259,17 @@ CASES = [
     case("nested-property-shape", """ex:S a sh:NodeShape ;
             sh:property [ sh:path ex:address ; sh:property [ sh:path ex:street ; sh:minCount 1 ] ] ."""),
     case("node-on-node-shape", """ex:S a sh:NodeShape ; sh:node ex:T ; sh:property [ sh:path ex:p ; sh:datatype xsd:string ] .
-            ex:T a sh:NodeShape ; sh:property [ sh:path ex:q ; sh:datatype xsd:integer ; sh:minCount 1 ] .""",
-         known_bug("sh:node on a node shape that also has properties is skipped")),
+            ex:T a sh:NodeShape ; sh:property [ sh:path ex:q ; sh:datatype xsd:integer ; sh:minCount 1 ] ."""),
+    case("node-on-node-shape-with-class", """ex:S a sh:NodeShape ; sh:node ex:T ; sh:property [ sh:path ex:p ; sh:minCount 1 ] .
+            ex:T a sh:NodeShape ; sh:class ex:C ; sh:property [ sh:path ex:q ; sh:minCount 1 ] ."""),
+    case("node-on-node-shape-transitive", """ex:S a sh:NodeShape ; sh:node ex:T ; sh:property [ sh:path ex:p ; sh:minCount 1 ] .
+            ex:T a sh:NodeShape ; sh:node ex:U ; sh:property [ sh:path ex:q ; sh:minCount 1 ] .
+            ex:U a sh:NodeShape ; sh:property [ sh:path ex:r ; sh:datatype xsd:integer ; sh:minCount 1 ] ."""),
+    case("node-on-node-shape-in-a-cycle", """ex:S a sh:NodeShape ; sh:node ex:T ; sh:property [ sh:path ex:p ; sh:minCount 1 ] .
+            ex:T a sh:NodeShape ; sh:node ex:S ; sh:property [ sh:path ex:q ; sh:minCount 1 ] .""",
+         IGNORE_RECURSION_WARNING),
+    case("node-in-an-and-branch", """ex:S a sh:NodeShape ; sh:and ( [ sh:node ex:T ] [ sh:property [ sh:path ex:p ; sh:minCount 1 ] ] ) .
+            ex:T a sh:NodeShape ; sh:property [ sh:path ex:q ; sh:datatype xsd:integer ; sh:minCount 1 ] ."""),
     case("two-nodes-on-one-property", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:node ex:T, ex:U ; sh:minCount 2 ; sh:maxCount 2 ] .
             ex:T a sh:NodeShape ; sh:property [ sh:path ex:t ; sh:minCount 1 ] .
             ex:U a sh:NodeShape ; sh:property [ sh:path ex:u ; sh:minCount 1 ] .""",

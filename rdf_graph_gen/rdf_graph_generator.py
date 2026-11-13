@@ -109,6 +109,38 @@ def _has_node_kind(value, kinds):
     return all(isinstance(value, NODE_KINDS[kind]) for kind in kinds if kind in NODE_KINDS)
 
 
+def _without_node(shape_dictionary):
+    shape_dictionary.pop(SH.node, None)
+    shape_dictionary.get("values", {}).pop(SH.node, None)
+
+
+def _with_node_shapes(shape_dictionary, dictionary):
+    """
+    sh:node on a node shape (e.g. ex:S sh:node ex:T): the entities of the shape must conform to the shapes of sh:node
+    as well, so these are combined with it, like the shapes of sh:and (their own sh:node shapes in turn, each once).
+    Returns a combined copy without sh:node. (On a property shape, sh:node describes the values instead: they are
+    entities of the shapes of sh:node, see dictionary_to_rdf_graph.)
+    """
+    names = parameter_values(shape_dictionary, SH.node)
+    if shape_dictionary.get(SH.path) is not None or not names:
+        return shape_dictionary
+    combined = deepcopy(shape_dictionary)
+    _without_node(combined)
+    seen = set()
+    while names:
+        name = names.pop(0)
+        if name in seen:
+            continue
+        seen.add(name)
+        if dictionary.get(name) is None:
+            raise Exception("The SHACL shape " + name + " cannot be found!")
+        other = deepcopy(dictionary[name])
+        names += parameter_values(other, SH.node)
+        _without_node(other)
+        merge_shape_dictionaries(combined, other)
+    return combined
+
+
 def _number_of_equal_values(property_dictionary, result, node):
     """
     For a property with sh:equals: the number of values of the other property (0 while it has none). The property
@@ -138,6 +170,44 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     # initialization
     property_pair_constraint_components = []
     global COUNTER, BNODE_COUNTER
+
+    # sh:node on a node shape: its entities conform to the shapes of sh:node as well
+    shape_dictionary = _with_node_shapes(shape_dictionary, dictionary)
+
+    # A shape can have several sh:xone, sh:and and sh:or lists, and each of them must hold, so each list is used.
+    # (The lists are read from the copy, so that merging never changes the shared shape dictionaries.)
+
+    # if there is a sh:xone for this dict, choose one of the choices and merge it with the existing properties
+    if shape_dictionary.get(URIRef(SH['xone'])):
+        shape_dictionary = deepcopy(shape_dictionary)
+        for sh_xone in parameter_values(shape_dictionary, URIRef(SH['xone'])):
+            choice = _branch_as_node_shape(random.choice(sh_xone))
+            if choice is not None:
+                merge_shape_dictionaries(shape_dictionary, choice)
+
+    # if there is a sh:and for this dict, merge all the choices  with the existing properties
+    if shape_dictionary.get(URIRef(SH['and'])):
+        shape_dictionary = deepcopy(shape_dictionary)
+        for sh_and in parameter_values(shape_dictionary, URIRef(SH['and'])):
+            for choice in sh_and:
+                choice = _branch_as_node_shape(choice)
+                if choice is not None:
+                    merge_shape_dictionaries(shape_dictionary, choice)
+
+    # if there is a sh:or for this dict, choose some of the choices and merge it with the existing properties
+    if shape_dictionary.get(URIRef(SH['or'])):
+        shape_dictionary = deepcopy(shape_dictionary)
+        for sh_or in parameter_values(shape_dictionary, URIRef(SH['or'])):
+            len_choices = len(sh_or)
+            for choice in random.sample(sh_or, random.randint(1, len_choices)):
+                choice = _branch_as_node_shape(choice)
+                if choice is not None:
+                    merge_shape_dictionaries(shape_dictionary, choice)
+
+    # a shape of sh:and, sh:or or sh:xone can itself have sh:node
+    shape_dictionary = _with_node_shapes(shape_dictionary, dictionary)
+
+    # The node is created once the shape is complete (its node kind and classes can come from the shapes above)
 
     # sh:nodeKind of the shape (of a node shape: its entities; of a property shape: its values), and node_kind: the
     # node kind that the property whose value this entity is requires (for sh:node)
@@ -174,36 +244,6 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
             for c in classes:
                 result.add((value, RDF.type, c))
         return value
-
-    # A shape can have several sh:xone, sh:and and sh:or lists, and each of them must hold, so each list is used.
-    # (The lists are read from the copy, so that merging never changes the shared shape dictionaries.)
-
-    # if there is a sh:xone for this dict, choose one of the choices and merge it with the existing properties
-    if shape_dictionary.get(URIRef(SH['xone'])):
-        shape_dictionary = deepcopy(shape_dictionary)
-        for sh_xone in parameter_values(shape_dictionary, URIRef(SH['xone'])):
-            choice = _branch_as_node_shape(random.choice(sh_xone))
-            if choice is not None:
-                merge_shape_dictionaries(shape_dictionary, choice)
-
-    # if there is a sh:and for this dict, merge all the choices  with the existing properties
-    if shape_dictionary.get(URIRef(SH['and'])):
-        shape_dictionary = deepcopy(shape_dictionary)
-        for sh_and in parameter_values(shape_dictionary, URIRef(SH['and'])):
-            for choice in sh_and:
-                choice = _branch_as_node_shape(choice)
-                if choice is not None:
-                    merge_shape_dictionaries(shape_dictionary, choice)
-
-    # if there is a sh:or for this dict, choose some of the choices and merge it with the existing properties
-    if shape_dictionary.get(URIRef(SH['or'])):
-        shape_dictionary = deepcopy(shape_dictionary)
-        for sh_or in parameter_values(shape_dictionary, URIRef(SH['or'])):
-            len_choices = len(sh_or)
-            for choice in random.sample(sh_or, random.randint(1, len_choices)):
-                choice = _branch_as_node_shape(choice)
-                if choice is not None:
-                    merge_shape_dictionaries(shape_dictionary, choice)
 
     # Property pairs (sh:equals, sh:disjoint, sh:lessThan, sh:lessThanOrEquals) and the dependencies of the
     # realistic-value heuristics need the values of another property of the parent. While that property has no
