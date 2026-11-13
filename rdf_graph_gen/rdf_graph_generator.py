@@ -140,13 +140,19 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     if shape_name:
         ancestors = ancestors + ((shape_name, node),)
 
-    # The entity is an instance of every class given with sh:targetClass and sh:class (all of them must hold)
+    # The entity (or, for a property shape, each value) is an instance of every class given with sh:targetClass and
+    # sh:class (all of them must hold). The classes are added to the value that is returned (see typed), which is
+    # this node, or e.g. an entity of sh:node or a value of sh:in.
     classes = []
     for parameter in (SH.targetClass, URIRef(SH['class'])):
         classes += [c for c in parameter_values(shape_dictionary, parameter) if c not in classes]
-    for c in classes:
-        result.add((node, RDF.type, c))
     sh_class = classes[0] if classes else parent_class
+
+    def typed(value):
+        if value is not None and not isinstance(value, Literal):
+            for c in classes:
+                result.add((value, RDF.type, c))
+        return value
 
     # A shape can have several sh:xone, sh:and and sh:or lists, and each of them must hold, so each list is used.
     # (The lists are read from the copy, so that merging never changes the shared shape dictionaries.)
@@ -314,7 +320,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
                 forced = next((value for value in still_postponed if not _partners(value) & waiting_for),
                               still_postponed[0])
             postponed = still_postponed
-        return node
+        return typed(node)
 
     # if sh:in exists, return a value from it's predefined set. 
     # Check the parent shape so you dont add the same tuple multiple times.
@@ -330,20 +336,21 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
                           or [value for value in sh_in if not isinstance(value, Literal)])
             if not candidates:
                 return None
-        return random.choice(candidates)
+        return typed(random.choice(candidates))
 
     # if the property is described by a sh:node, generate a node and add it
     elif sh_node:
         n = dictionary.get(sh_node)
         if not n:
             raise Exception("The SHACL shape " + sh_node + " cannot be found!")
-        return dictionary_to_rdf_graph(n, sh_node, result, None, dictionary, [], sh_class, batchID,
-                                       ancestors=ancestors)
+        return typed(dictionary_to_rdf_graph(n, sh_node, result, None, dictionary, [], sh_class, batchID,
+                                             ancestors=ancestors))
 
-    # values reached through an inverse step are subjects of triples, so they cannot be literals: the value is the
-    # fresh node created above (with the classes of the shape, if any)
-    if _ends_with_inverse_step(shape_dictionary):
-        return node
+    # The value is the fresh node created above, with the classes of the shape: for an entity of a node shape (e.g.
+    # one without properties), for values that must be instances of a class (sh:class), and for values reached
+    # through an inverse step (they are subjects of triples, so they cannot be literals)
+    if shape_name or classes or _ends_with_inverse_step(shape_dictionary):
+        return typed(node)
 
     # check if a predefined value exists for this iteration
     value = generate_intuitive_value(sh_path, sh_class, dependencies)

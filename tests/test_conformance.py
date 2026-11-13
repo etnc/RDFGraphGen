@@ -267,8 +267,16 @@ CASES = [
          known_bug("only one of several sh:node shapes is applied; values must conform to all of them")),
     case("several-classes-on-node-shape", """ex:S a sh:NodeShape ; sh:targetClass ex:Thing ; sh:class ex:A, ex:B ;
             sh:property [ sh:path ex:p ] ."""),
-    case("class-on-property", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:class ex:Person ; sh:minCount 1 ] .",
-         known_bug("a literal is generated instead of an instance of the class")),
+    case("class-on-property", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:class ex:Person ; sh:minCount 1 ] ."),
+    case("class-on-property-with-node", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:author ; sh:node ex:T ; sh:class ex:Person ; sh:minCount 1 ] .
+            ex:T a sh:NodeShape ; sh:property [ sh:path ex:name ; sh:minCount 1 ] ."""),
+    case("class-on-property-with-in", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:p ; sh:in ( ex:alice ex:bob ) ; sh:class ex:Person ; sh:minCount 1 ] ."""),
+    case("class-on-property-with-nested-properties", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ;
+            sh:class ex:Person ; sh:minCount 2 ; sh:maxCount 2 ; sh:property [ sh:path ex:name ; sh:minCount 1 ] ] ."""),
+    case("node-shape-without-properties", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:node ex:T ; sh:minCount 1 ] .
+            ex:T a sh:NodeShape ; sh:class ex:C ."""),
     case("nodeKind-IRI", "ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:nodeKind sh:IRI ; sh:minCount 1 ] .",
          known_bug("sh:nodeKind is ignored")),
     case("two-shapes-targeting-one-class", """ex:A a sh:NodeShape ; sh:targetClass ex:C ; sh:property [ sh:path ex:p ; sh:datatype xsd:integer ] .

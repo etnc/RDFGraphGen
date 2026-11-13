@@ -1,6 +1,6 @@
 """Tests of the generation process: reproducibility, batching and parallelism, and per-batch validation."""
 import pytest
-from rdflib import Graph, Literal, SH, URIRef
+from rdflib import RDF, Graph, Literal, SH, URIRef
 
 from support import REPO_ROOT, load_shapes, parse_turtle
 
@@ -139,6 +139,26 @@ def test_inverse_paths_never_make_a_literal_the_subject_of_a_triple():
         graph = generate_graph(shapes, 10, seed=1)
     assert not any(isinstance(subject, Literal) for subject in graph.subjects())
     assert len(set(graph.subjects(URIRef("http://example.org/name"), None))) == 10  # other properties: generated
+
+
+def test_every_instance_of_a_class_is_used():
+    # the classes of a property are added to its values, not to nodes that are then not used
+    shapes = parse_turtle("""
+        ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:a ; sh:class ex:A ; sh:minCount 1 ] ;
+            sh:property [ sh:path ex:b ; sh:node ex:T ; sh:class ex:B ; sh:minCount 1 ] ;
+            sh:property [ sh:path ex:c ; sh:in ( ex:c1 ex:c2 ) ; sh:class ex:C ; sh:minCount 1 ] ;
+            sh:property [ sh:path ex:d ; sh:class ex:D ; sh:lessThan ex:e ] ;
+            sh:property [ sh:path ex:e ; sh:datatype xsd:integer ] .
+        ex:T a sh:NodeShape ; sh:property [ sh:path ex:name ; sh:minCount 1 ] .
+    """)
+    graph = generate_graph(shapes, 10, seed=1)
+    top_level = set(graph.subjects(SH.description, URIRef("http://example.org/S")))
+    used = set(graph.objects())
+    for instance in graph.subjects(RDF.type, None):
+        assert instance in top_level or instance in used, f"{instance} is typed but not the value of any property"
+    for cls in "ABC":
+        assert len(set(graph.subjects(RDF.type, URIRef("http://example.org/" + cls)))) >= 1
 
 
 def test_person_heuristics_also_apply_to_shapes_with_sh_class():
