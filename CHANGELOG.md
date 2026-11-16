@@ -36,11 +36,12 @@ All notable changes to RDFGraphGen are documented in this file.
 - The example shapes are named in the `ex:` namespace instead of the schema.org namespace, since the generated data links each entity to the shape it was generated from.
 - Dates are drawn uniformly from the days of their range, and decimal numbers have two decimal places (more if the range requires it), so the generated values differ from those of earlier versions with the same shapes.
 - `python-dateutil` is no longer a dependency.
+- `sh:or` uses one of its shapes, instead of combining a random number of them: shapes can contradict each other (e.g. two datatypes), and then the combined constraints satisfied none of them. Shapes with a property path that is not supported are not used.
 
 ### Fixed
 
 - The name/gender/email heuristics for `schema:Person` added their dependencies again for every generated entity, which slowed generation down as more entities were generated.
-- `sh:not` crashed the shape parser. It is now parsed, but not yet enforced during generation.
+- `sh:not` crashed the shape parser, and was not enforced. The generated data is now checked, and generated again until no negated shape holds; values of `sh:in` and `sh:hasValue` in a negated shape are avoided directly. A negated shape that holds for the values the generator always gives (e.g. that all values of a property are strings) cannot be avoided yet.
 - With `sh:equals` or `sh:disjoint`, the declaration of the other property was replaced by a bare one, so its constraints (e.g. its datatype and value range) were lost.
 - Generation never ended when a property waited for the values of another property (`sh:equals`, `sh:disjoint`, `sh:lessThan`, `sh:lessThanOrEquals`, or the `schema:Person` heuristics) that got no values, and `sh:disjoint` never ended once the other property had values. Such properties also got too many values.
 - A repeated parameter (e.g. `sh:class ex:A, ex:B`, several `sh:hasValue` values or several `sh:or` lists) kept only its last value; all values are now used. `sh:class` was ignored on a shape that also had `sh:targetClass`.
@@ -61,3 +62,4 @@ All notable changes to RDFGraphGen are documented in this file.
 - With several `sh:node` shapes on a property, or `sh:node` together with nested property shapes, only one of them was used. Each value now conforms to all of them, and is linked to each shape of `sh:node`.
 - Instances of a class did not conform to the other shapes that target the class (`sh:targetClass`), e.g. the entities of two shapes with the same target class, or the values of a property with `sh:class`. The shapes that target a class are now combined with the shape of every instance of the class that is generated. `sh:targetSubjectsOf` and `sh:targetObjectsOf` are not supported yet.
 - An entity of a node shape without properties was replaced by a literal, and classes given in the shapes of `sh:and`, `sh:or` and `sh:xone` were not added to the entity.
+- With `sh:xone`, the generated data could satisfy more than one shape, e.g. when a shape only limits a property (`sh:maxCount 1`) and holds for a node without it. The data is now checked, and generated again until exactly one shape of each list holds (up to 20 attempts, with a warning if none succeeds). A property generated after another one (e.g. with `sh:lessThan`) no longer combines two choices of `sh:or` or `sh:xone`.
