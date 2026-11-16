@@ -1,10 +1,11 @@
 import random
+import warnings
 from copy import deepcopy
 from rdflib import Graph, BNode, Literal
 
 from rdf_graph_gen.shacl_mapping_generator import *
 from rdf_graph_gen.value_generators import *
-from rdf_graph_gen.checker import has_node_kind
+from rdf_graph_gen.checker import conforms, exactly_one_holds, has_node_kind
 
 # Counters for the identifiers of generated entities (IRIs) and nested values (blank nodes). They are reset at
 # the start of every batch, so identifiers depend only on the batch, not on the process that generates it.
@@ -80,7 +81,7 @@ def _add_value(result, node, path, property_dictionary, value, batchID):
         if index == len(steps) - 1:
             target = value
         else:
-            target = BNode(f'{batchID}b{BNODE_COUNTER}')
+            target = _blank_node(batchID, BNODE_COUNTER)
             BNODE_COUNTER += 1
         result.add((target, predicate, current) if inverse else (current, predicate, target))
         current = target
@@ -214,12 +215,62 @@ def _earlier_entities(ancestors, value_shape, node):
     return [entity for entity in earlier if entity != node]
 
 
+def _entity_iri(batchID, number):
+    return URIRef(f'http://example.org/ns#Node{batchID}_{number}')
+
+
+def _blank_node(batchID, number):
+    # deterministic blank node identifiers (rdflib's default ones are random)
+    return BNode(f'{batchID}b{number}')
+
+
+def _remove_nodes_since(result, batchID, counters):
+    """Remove the nodes created since the counters (COUNTER, BNODE_COUNTER) had these values, with their triples."""
+    counter, bnode_counter = counters
+    nodes = [_entity_iri(batchID, n) for n in range(counter, COUNTER)]
+    nodes += [_blank_node(batchID, n) for n in range(bnode_counter, BNODE_COUNTER)]
+    for node in nodes:
+        result.remove((node, None, None))
+        result.remove((None, None, node))
+
+
+# sh:xone: the number of attempts to generate data for which exactly one choice of each list holds
+XONE_ATTEMPTS = 20
+
+
+def _generate_with_xone(xone_lists, generate, result, dictionary, batchID):
+    """
+    Generate data (an entity or a value, with generate()) for a shape with sh:xone. One choice of each list is used,
+    but the data can satisfy another choice as well (e.g. a choice that only limits a property, such as sh:maxCount 1,
+    holds for a node without that property). So the data is checked, and generated again until exactly one choice of
+    each list holds; the nodes of a failed attempt are removed first. After XONE_ATTEMPTS attempts, the last one is
+    kept, with a warning. Choices whose conformance the checker cannot tell are assumed not to break this.
+    """
+    for attempt in range(XONE_ATTEMPTS):
+        counters = (COUNTER, BNODE_COUNTER)
+        value = generate()
+        if value is None:
+            return None  # postponed, or no value can be generated
+        if all(exactly_one_holds(conforms(result, value, choice, dictionary) for choice in choices) is not False
+               for choices in xone_lists):
+            return value
+        if attempt < XONE_ATTEMPTS - 1:
+            _remove_nodes_since(result, batchID, counters)
+    warnings.warn(f"No data was found for which exactly one shape of each sh:xone list holds, after {XONE_ATTEMPTS} "
+                  f"attempts.", stacklevel=2)
+    return value
+
+
 def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictionary,
                             property_pair_constraint_components_parent, parent_class, batchID, final_attempt=False,
-                            ancestors=(), node_kind=None):
+                            ancestors=(), node_kind=None, xone_checked=False):
     # initialization
     property_pair_constraint_components = []
     global COUNTER, BNODE_COUNTER
+
+    # the shape as it was given: a property that is postponed is generated again from it later (with new choices of
+    # sh:or and sh:xone, which are combined with a copy of it below)
+    postponed_shape = shape_dictionary
 
     # sh:node on a node shape: its entities conform to the shapes of sh:node as well
     shape_dictionary = _with_node_shapes(shape_dictionary, dictionary)
@@ -231,6 +282,13 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
             or not (parameter_values(shape_dictionary, SH.node) or shape_dictionary.get(URIRef(SH + "in")))):
         shape_dictionary, class_shapes = _with_class_shapes(shape_dictionary, dictionary, shape_name)
         shape_dictionary = _with_node_shapes(shape_dictionary, dictionary)
+
+    # sh:xone: exactly one choice of each list must hold; the generated data is checked (see _generate_with_xone)
+    xone_lists = parameter_values(shape_dictionary, URIRef(SH['xone']))
+    if xone_lists and not xone_checked:
+        return _generate_with_xone(xone_lists, lambda: dictionary_to_rdf_graph(
+            postponed_shape, shape_name, result, parent, dictionary, property_pair_constraint_components_parent,
+            parent_class, batchID, final_attempt, ancestors, node_kind, xone_checked=True), result, dictionary, batchID)
 
     # A shape can have several sh:xone, sh:and and sh:or lists, and each of them must hold, so each list is used.
     # (The lists are read from the copy, so that merging never changes the shared shape dictionaries.)
@@ -275,11 +333,10 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     # Entities of a named shape are IRIs, and other nodes (e.g. values with nested properties) blank nodes, unless
     # the node kind requires the other kind
     if (shape_name or kinds & {SH.IRI, SH.IRIOrLiteral}) and not blank:
-        node = URIRef(f'http://example.org/ns#Node{batchID}_{COUNTER}')
+        node = _entity_iri(batchID, COUNTER)
         COUNTER += 1
     else:
-        # deterministic blank node identifiers (rdflib's default ones are random)
-        node = BNode(f'{batchID}b{BNODE_COUNTER}')
+        node = _blank_node(batchID, BNODE_COUNTER)
         BNODE_COUNTER += 1
     if shape_name:
         # as SH.description add the name of the shape that this node was generated from
@@ -313,7 +370,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         if not equal_values:
             if final_attempt:
                 return None  # the other property has no values, so this one must not have any either
-            property_pair_constraint_components_parent.append(shape_dictionary)
+            property_pair_constraint_components_parent.append(postponed_shape)
             return None
         # the values of the other property, one by one (see _number_of_equal_values); this takes precedence over
         # the other constraints of this property, which the values must satisfy anyway
@@ -325,7 +382,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     if sh_disjoint:
         sh_disjoint = list(result.objects(parent, sh_disjoint))
         if not sh_disjoint and not final_attempt:
-            property_pair_constraint_components_parent.append(shape_dictionary)
+            property_pair_constraint_components_parent.append(postponed_shape)
             return None
     disjoint_values = sh_disjoint or []
 
@@ -334,7 +391,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     if sh_less_than:
         sh_less_than = [o for o in result.objects(parent, sh_less_than)]
         if len(sh_less_than) == 0 and not final_attempt:
-            property_pair_constraint_components_parent.append(shape_dictionary)
+            property_pair_constraint_components_parent.append(postponed_shape)
             return None
 
     # get the dependent property for sh:lessThanOrEquals
@@ -342,7 +399,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     if sh_less_than_or_equals:
         sh_less_than_or_equals = [o for o in result.objects(parent, sh_less_than_or_equals)]
         if len(sh_less_than_or_equals) == 0 and not final_attempt:
-            property_pair_constraint_components_parent.append(shape_dictionary)
+            property_pair_constraint_components_parent.append(postponed_shape)
             return None
 
     # Define dependencies for the dictionary, so the generated result makes sense
@@ -355,7 +412,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         if len(val) == 0:
             if final_attempt:
                 continue  # generate without this dependency
-            property_pair_constraint_components_parent.append(shape_dictionary)
+            property_pair_constraint_components_parent.append(postponed_shape)
             return None
         dependencies[dep] = val
 

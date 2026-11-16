@@ -141,6 +141,22 @@ def test_inverse_paths_never_make_a_literal_the_subject_of_a_triple():
     assert len(set(graph.subjects(URIRef("http://example.org/name"), None))) == 10  # other properties: generated
 
 
+def test_failed_attempts_for_xone_leave_no_data():
+    # entities that are generated again for sh:xone: the nodes of the failed attempts are removed
+    shapes = parse_turtle("""
+        ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:member ; sh:minCount 1 ; sh:maxCount 1 ;
+                          sh:property [ sh:path ex:name ; sh:minCount 1 ] ] ;
+            sh:xone ( [ sh:property [ sh:path ex:a ; sh:minCount 1 ] ] [ sh:property [ sh:path ex:b ; sh:maxCount 1 ] ] ) .
+    """)
+    graph = generate_graph(shapes, 30, seed=1)
+    entities = set(graph.subjects(SH.description, URIRef("http://example.org/S")))
+    assert len(entities) == 30
+    # every node is an entity or a value of a property of another node (no leftovers of failed attempts)
+    assert all(subject in entities or subject in set(graph.objects()) for subject in graph.subjects())
+    assert len(set(graph.subjects(URIRef("http://example.org/name"), None))) == 30
+
+
 def test_every_instance_of_a_class_is_used():
     # the classes of a property are added to its values, not to nodes that are then not used
     shapes = parse_turtle("""

@@ -121,9 +121,17 @@ def test_what_the_checker_does_not_check_is_unknown(constraints, data):
 
 
 def test_the_checker_agrees_with_pyshacl_on_generated_data():
-    # generated entities of shapes with logical constraints, some of which do not conform (sh:xone, sh:not)
+    # entities generated from a looser shape (all properties optional), so that some of them conform to the shape
+    # with logical constraints and some do not
     from rdf_graph_gen.rdf_graph_generator import generate_graph
     from rdflib import SH
+    loose = parse_turtle("""
+        ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:a ; sh:minCount 0 ; sh:maxCount 1 ] ;
+            sh:property [ sh:path ex:b ; sh:minCount 0 ; sh:maxCount 2 ] ;
+            sh:property [ sh:path ex:c ; sh:minCount 0 ; sh:maxCount 1 ] ;
+            sh:property [ sh:path ex:p ; sh:minCount 1 ; sh:maxCount 1 ; sh:in (1 2 3 4 5 6 "x") ] .
+    """)
     shapes = parse_turtle("""
         ex:S a sh:NodeShape ;
             sh:xone ( [ sh:property [ sh:path ex:a ; sh:minCount 1 ] ] [ sh:property [ sh:path ex:b ; sh:maxCount 1 ] ] ) ;
@@ -132,7 +140,7 @@ def test_the_checker_agrees_with_pyshacl_on_generated_data():
             sh:not [ sh:property [ sh:path ex:c ; sh:minCount 1 ] ] .
     """)
     dictionary = generate_dictionary_from_shapes_graph(shapes)
-    graph = generate_graph(shapes, 30, seed=1)
+    graph = generate_graph(loose, 30, seed=1)
     shape = dictionary[URIRef(EX + "S")]
     results = {}
     for entity in graph.subjects(SH.description, URIRef(EX + "S")):

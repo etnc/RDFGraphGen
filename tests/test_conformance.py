@@ -408,6 +408,19 @@ CASES = [
             [ sh:property [ sh:path ex:givenName ; sh:minCount 1 ] ; sh:property [ sh:path ex:familyName ; sh:minCount 1 ] ]
             [ sh:path ex:fullName ; sh:minCount 1 ] ) ."""),
     # several property shapes with the same path, and branches combined with a shape: all of them must hold
+    # sh:xone: exactly one choice holds, also when another choice holds without data of its own
+    case("xone-with-a-choice-that-holds-by-default", """ex:S a sh:NodeShape ; sh:xone (
+            [ sh:property [ sh:path ex:a ; sh:minCount 1 ] ] [ sh:property [ sh:path ex:b ; sh:maxCount 1 ] ] ) ."""),
+    case("xone-on-values-with-overlapping-choices", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:minCount 1 ;
+            sh:maxCount 1 ; sh:xone ( [ sh:datatype xsd:integer ; sh:maxInclusive 5 ] [ sh:in (1 2 3 "x") ] ) ] ."""),
+    case("xone-with-a-postponed-property", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:hi ; sh:datatype xsd:integer ; sh:minInclusive 10 ; sh:maxInclusive 20 ] ;
+            sh:property [ sh:path ex:lo ; sh:datatype xsd:integer ; sh:lessThan ex:hi ; sh:minCount 1 ; sh:maxCount 1 ;
+                          sh:xone ( [ sh:maxInclusive 5 ] [ sh:in (1 2 3) ] ) ] ."""),
+    case("xone-of-nested-entities", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:member ; sh:node ex:T ; sh:minCount 2 ] .
+            ex:T a sh:NodeShape ; sh:xone ( [ sh:property [ sh:path ex:a ; sh:minCount 1 ] ]
+                                            [ sh:property [ sh:path ex:b ; sh:maxCount 0 ] ] ) ;
+                sh:property [ sh:path ex:b ; sh:minCount 0 ; sh:maxCount 1 ] ."""),
     case("two-property-shapes-with-the-same-path", """ex:S a sh:NodeShape ;
             sh:property [ sh:path ex:p ; sh:datatype xsd:integer ; sh:minInclusive 40 ; sh:minCount 3 ] ;
             sh:property [ sh:path ex:p ; sh:minInclusive 1 ; sh:maxInclusive 45 ; sh:maxCount 3 ] ."""),
