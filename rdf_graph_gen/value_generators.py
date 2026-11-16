@@ -12,7 +12,7 @@ import re
 from collections import namedtuple
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
-from rdf_graph_gen.shacl_mapping_generator import SCH
+from rdf_graph_gen.shacl_mapping_generator import SCH, schema_name, schema_namespace
 from importlib.resources import files
 import warnings
 
@@ -59,8 +59,9 @@ dataset_dictionary = {'streetAddress': get_array_from_csv(get_path("street_name.
                       }
 
 
-def getBookFormat():
-    return URIRef(SCH[random.choice(["AudiobookFormat", "EBook", "GraphicNovel", "Hardcover", "Paperback"])])
+def getBookFormat(sch=SCH):
+    # a schema:BookFormatType, in the schema.org namespace of the shape (http:// or https://)
+    return URIRef(sch[random.choice(["AudiobookFormat", "EBook", "GraphicNovel", "Hardcover", "Paperback"])])
 
 
 # The value ranges of the XSD integer datatypes (None: unbounded)
@@ -778,27 +779,39 @@ def generate_default_value(existing_values, datatype, min_exclusive, min_inclusi
 """
 
 
+def _is_female(gender):
+    return gender in ('female', 'f', 'fem') or schema_name(gender) == "Female"
+
+
+def _is_male(gender):
+    return gender in ('male', 'm') or schema_name(gender) == "Male"
+
+
 def generate_intuitive_value(sh_path, sh_class, dependencies):
+    # schema.org classes and properties, with http:// or https://; the properties that a value depends on are in the
+    # namespace of the property
+    cls, prop = schema_name(sh_class), schema_name(sh_path)
+    sch = schema_namespace(sh_path) or SCH
 
     # Handle cases for Person class
-    if sh_class == SCH.Person:
-        gender = URIRef(SCH.gender)
-        given_name = URIRef(SCH.givenName)
-        family_name = URIRef(SCH.familyName)
-        name = URIRef(SCH.name)
+    if cls == "Person":
+        gender = URIRef(sch.gender)
+        given_name = URIRef(sch.givenName)
+        family_name = URIRef(sch.familyName)
+        name = URIRef(sch.name)
 
-        if sh_path == SCH.additionalName or sh_path == SCH.givenName:
+        if prop in ("additionalName", "givenName"):
             # Generate predefined value based on gender dependency
             gender = str(dependencies.get(gender, ["none"])[0])
-            if gender in (SCH.Female, 'female', 'f', 'fem'):
+            if _is_female(gender):
                 return Literal(random.choice(dataset_dictionary.get('givenNameFemale')))
-            elif gender in (SCH.Male, 'male', 'm'):
+            elif _is_male(gender):
                 return Literal(random.choice(dataset_dictionary.get('givenNameMale')))
             else:
                 return Literal(
                     random.choice(dataset_dictionary.get('givenNameMale') + dataset_dictionary.get('givenNameFemale')))
 
-        if sh_path == SCH.email:
+        if prop == "email":
             given_name = dependencies.get(given_name)
             family_name = dependencies.get(family_name)
             name = dependencies.get(name)
@@ -815,56 +828,56 @@ def generate_intuitive_value(sh_path, sh_class, dependencies):
                 return Literal(given_name[0].lower() + "_" + str(random.randrange(100, 1000)) + "@gmail.com")
 
         # Handle other properties for Person class
-        if sh_path == SCH.familyName:
+        if prop == "familyName":
             return Literal(random.choice(dataset_dictionary.get('familyName')))
-        if sh_path == SCH.name:
+        if prop == "name":
             gender = str(dependencies.get(gender, ["none"])[0])
-            if gender in (SCH.Female, 'female', 'f', 'fem'):
+            if _is_female(gender):
                 return Literal(random.choice(dataset_dictionary.get('givenNameFemale')) + " " + random.choice(
                     dataset_dictionary.get('familyName')))
-            elif gender in (SCH.Male, 'male', 'm'):
+            elif _is_male(gender):
                 return Literal(random.choice(dataset_dictionary.get('givenNameMale')) + " " + random.choice(
                     dataset_dictionary.get('familyName')))
             else:
                 return Literal(
                     random.choice(dataset_dictionary.get('givenNameMale') + dataset_dictionary.get('givenNameFemale')) +
                     " " + random.choice(dataset_dictionary.get('familyName')))
-        if sh_path == SCH.streetAddress:
+        if prop == "streetAddress":
             return Literal(
                 "no. " + str(random.randint(1, 100)) + " " + random.choice(dataset_dictionary.get('streetAddress')))
-        if sh_path == SCH.gender:
+        if prop == "gender":
             return Literal(random.choice(dataset_dictionary.get('gender')))
-        if sh_path == SCH.jobTitle:
+        if prop == "jobTitle":
             return Literal(random.choice(dataset_dictionary.get('jobTitle')))
 
     # Handle cases for Book class
-    elif sh_class == SCH.Book:
+    elif cls == "Book":
         # Handle properties for Book class
-        if sh_path == SCH.name:
+        if prop == "name":
             return Literal(random.choice(dataset_dictionary.get("bookTitle")))
-        if sh_path == SCH.award:
+        if prop == "award":
             return Literal(random.choice(dataset_dictionary.get('bookAward')))
-        if sh_path == SCH.genre:
+        if prop == "genre":
             return Literal(random.choice(dataset_dictionary.get('bookGenre')))
-        if sh_path == SCH.bookEdition:
-            return getBookFormat()
+        if prop == "bookEdition":
+            return getBookFormat(sch)
 
     # Handle cases for Movie class
-    elif sh_class == SCH.Movie:
+    elif cls == "Movie":
         # Handle properties for Movie class
-        if sh_path == SCH.name:
+        if prop == "name":
             return Literal(random.choice(dataset_dictionary.get("movieTitle")))
-        if sh_path == SCH.award:
+        if prop == "award":
             return Literal(random.choice(dataset_dictionary.get('movieAward')))
-        if sh_path == SCH.genre:
+        if prop == "genre":
             return Literal(random.choice(dataset_dictionary.get('movieGenre')))
 
     # Handle cases for TVSeries class
-    elif sh_class == SCH.TVSeries:
+    elif cls == "TVSeries":
         # Handle properties for TVSeries class
-        if sh_path == SCH.name:
+        if prop == "name":
             return Literal(random.choice(dataset_dictionary.get("tvSeriesTitle")))
-        if sh_path == SCH.genre:
+        if prop == "genre":
             return Literal(random.choice(dataset_dictionary.get('movieGenre')))
 
     return None

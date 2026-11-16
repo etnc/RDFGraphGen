@@ -525,7 +525,6 @@ def test_schema_org_given_names_come_from_the_name_lists():
     assert names and names <= KNOWN_GIVEN_NAMES
 
 
-@known_bug("the realistic-value heuristics only recognise http://schema.org/, not https://schema.org/")
 def test_https_schema_org_given_names_come_from_the_name_lists():
     names = _generated_given_names("https://schema.org/")
     assert names and names <= KNOWN_GIVEN_NAMES

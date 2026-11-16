@@ -177,16 +177,18 @@ def test_every_instance_of_a_class_is_used():
         assert len(set(graph.subjects(RDF.type, URIRef("http://example.org/" + cls)))) >= 1
 
 
-def test_person_heuristics_also_apply_to_shapes_with_sh_class():
-    # Shapes used via sh:node typically declare their class with sh:class instead of sh:targetClass
-    shapes = parse_turtle("""
-        ex:AuthorShape a sh:NodeShape ; sh:class schema:Person ;
-            sh:property [ sh:path schema:givenName ; sh:minCount 1 ; sh:maxCount 1 ] ;
-            sh:property [ sh:path schema:familyName ; sh:minCount 1 ; sh:maxCount 1 ] ;
-            sh:property [ sh:path schema:email ; sh:minCount 1 ; sh:maxCount 1 ] .
+@pytest.mark.parametrize("schema", ["http://schema.org/", "https://schema.org/"])
+def test_person_heuristics_also_apply_to_shapes_with_sh_class(schema):
+    # Shapes used via sh:node typically declare their class with sh:class instead of sh:targetClass; schema.org terms
+    # can be written with http:// or https://
+    shapes = parse_turtle(f"""
+        @prefix s: <{schema}> .
+        ex:AuthorShape a sh:NodeShape ; sh:class s:Person ;
+            sh:property [ sh:path s:givenName ; sh:minCount 1 ; sh:maxCount 1 ] ;
+            sh:property [ sh:path s:familyName ; sh:minCount 1 ; sh:maxCount 1 ] ;
+            sh:property [ sh:path s:email ; sh:minCount 1 ; sh:maxCount 1 ] .
     """)
     graph = generate_graph(shapes, 10, seed=1)
-    schema = "http://schema.org/"
     people = set(graph.subjects(URIRef(schema + "email"), None))
     assert len(people) == 10
     for person in people:
@@ -194,6 +196,18 @@ def test_person_heuristics_also_apply_to_shapes_with_sh_class():
         family = str(graph.value(person, URIRef(schema + "familyName")))
         # the e-mail address is built from the generated name
         assert str(graph.value(person, URIRef(schema + "email"))) == f"{given.lower()}_{family.lower()}@gmail.com"
+
+
+@pytest.mark.parametrize("schema", ["http://schema.org/", "https://schema.org/"])
+def test_realistic_iris_are_in_the_schema_org_namespace_of_the_shape(schema):
+    shapes = parse_turtle(f"""
+        @prefix s: <{schema}> .
+        ex:BookShape a sh:NodeShape ; sh:targetClass s:Book ; sh:property [ sh:path s:bookEdition ; sh:minCount 1 ] .
+    """)
+    formats = set(generate_graph(shapes, 20, seed=1).objects(None, URIRef(schema + "bookEdition")))
+    assert formats and all(str(f).startswith(schema) for f in formats)
+    assert {str(f)[len(schema):] for f in formats} <= {"AudiobookFormat", "EBook", "GraphicNovel", "Hardcover",
+                                                       "Paperback"}
 
 
 def test_person_dependencies_are_added_once():

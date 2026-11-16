@@ -4,6 +4,21 @@ from rdflib import SH, RDF, BNode, URIRef, Namespace, Literal
 
 SCH = Namespace("http://schema.org/")
 
+# Schema.org terms are written with http:// or https:// (schema.org recommends https://); the heuristics for
+# realistic values recognise both
+SCHEMA_NAMESPACES = (Namespace("http://schema.org/"), Namespace("https://schema.org/"))
+
+
+def schema_namespace(term):
+    """The schema.org namespace (http:// or https://) of a term, or None if it is not a schema.org term."""
+    return next((namespace for namespace in SCHEMA_NAMESPACES if str(term or "").startswith(namespace)), None)
+
+
+def schema_name(term):
+    """The name of a schema.org term (e.g. givenName for schema:givenName), whichever namespace it uses; else None."""
+    namespace = schema_namespace(term)
+    return None if namespace is None else str(term)[len(namespace):]
+
 # Parameters that a shape can have at most one value for (SHACL syntax rules, as in the W3C SHACL-SHACL shapes).
 # Other parameters, such as sh:class, sh:node, sh:hasValue, sh:not, sh:and, sh:or and sh:xone, can have several
 # values in one shape, and each value is a separate constraint that must hold.
@@ -600,13 +615,14 @@ def define_dependencies(dictionary):
     if t_class and properties:
 
         # Check if the target class is 'Person'
-        if t_class == SCH.Person:
-            # Define URIs for specific properties
-            gender = URIRef(SCH.gender)
-            given_name = URIRef(SCH.givenName)
-            family_name = URIRef(SCH.familyName)
-            name = URIRef(SCH.name)
-            email = URIRef(SCH.email)
+        if schema_name(t_class) == "Person":
+            # Define URIs for specific properties (in the namespace of the class: http:// or https://)
+            sch = schema_namespace(t_class)
+            gender = URIRef(sch.gender)
+            given_name = URIRef(sch.givenName)
+            family_name = URIRef(sch.familyName)
+            name = URIRef(sch.name)
+            email = URIRef(sch.email)
 
             # Retrieve dictionaries for each property
             gender_dict = properties.get(gender)
