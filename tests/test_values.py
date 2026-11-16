@@ -66,6 +66,14 @@ def test_constraints_that_no_value_can_satisfy_produce_a_warning_and_no_value(da
         assert generated_values(datatype, constraints, count=1, scale=1) == []
 
 
+def test_discarded_candidates_are_not_logged(caplog):
+    # values generated from a pattern that are not valid values of the datatype are discarded; rdflib logs an error
+    # with a traceback for each of them unless that is switched off
+    with pytest.warns(UserWarning, match="No http://www.w3.org/2001/XMLSchema#integer value that matches"):
+        generated_values("xsd:integer", 'sh:pattern "^[a-z]+$" ;', count=1, scale=1)
+    assert not [record for record in caplog.records if record.name.startswith("rdflib")]
+
+
 def test_values_from_a_pattern_still_match_it_when_the_data_is_read_again():
     # rdflib normalizes lexical forms when it reads data (e.g. 04821 becomes 4821), so values from a pattern must
     # be in canonical form

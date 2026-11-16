@@ -1,6 +1,7 @@
 import base64
 import csv
 import json
+import logging
 import math
 import random
 import string
@@ -496,6 +497,19 @@ def generate_string(existing_values, min_length, max_length, pattern):
     return None
 
 
+def _candidate_literal(text, datatype):
+    """
+    A literal with a generated lexical form that may not be valid for the datatype (such candidates are checked and
+    discarded). rdflib logs an error with a traceback for each invalid one, so its logging is off while it is created.
+    """
+    logger = logging.getLogger("rdflib.term")
+    disabled, logger.disabled = logger.disabled, True
+    try:
+        return Literal(text, datatype=datatype)
+    finally:
+        logger.disabled = disabled
+
+
 def _within(number, lower, upper):
     """Whether a number is within the bounds given by _bounds."""
     if lower is not None and (number < lower[0] or (lower[1] and number == lower[0])):
@@ -531,7 +545,7 @@ def generate_with_pattern(existing_values, datatype, pattern, min_length, max_le
     parsed = parse(pattern)
     for _ in range(200):
         text = _randone(parsed)
-        value = Literal(text, datatype=datatype)
+        value = _candidate_literal(text, datatype)
         number = None if value.ill_typed or str(value) != text else to_number(value)
         if (number is not None and not isinstance(number, Literal) and _within(number, lower, upper)
                 and acceptable(value)):
@@ -627,8 +641,9 @@ def generate_typed_string(existing_values, datatype, min_length, max_length, pat
         text = lexical_form()
         if text is not None and _has_length(text, min_length, max_length):
             found_length = True
-            if Literal(text, datatype=datatype).toPython() not in existing_values:
-                return Literal(text, datatype=datatype)
+            value = _candidate_literal(text, datatype)
+            if value.toPython() not in existing_values:
+                return value
     if not found_length and (min_length is not None or max_length is not None):
         warnings.warn(f"No {datatype} value with a length {_length_range(min_length, max_length)} was found, so no "
                       f"value is generated.", stacklevel=3)
