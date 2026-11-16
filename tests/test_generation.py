@@ -195,7 +195,7 @@ def test_person_heuristics_also_apply_to_shapes_with_sh_class(schema):
         given = str(graph.value(person, URIRef(schema + "givenName")))
         family = str(graph.value(person, URIRef(schema + "familyName")))
         # the e-mail address is built from the generated name
-        assert str(graph.value(person, URIRef(schema + "email"))) == f"{given.lower()}_{family.lower()}@gmail.com"
+        assert str(graph.value(person, URIRef(schema + "email"))) == f"{given.lower()}_{family.lower()}@example.com"
 
 
 @pytest.mark.parametrize("schema", ["http://schema.org/", "https://schema.org/"])

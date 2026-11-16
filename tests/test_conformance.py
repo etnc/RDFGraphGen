@@ -113,7 +113,7 @@ CASES = [
     # sh:minLength and sh:maxLength: the length of the lexical form of any value
     case("pattern-with-length", 'ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:pattern "^[a-z]+$" ; sh:maxLength 3 ] .'),
     case("default-email-pattern-with-length", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:email ;
-            sh:maxLength 16 ; sh:minCount 2 ; sh:maxCount 2 ] ."""),
+            sh:maxLength 20 ; sh:minCount 2 ; sh:maxCount 2 ] ."""),
     case("pattern-with-minimum-and-maximum-length", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:string ;
             sh:pattern "^[a-z]*$" ; sh:minLength 4 ; sh:maxLength 5 ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
     case("string-with-maximum-length-zero", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:string ;

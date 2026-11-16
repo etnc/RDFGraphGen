@@ -59,6 +59,11 @@ dataset_dictionary = {'streetAddress': get_array_from_csv(get_path("street_name.
                       }
 
 
+# The domain of generated e-mail addresses: example.com is reserved for examples (RFC 2606), so a generated
+# address never belongs to a real person
+EMAIL_DOMAIN = "example.com"
+
+
 def getBookFormat(sch=SCH):
     # a schema:BookFormatType, in the schema.org namespace of the shape (http:// or https://)
     return URIRef(sch[random.choice(["AudiobookFormat", "EBook", "GraphicNovel", "Hardcover", "Paperback"])])
@@ -697,8 +702,8 @@ def generate_default_value(existing_values, datatype, min_exclusive, min_inclusi
 
     # Apply default patterns for certain property paths
     elif 'email' in path and not pattern:
-        # e.g. lena.ross42@gmail.com (a dot is written as [.], since . matches any character)
-        pattern = '^[a-z]{3,10}([._][a-z]{3,10})?[0-9]{0,2}@gmail[.]com$'
+        # e.g. lena.ross42@example.com (a dot is written as [.], since . matches any character)
+        pattern = '^[a-z]{3,10}([._][a-z]{3,10})?[0-9]{0,2}@' + EMAIL_DOMAIN.replace('.', '[.]') + '$'
     elif 'telephone' in path and not pattern:
         # e.g. (339) 217-3216 or 847-135-0049
         pattern = '^([(][0-9]{3}[)] |[0-9]{3}-)[0-9]{3}-[0-9]{4}$'
@@ -820,14 +825,14 @@ def generate_intuitive_value(sh_path, sh_class, dependencies):
 
             # Generate email based on given_name, family_name, or name dependencies
             if given_name and family_name:
-                return Literal(given_name[0].lower() + "_" + family_name[0].lower() + "@gmail.com")
+                return Literal(given_name[0].lower() + "_" + family_name[0].lower() + "@" + EMAIL_DOMAIN)
             elif name:
                 email = ""
                 for p in name[0].split(' '):
                     email = email + p.lower()
-                return Literal(email + "@gmail.com")
+                return Literal(email + "@" + EMAIL_DOMAIN)
             elif given_name:
-                return Literal(given_name[0].lower() + "_" + str(random.randrange(100, 1000)) + "@gmail.com")
+                return Literal(given_name[0].lower() + "_" + str(random.randrange(100, 1000)) + "@" + EMAIL_DOMAIN)
 
         # Handle other properties for Person class
         if prop == "familyName":

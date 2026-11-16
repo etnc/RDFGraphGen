@@ -46,7 +46,7 @@ def test_values_have_the_lexical_form_of_their_datatype(datatype, lexical_form):
 
 
 @pytest.mark.parametrize("prop, form", [
-    ("email", r"[a-z]{3,10}([._][a-z]{3,10})?[0-9]{0,2}@gmail\.com"),
+    ("email", r"[a-z]{3,10}([._][a-z]{3,10})?[0-9]{0,2}@example\.com"),
     ("telephone", r"(\([0-9]{3}\) |[0-9]{3}-)[0-9]{3}-[0-9]{4}"),
 ])
 def test_values_from_the_default_patterns_are_well_formed(prop, form):
