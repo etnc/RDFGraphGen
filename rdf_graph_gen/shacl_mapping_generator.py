@@ -127,7 +127,8 @@ def merge_shape_dictionaries(target, source):
     - bounds (counts, lengths, value ranges): the strictest value
     - sh:in: the values that are in both lists; sh:languageIn: the language tags that both lists allow
     - nested property shapes ("properties"): merged per path, in the same way
-    - all values of every parameter are kept ("values"), e.g. all classes and all sh:hasValue values
+    - all values of every parameter are kept ("values"), e.g. all classes and all sh:hasValue values, and all
+      negated shapes of sh:not
     - any other parameter: the value of `target` is kept, if it has one (if the values differ, they cannot both
       hold anyway)
     """
@@ -148,6 +149,9 @@ def merge_shape_dictionaries(target, source):
             else:
                 kept = target.setdefault("depends_on", [])
                 kept.extend(v for v in value if v not in kept)
+        elif key == SH["not"]:
+            # every negated shape must not hold (a new list, so that the lists of the shapes are not changed)
+            target[key] = list(target.get(key) or []) + [shape for shape in value if shape not in (target.get(key) or [])]
         elif target.get(key) is None:
             target[key] = value
         elif key in LOWER_BOUND_PARAMETERS or key in UPPER_BOUND_PARAMETERS:

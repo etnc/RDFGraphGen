@@ -442,8 +442,25 @@ CASES = [
             sh:xone ( [ sh:property [ sh:path ex:a ; sh:minCount 1 ] ] [ sh:property [ sh:path ex:b ; sh:minCount 1 ] ] ) ;
             sh:xone ( [ sh:property [ sh:path ex:c ; sh:minCount 1 ] ] [ sh:property [ sh:path ex:d ; sh:minCount 1 ] ] ) ."""),
     case("not", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:integer ;
-            sh:minInclusive 1 ; sh:maxInclusive 3 ; sh:not [ sh:in (1 2) ] ] .""",
-         known_bug("sh:not is not enforced")),
+            sh:minInclusive 1 ; sh:maxInclusive 3 ; sh:not [ sh:in (1 2) ] ] ."""),
+    case("not-leaves-one-value-of-a-range", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:integer ;
+            sh:minInclusive 1 ; sh:maxInclusive 10 ; sh:not [ sh:in (1 2 3 4 5 6 7 8 9) ] ; sh:minCount 1 ; sh:maxCount 1 ] ."""),
+    case("not-hasValue", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:in ("a" "b") ;
+            sh:not [ sh:hasValue "a" ] ; sh:minCount 1 ; sh:maxCount 1 ] ."""),
+    case("not-pattern", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:string ;
+            sh:not [ sh:pattern "^[a-m]" ] ; sh:minCount 2 ; sh:maxCount 2 ] ."""),
+    case("not-on-a-node-shape-forbidding-an-optional-property", """ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:p ; sh:minCount 0 ; sh:maxCount 1 ] ; sh:property [ sh:path ex:q ; sh:minCount 1 ] ;
+            sh:not [ sh:property [ sh:path ex:p ; sh:minCount 1 ] ] ."""),
+    case("not-of-two-combined-shapes", """ex:S a sh:NodeShape ; sh:node ex:T ;
+            sh:property [ sh:path ex:a ; sh:minCount 0 ; sh:maxCount 1 ] ; sh:property [ sh:path ex:b ; sh:minCount 0 ; sh:maxCount 1 ] ;
+            sh:property [ sh:path ex:c ; sh:minCount 1 ] ; sh:not [ sh:property [ sh:path ex:a ; sh:minCount 1 ] ] .
+            ex:T a sh:NodeShape ; sh:not [ sh:property [ sh:path ex:b ; sh:minCount 1 ] ] ."""),
+    case("not-that-the-usual-values-satisfy", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:minCount 1 ] ;
+            sh:not [ sh:property [ sh:path ex:p ; sh:datatype xsd:string ] ] .""",
+         known_bug("the negated shape holds for the values the generator always gives (strings); making the data "
+                   "break a shape on purpose is not supported yet"),
+         pytest.mark.filterwarnings("ignore:No data was found")),
 
     # other
     case("closed", """ex:S a sh:NodeShape ; sh:targetClass ex:C ; sh:closed true ; sh:ignoredProperties ( rdf:type ) ;

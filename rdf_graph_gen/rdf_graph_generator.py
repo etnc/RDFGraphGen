@@ -234,36 +234,39 @@ def _remove_nodes_since(result, batchID, counters):
         result.remove((None, None, node))
 
 
-# sh:xone: the number of attempts to generate data for which exactly one choice of each list holds
-XONE_ATTEMPTS = 20
+# sh:xone and sh:not: the number of attempts to generate data for which exactly one choice of each sh:xone list holds,
+# and no negated shape of sh:not
+CHECKED_ATTEMPTS = 20
 
 
-def _generate_with_xone(xone_lists, generate, result, dictionary, batchID):
+def _generate_checked(xone_lists, negated_shapes, generate, result, dictionary, batchID):
     """
-    Generate data (an entity or a value, with generate()) for a shape with sh:xone. One choice of each list is used,
-    but the data can satisfy another choice as well (e.g. a choice that only limits a property, such as sh:maxCount 1,
-    holds for a node without that property). So the data is checked, and generated again until exactly one choice of
-    each list holds; the nodes of a failed attempt are removed first. After XONE_ATTEMPTS attempts, the last one is
-    kept, with a warning. Choices whose conformance the checker cannot tell are assumed not to break this.
+    Generate data (an entity or a value, with generate()) for a shape with sh:xone or sh:not. For sh:xone, one choice
+    of each list is used, but the data can satisfy another choice as well (e.g. a choice that only limits a property,
+    such as sh:maxCount 1, holds for a node without that property); and the data can satisfy a negated shape of
+    sh:not. So the data is checked, and generated again until exactly one choice of each sh:xone list holds and no
+    negated shape; the nodes of a failed attempt are removed first. After CHECKED_ATTEMPTS attempts, the last one is
+    kept, with a warning. Shapes whose conformance the checker cannot tell are assumed not to break this.
     """
-    for attempt in range(XONE_ATTEMPTS):
+    for attempt in range(CHECKED_ATTEMPTS):
         counters = (COUNTER, BNODE_COUNTER)
         value = generate()
         if value is None:
             return None  # postponed, or no value can be generated
-        if all(exactly_one_holds(conforms(result, value, choice, dictionary) for choice in choices) is not False
-               for choices in xone_lists):
+        if (all(exactly_one_holds(conforms(result, value, choice, dictionary) for choice in choices) is not False
+                for choices in xone_lists)
+                and all(conforms(result, value, negated, dictionary) is not True for negated in negated_shapes)):
             return value
-        if attempt < XONE_ATTEMPTS - 1:
+        if attempt < CHECKED_ATTEMPTS - 1:
             _remove_nodes_since(result, batchID, counters)
-    warnings.warn(f"No data was found for which exactly one shape of each sh:xone list holds, after {XONE_ATTEMPTS} "
-                  f"attempts.", stacklevel=2)
+    warnings.warn(f"No data was found for which exactly one shape of each sh:xone list holds and no shape of sh:not, "
+                  f"after {CHECKED_ATTEMPTS} attempts.", stacklevel=2)
     return value
 
 
 def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictionary,
                             property_pair_constraint_components_parent, parent_class, batchID, final_attempt=False,
-                            ancestors=(), node_kind=None, xone_checked=False):
+                            ancestors=(), node_kind=None, checked=False):
     # initialization
     property_pair_constraint_components = []
     global COUNTER, BNODE_COUNTER
@@ -283,12 +286,14 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         shape_dictionary, class_shapes = _with_class_shapes(shape_dictionary, dictionary, shape_name)
         shape_dictionary = _with_node_shapes(shape_dictionary, dictionary)
 
-    # sh:xone: exactly one choice of each list must hold; the generated data is checked (see _generate_with_xone)
+    # sh:xone: exactly one choice of each list must hold; sh:not: no negated shape may hold. The generated data is
+    # checked (see _generate_checked).
     xone_lists = parameter_values(shape_dictionary, URIRef(SH['xone']))
-    if xone_lists and not xone_checked:
-        return _generate_with_xone(xone_lists, lambda: dictionary_to_rdf_graph(
+    negated_shapes = shape_dictionary.get(SH["not"], [])
+    if (xone_lists or negated_shapes) and not checked:
+        return _generate_checked(xone_lists, negated_shapes, lambda: dictionary_to_rdf_graph(
             postponed_shape, shape_name, result, parent, dictionary, property_pair_constraint_components_parent,
-            parent_class, batchID, final_attempt, ancestors, node_kind, xone_checked=True), result, dictionary, batchID)
+            parent_class, batchID, final_attempt, ancestors, node_kind, checked=True), result, dictionary, batchID)
 
     # A shape can have several sh:xone, sh:and and sh:or lists, and each of them must hold, so each list is used.
     # (The lists are read from the copy, so that merging never changes the shared shape dictionaries.)
@@ -384,7 +389,14 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         if not sh_disjoint and not final_attempt:
             property_pair_constraint_components_parent.append(postponed_shape)
             return None
-    disjoint_values = sh_disjoint or []
+    disjoint_values = list(sh_disjoint or [])
+
+    # sh:not with sh:in or sh:hasValue (e.g. sh:not [ sh:in (1 2) ]): a value that is not one of these values does
+    # not conform to the negated shape, so these values are avoided in the same way as those of sh:disjoint
+    if shape_dictionary.get(SH.path) is not None:
+        for negated in shape_dictionary.get(SH["not"], []):
+            for excluded in parameter_values(negated, URIRef(SH['in'])) + [parameter_values(negated, SH.hasValue)]:
+                disjoint_values += [value for value in excluded if value not in disjoint_values]
 
     # get the dependent property for sh:lessThan
     sh_less_than = shape_dictionary.get(SH.lessThan)
