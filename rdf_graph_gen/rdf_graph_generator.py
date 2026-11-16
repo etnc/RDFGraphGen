@@ -4,6 +4,7 @@ from rdflib import Graph, BNode, Literal
 
 from rdf_graph_gen.shacl_mapping_generator import *
 from rdf_graph_gen.value_generators import *
+from rdf_graph_gen.checker import has_node_kind
 
 # Counters for the identifiers of generated entities (IRIs) and nested values (blank nodes). They are reset at
 # the start of every batch, so identifiers depend only on the batch, not on the process that generates it.
@@ -96,17 +97,8 @@ def _values(result, node, path, property_dictionary):
     return nodes
 
 
-# sh:nodeKind: the kinds of nodes that each node kind allows
-NODE_KINDS = {
-    SH.IRI: (URIRef,), SH.BlankNode: (BNode,), SH.Literal: (Literal,),
-    SH.BlankNodeOrIRI: (BNode, URIRef), SH.BlankNodeOrLiteral: (BNode, Literal), SH.IRIOrLiteral: (URIRef, Literal),
-}
+# sh:nodeKind values that do not allow literals
 NON_LITERAL_NODE_KINDS = {SH.IRI, SH.BlankNode, SH.BlankNodeOrIRI}
-
-
-def _has_node_kind(value, kinds):
-    """Whether a value is of every node kind in kinds (e.g. an IRI for sh:IRI)."""
-    return all(isinstance(value, NODE_KINDS[kind]) for kind in kinds if kind in NODE_KINDS)
 
 
 def _without_node(shape_dictionary):
@@ -482,8 +474,8 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         # cannot be literals
         allowed_kinds = kinds | ({SH.BlankNodeOrIRI} if _ends_with_inverse_step(shape_dictionary) else set())
         if allowed_kinds:
-            candidates = ([value for value in candidates if _has_node_kind(value, allowed_kinds)]
-                          or [value for value in sh_in if _has_node_kind(value, allowed_kinds)])
+            candidates = ([value for value in candidates if has_node_kind(value, allowed_kinds)]
+                          or [value for value in sh_in if has_node_kind(value, allowed_kinds)])
             if not candidates:
                 return None
         return typed(random.choice(candidates))

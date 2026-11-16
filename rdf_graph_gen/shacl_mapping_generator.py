@@ -456,6 +456,7 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
                 # a complex property path other than sequence and inverse paths (e.g. an alternative path): not
                 # supported yet, so the property is skipped (writing the path as a predicate would be invalid RDF)
                 warn_unsupported_path(property_path, shapes_graph)
+                shape_dictionary["unsupported"] = True  # its conformance cannot be checked (see checker.py)
                 continue
 
             # Retrieve or initialize property dictionary for the current property path
