@@ -260,15 +260,15 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
                 if choice is not None:
                     merge_shape_dictionaries(shape_dictionary, choice)
 
-    # if there is a sh:or for this dict, choose some of the choices and merge it with the existing properties
+    # if there is a sh:or for this dict, choose one of the choices and merge it with the existing properties. (One is
+    # enough for sh:or to hold; combining several could combine constraints that contradict each other, e.g. two
+    # datatypes, so that none of them holds.) Choices that cannot be generated (unsupported paths) are not used.
     if shape_dictionary.get(URIRef(SH['or'])):
         shape_dictionary = deepcopy(shape_dictionary)
         for sh_or in parameter_values(shape_dictionary, URIRef(SH['or'])):
-            len_choices = len(sh_or)
-            for choice in random.sample(sh_or, random.randint(1, len_choices)):
-                choice = _branch_as_node_shape(choice)
-                if choice is not None:
-                    merge_shape_dictionaries(shape_dictionary, choice)
+            choices = [choice for choice in map(_branch_as_node_shape, sh_or) if choice is not None]
+            if choices:
+                merge_shape_dictionaries(shape_dictionary, random.choice(choices))
 
     # a shape of sh:and, sh:or or sh:xone can itself have sh:node
     shape_dictionary = _with_node_shapes(shape_dictionary, dictionary)

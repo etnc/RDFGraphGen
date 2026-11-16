@@ -399,6 +399,11 @@ CASES = [
     # logical constraints
     case("or-of-datatypes", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:postalCode ; sh:minCount 1 ;
             sh:or ( [ sh:datatype xsd:integer ; sh:minInclusive 10100 ; sh:maxInclusive 10999 ] [ sh:datatype xsd:string ] ) ] ."""),
+    case("or-with-incompatible-choices", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:minCount 1 ; sh:maxCount 1 ;
+            sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:string ; sh:pattern "^[a-z]+$" ] ) ] ."""),
+    case("or-with-an-unsupported-path-in-a-choice", """ex:S a sh:NodeShape ;
+            sh:or ( [ sh:path [ sh:oneOrMorePath ex:a ] ; sh:minCount 1 ] [ sh:path ex:b ; sh:minCount 1 ] ) .""",
+         pytest.mark.filterwarnings("ignore:The property path")),
     case("xone-of-property-groups", """ex:S a sh:NodeShape ; sh:xone (
             [ sh:property [ sh:path ex:givenName ; sh:minCount 1 ] ; sh:property [ sh:path ex:familyName ; sh:minCount 1 ] ]
             [ sh:path ex:fullName ; sh:minCount 1 ] ) ."""),
