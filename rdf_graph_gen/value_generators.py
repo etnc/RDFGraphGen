@@ -697,9 +697,11 @@ def generate_default_value(existing_values, datatype, min_exclusive, min_inclusi
 
     # Apply default patterns for certain property paths
     elif 'email' in path and not pattern:
-        pattern = '([a-z0-9]+[_])*[A-Za-z0-9]@gmail.com'
+        # e.g. lena.ross42@gmail.com (a dot is written as [.], since . matches any character)
+        pattern = '^[a-z]{3,10}([._][a-z]{3,10})?[0-9]{0,2}@gmail[.]com$'
     elif 'telephone' in path and not pattern:
-        pattern = '^(([0-9]{3})|[0-9]{3}-)[0-9]{3}-[0-9]{4}$'
+        # e.g. (339) 217-3216 or 847-135-0049
+        pattern = '^([(][0-9]{3}[)] |[0-9]{3}-)[0-9]{3}-[0-9]{4}$'
 
     # Special handling for certain properties and their constraints
     if cl == 'Person':

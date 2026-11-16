@@ -45,6 +45,18 @@ def test_values_have_the_lexical_form_of_their_datatype(datatype, lexical_form):
         assert re.fullmatch(lexical_form, str(value)), f"{value!r} is not a valid {datatype}"
 
 
+@pytest.mark.parametrize("prop, form", [
+    ("email", r"[a-z]{3,10}([._][a-z]{3,10})?[0-9]{0,2}@gmail\.com"),
+    ("telephone", r"(\([0-9]{3}\) |[0-9]{3}-)[0-9]{3}-[0-9]{4}"),
+])
+def test_values_from_the_default_patterns_are_well_formed(prop, form):
+    # properties named like an e-mail address or a telephone number, without a pattern of their own
+    shapes = parse_turtle(f"ex:S a sh:NodeShape ; sh:property [ sh:path ex:{prop} ; sh:minCount 3 ; sh:maxCount 3 ] .")
+    values = list(generate_graph(shapes, 20, seed=1).objects(None, URIRef(f"http://example.org/{prop}")))
+    assert len(values) == 60
+    assert all(re.fullmatch(form, str(value)) for value in values), [str(v) for v in values]
+
+
 def test_values_of_unknown_datatypes_are_typed_strings_with_a_warning():
     with pytest.warns(UserWarning, match="The datatype http://example.org/myType is not supported yet"):
         values = generated_values("ex:myType")
