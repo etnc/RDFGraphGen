@@ -694,10 +694,13 @@ def generate_default_value(existing_values, datatype, min_exclusive, min_inclusi
     cl = str(sh_class).split('/')[-1]
     path = str(path).split('/')[-1]
 
-    # Apply default datatype and pattern for certain property paths
-    if ('date' in path or 'Date' in path) and not datatype:
+    # Apply default datatype and pattern for certain property paths. A datatype is guessed from the name of the
+    # property only if the shape gives neither a datatype nor a pattern (a pattern describes the form of the values,
+    # e.g. ^[0-9]{3}-[0-9]{4}$ for a phoneNumber, which is not an integer).
+    guess_datatype = not datatype and not pattern
+    if ('date' in path or 'Date' in path) and guess_datatype:
         datatype = XSD.date
-    elif ('number' in path or 'Number' in path) and not datatype:
+    elif ('number' in path or 'Number' in path) and guess_datatype:
         datatype = XSD.integer
 
     # Apply default patterns for certain property paths
@@ -715,13 +718,13 @@ def generate_default_value(existing_values, datatype, min_exclusive, min_inclusi
     if cl == 'Book':
         if 'isbn' in path and not pattern:
             pattern = '[0-9]{3}-[0-9]-[0-9]{2}-[0-9]{6}-[0-9]'
-        elif 'numberOfPages' in path and not datatype:
+        elif 'numberOfPages' in path and guess_datatype:
             datatype = XSD.integer
             if not min_inclusive:
                 min_inclusive = 100
-        elif 'abridged' in path and not datatype:
+        elif 'abridged' in path and guess_datatype:
             datatype = XSD.boolean
-        elif 'bookEdition' in path and not datatype:
+        elif 'bookEdition' in path and guess_datatype:
             datatype = XSD.integer
 
     # Generate values based on datatype and constraints

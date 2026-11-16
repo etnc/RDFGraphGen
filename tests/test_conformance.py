@@ -114,6 +114,25 @@ CASES = [
     case("pattern-with-length", 'ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:pattern "^[a-z]+$" ; sh:maxLength 3 ] .'),
     case("default-email-pattern-with-length", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:email ;
             sh:maxLength 20 ; sh:minCount 2 ; sh:maxCount 2 ] ."""),
+
+    # realistic values (e.g. names from the name lists) satisfy the constraints of the property
+    case("realistic-name-with-a-maximum-length", """ex:S a sh:NodeShape ; sh:targetClass schema:Person ;
+            sh:property [ sh:path schema:givenName ; sh:maxLength 5 ; sh:minCount 1 ; sh:maxCount 1 ] ."""),
+    case("realistic-name-with-a-pattern", """ex:S a sh:NodeShape ; sh:targetClass schema:Person ;
+            sh:property [ sh:path schema:givenName ; sh:pattern "^A" ; sh:minCount 1 ; sh:maxCount 1 ] ."""),
+    case("realistic-name-with-sh-not", """ex:S a sh:NodeShape ; sh:targetClass schema:Person ;
+            sh:property [ sh:path schema:givenName ; sh:not [ sh:pattern "^[A-M]" ] ; sh:minCount 1 ; sh:maxCount 1 ] ."""),
+    case("realistic-email-with-a-pattern", """ex:S a sh:NodeShape ; sh:targetClass schema:Person ;
+            sh:property [ sh:path schema:givenName ; sh:minCount 1 ; sh:maxCount 1 ] ;
+            sh:property [ sh:path schema:familyName ; sh:minCount 1 ; sh:maxCount 1 ] ;
+            sh:property [ sh:path schema:email ; sh:pattern "^[a-z]+@uni[.]edu$" ; sh:minCount 1 ; sh:maxCount 1 ] ."""),
+    case("several-realistic-names", """ex:S a sh:NodeShape ; sh:targetClass schema:Person ;
+            sh:property [ sh:path schema:givenName ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
+    # no datatype is guessed from the name of a property with a pattern (e.g. ...Number, ...Date)
+    case("number-in-the-name-of-a-property-with-a-pattern", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:phoneNumber ;
+            sh:pattern "^[0-9]{3}-[0-9]{4}$" ; sh:minCount 1 ] ."""),
+    case("date-in-the-name-of-a-property-with-a-pattern", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:birthDate ;
+            sh:pattern "^[0-9]{2}/[0-9]{2}/[0-9]{4}$" ; sh:minCount 1 ] ."""),
     case("pattern-with-minimum-and-maximum-length", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:string ;
             sh:pattern "^[a-z]*$" ; sh:minLength 4 ; sh:maxLength 5 ; sh:minCount 3 ; sh:maxCount 3 ] ."""),
     case("string-with-maximum-length-zero", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:datatype xsd:string ;

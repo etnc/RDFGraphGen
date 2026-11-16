@@ -106,6 +106,14 @@ def conforms(graph, focus, shape, dictionary, depth=0):
     return all_hold(results)
 
 
+def value_conforms(graph, value, property_shape, dictionary):
+    """
+    Whether a value satisfies the constraints that a property shape has on each of its values (e.g. sh:datatype,
+    sh:pattern, sh:maxLength), regardless of the other values (e.g. sh:minCount): True, False, or None if not known.
+    """
+    return _value_conforms(graph, value, property_shape, dictionary, 0, in_property_shape=True)
+
+
 def _path_values(graph, focus, shape):
     """The values of the property shape's path for focus, or None for paths that are not supported."""
     path = shape[SH.path]

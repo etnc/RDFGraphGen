@@ -210,6 +210,19 @@ def test_realistic_iris_are_in_the_schema_org_namespace_of_the_shape(schema):
                                                        "Paperback"}
 
 
+def test_realistic_values_that_fit_the_constraints_are_still_used():
+    # names from the name lists that satisfy the constraints of the property are used (not random strings)
+    from rdf_graph_gen.value_generators import dataset_dictionary
+    known = set(dataset_dictionary["givenNameMale"]) | set(dataset_dictionary["givenNameFemale"])
+    shapes = parse_turtle("""
+        ex:S a sh:NodeShape ; sh:targetClass schema:Person ;
+            sh:property [ sh:path schema:givenName ; sh:maxLength 5 ; sh:minCount 1 ; sh:maxCount 1 ] .
+    """)
+    names = [str(o) for o in generate_graph(shapes, 100, seed=1).objects(None, URIRef("http://schema.org/givenName"))]
+    assert len(names) == 100 and all(len(name) <= 5 for name in names)
+    assert sum(name in known for name in names) >= 90
+
+
 def test_person_dependencies_are_added_once():
     shapes = parse_turtle("""
         ex:PersonShape a sh:NodeShape ; sh:targetClass schema:Person ;
