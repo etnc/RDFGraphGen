@@ -312,6 +312,35 @@ def test_ntriples_output_does_not_depend_on_the_number_of_processes(tmp_path):
     assert len(set(graph.subjects(SH.description, None))) == 120
 
 
+PREFIXED_SHAPES = """
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix schema: <http://schema.org/> .
+@prefix voc: <http://example.com/vocabulary#> .
+
+voc:PersonShape a sh:NodeShape ;
+    sh:targetClass schema:Person ;
+    sh:property [ sh:path voc:nickname ; sh:minCount 1 ; sh:maxCount 1 ] .
+"""
+
+
+def test_the_output_uses_the_prefixes_of_the_shapes(tmp_path):
+    shapes = tmp_path / "shapes.ttl"
+    shapes.write_text(PREFIXED_SHAPES, encoding="utf-8")
+    expected = {"@prefix schema: <http://schema.org/> .", "@prefix voc: <http://example.com/vocabulary#> .",
+                "@prefix sh: <http://www.w3.org/ns/shacl#> ."}
+    for processes in (1, 2):  # two batches: with two processes, the prefixes must also reach the worker processes
+        output = tmp_path / f"out-{processes}.ttl"
+        MultiprocessGenerator(str(shapes), str(output), 4, 2, processes=processes, seed=1).generate()
+        # rdflib's own prefixes would be ns1: (voc:) and schemaorg: or schema1: (schema:, which rdflib binds to
+        # https://schema.org/)
+        assert {line for line in output.read_text(encoding="utf-8").splitlines() if line.startswith("@prefix")} == \
+            expected
+    # also in a graph generated in memory from the shapes file
+    namespaces = dict(generate_graph(str(shapes), 2, seed=1).namespaces())
+    assert namespaces["schema"] == URIRef("http://schema.org/")
+    assert namespaces["voc"] == URIRef("http://example.com/vocabulary#")
+
+
 def test_the_output_format_follows_the_file_name(tmp_path):
     from rdf_graph_gen.multiprocess_generate import output_format_of
     assert output_format_of(tmp_path / "out.nt") == "ntriples"

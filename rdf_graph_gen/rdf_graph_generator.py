@@ -819,6 +819,10 @@ def generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, number_of_samp
 
     result_graph = GeneratedGraph(provenance=provenance, base_iri=base_iri)
     result_graph.bind("schemaorg", SCH)
+    # The prefixes of the shapes (e.g. ex: and schema:) are used in the output too, instead of rdflib's own ones
+    # (e.g. ns1:, or schema: for https://schema.org/); Turtle output declares only the prefixes it uses
+    for prefix, namespace in sorted(shapes_graph.namespaces()):
+        result_graph.bind(prefix, namespace, override=True, replace=True)
 
     # Find independent node shapes in the provided shapes_graph (in a fixed order, for reproducibility)
     independent_node_shapes = sorted(find_independent_node_shapes(shapes_graph), key=str)
@@ -896,7 +900,8 @@ def generate_graph(shapes, scale_factor, seed=None, provenance=True, base_iri=DE
           provenance=False, the data has no such links; validate_generated still uses them for the returned graph.
     base_iri: the IRIs of the generated entities start with it (default: http://example.org/ns#).
     """
-    shapes_graph = shapes if isinstance(shapes, Graph) else Graph().parse(shapes)
+    # bind_namespaces="core": the prefixes of the shapes file win over rdflib's defaults (also in the generated graph)
+    shapes_graph = shapes if isinstance(shapes, Graph) else Graph(bind_namespaces="core").parse(shapes)
     dictionary = generate_dictionary_from_shapes_graph(shapes_graph)
     return generate_batch(shapes_graph, dictionary, scale_factor, 1, seed, provenance, base_iri)
 
