@@ -6,7 +6,7 @@ from rdflib import Graph, BNode, Literal
 
 from rdf_graph_gen.shacl_mapping_generator import *
 from rdf_graph_gen.value_generators import *
-from rdf_graph_gen.checker import conforms, exactly_one_holds, has_node_kind, value_conforms
+from rdf_graph_gen.checker import conforms, exactly_one_holds, has_node_kind, qualified_value_conforms, value_conforms
 
 # Counters for the identifiers of generated entities (IRIs) and nested values (blank nodes). They are reset at
 # the start of every batch, so identifiers depend only on the batch, not on the process that generates it.
@@ -359,6 +359,58 @@ def _generate_checked(xone_lists, negated_shapes, generate, result, dictionary, 
     return value
 
 
+def _generate_value_until(generate, accept, result, batchID):
+    """
+    A value from generate() that accept() accepts, trying up to CHECKED_ATTEMPTS times (the nodes of a rejected value
+    are removed first); None if generate() gives none (e.g. the property is postponed) or none is accepted.
+    """
+    for _ in range(CHECKED_ATTEMPTS):
+        counters = (COUNTER, BNODE_COUNTER)
+        value = generate()
+        if value is None or accept(value):
+            return value
+        _remove_nodes_since(result, batchID, counters)
+    return None
+
+
+def _qualified_value_shape(property_dictionary, entry):
+    """
+    The shape of a value that counts for a qualified cardinality constraint (an entry of "qualified"): the property
+    shape (without its qualified cardinality constraints) combined with the qualified shape. A named qualified shape is
+    used like sh:node: the value is an entity of it.
+    """
+    shape = deepcopy({key: value for key, value in property_dictionary.items() if key != "qualified"})
+    qualified_shape = entry["shape"]
+    if isinstance(qualified_shape, dict):
+        branch = _branch_as_node_shape(qualified_shape)
+        if branch is not None:
+            merge_shape_dictionaries(shape, deepcopy(branch))
+    else:
+        names = parameter_values(shape, SH.node) + [qualified_shape]
+        shape[SH.node] = names[0]
+        shape.setdefault("values", {})[SH.node] = names
+    return shape
+
+
+def _counted_values(result, node, path, property_dictionary, entry, dictionary):
+    """The number of values of the property of node that count for a qualified cardinality constraint."""
+    siblings = [other for other in property_dictionary["qualified"] if other is not entry]
+    return sum(qualified_value_conforms(result, value, entry, siblings, dictionary) is True
+               for value in _values(result, node, path, property_dictionary))
+
+
+def _within_qualified_maxima(result, node, path, property_dictionary, candidate, dictionary):
+    """Whether a new value of the property keeps every count of a qualified cardinality constraint at its maximum."""
+    for entry in property_dictionary.get("qualified", []):
+        if entry["max"] is None:
+            continue
+        siblings = [other for other in property_dictionary["qualified"] if other is not entry]
+        if (qualified_value_conforms(result, candidate, entry, siblings, dictionary) is True
+                and _counted_values(result, node, path, property_dictionary, entry, dictionary) >= int(entry["max"])):
+            return False
+    return True
+
+
 def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictionary,
                             property_pair_constraint_components_parent, parent_class, batchID, final_attempt=False,
                             ancestors=(), node_kind=None, checked=False, iri_form=None):
@@ -598,10 +650,43 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
             earlier = _earlier_entities(ancestors, _value_shape(value, dictionary), node)
             count = max(sh_min_count, 0) if earlier is not None else random.randint(sh_min_count, sh_max_count)
             count = max(count, _number_of_equal_values(value, result, node))
+
+            # Qualified cardinality constraints (sh:qualifiedValueShape): first the values that count for them (from
+            # the property shape combined with the qualified shape; for disjoint shapes, values that do not conform to
+            # a sibling shape), as many as sh:qualifiedMinCount requires. They are values of the property as well.
+            qualified = value.get("qualified", []) if earlier is None else []
+            for entry in qualified:
+                siblings = [other for other in qualified if other is not entry]
+                value_shape = _qualified_value_shape(value, entry)
+                missing = int(entry["min"] or 0) - _counted_values(result, node, key, value, entry, dictionary)
+                for i in range(max(missing, 0)):
+                    generated_prop = _generate_value_until(
+                        lambda: dictionary_to_rdf_graph(value_shape, None, result, node, dictionary,
+                                                        property_pair_constraint_components, sh_class, batchID,
+                                                        ancestors=ancestors),
+                        lambda candidate: (qualified_value_conforms(result, candidate, entry, siblings, dictionary)
+                                           is not False
+                                           and _within_qualified_maxima(result, node, key, value, candidate, dictionary)),
+                        result, batchID)
+                    if generated_prop is None:
+                        warnings.warn(f"No value of {key} that counts for its sh:qualifiedValueShape was found.",
+                                      stacklevel=2)
+                        break
+                    _add_value(result, node, key, value, generated_prop, batchID)
+                    count -= 1
+
             for i in range(0, count):
                 postponed_before = len(property_pair_constraint_components)
                 if earlier:
                     generated_prop = earlier.pop(0)
+                elif any(entry["max"] is not None for entry in qualified):
+                    # other values must not raise a count above sh:qualifiedMaxCount
+                    generated_prop = _generate_value_until(
+                        lambda: dictionary_to_rdf_graph(value, None, result, node, dictionary,
+                                                        property_pair_constraint_components, sh_class, batchID,
+                                                        ancestors=ancestors),
+                        lambda candidate: _within_qualified_maxima(result, node, key, value, candidate, dictionary),
+                        result, batchID)
                 else:
                     generated_prop = dictionary_to_rdf_graph(value, None, result, node, dictionary,
                                                              property_pair_constraint_components, sh_class, batchID,

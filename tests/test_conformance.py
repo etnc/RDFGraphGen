@@ -507,9 +507,23 @@ CASES = [
     case("closed-shape-for-a-class", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:author ; sh:class ex:Person ; sh:minCount 1 ] .
             ex:PersonShape a sh:NodeShape ; sh:targetClass ex:Person ; sh:closed true ; sh:ignoredProperties ( rdf:type ) ;
                 sh:property [ sh:path ex:name ; sh:minCount 1 ] ."""),
+    # qualified cardinality constraints
     case("qualifiedValueShape", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ;
-            sh:qualifiedValueShape [ sh:datatype xsd:integer ] ; sh:qualifiedMinCount 2 ] .""",
-         known_bug("sh:qualifiedValueShape is not supported")),
+            sh:qualifiedValueShape [ sh:datatype xsd:integer ] ; sh:qualifiedMinCount 2 ] ."""),
+    case("qualifiedMaxCount-that-other-values-could-exceed", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ;
+            sh:datatype xsd:integer ; sh:minInclusive 1 ; sh:maxInclusive 3 ; sh:minCount 2 ; sh:maxCount 2 ;
+            sh:qualifiedValueShape [ sh:maxInclusive 2 ] ; sh:qualifiedMinCount 1 ; sh:qualifiedMaxCount 1 ] ."""),
+    case("qualifiedValueShape-named", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:member ;
+            sh:qualifiedValueShape ex:Admin ; sh:qualifiedMinCount 1 ; sh:qualifiedMaxCount 1 ; sh:minCount 3 ; sh:maxCount 3 ] .
+            ex:Admin a sh:NodeShape ; sh:property [ sh:path ex:role ; sh:hasValue "admin" ] ."""),
+    case("qualifiedValueShape-with-properties", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:author ;
+            sh:qualifiedValueShape [ sh:property [ sh:path ex:orcid ; sh:minCount 1 ] ] ; sh:qualifiedMinCount 2 ] ."""),
+    # the hand of the SHACL specification: one thumb and four fingers
+    case("qualifiedValueShapesDisjoint", """ex:Hand a sh:NodeShape ;
+            sh:property [ sh:path ex:digit ; sh:maxCount 5 ; sh:qualifiedValueShape [ sh:class ex:Thumb ] ;
+                          sh:qualifiedValueShapesDisjoint true ; sh:qualifiedMinCount 1 ; sh:qualifiedMaxCount 1 ] ;
+            sh:property [ sh:path ex:digit ; sh:qualifiedValueShape [ sh:class ex:Finger ] ;
+                          sh:qualifiedValueShapesDisjoint true ; sh:qualifiedMinCount 4 ; sh:qualifiedMaxCount 4 ] ."""),
 ]
 
 
