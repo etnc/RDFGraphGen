@@ -63,6 +63,10 @@ def build_generate_parser():
                              "pip install \"rdf-graph-gen[validate]\")")
     parser.add_argument("--report", metavar="FILE",
                         help="with --validate: also write the full SHACL validation report to FILE (Turtle)")
+    parser.add_argument("--no-provenance", action="store_true",
+                        help="do not link the generated entities to the shapes they were generated from "
+                             "(sh:description); --validate still checks every entity against its shape, but "
+                             "'rdfgen validate' can then only check the focus nodes of the target declarations")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     return parser
 
@@ -114,7 +118,7 @@ def generate(args):
     start = datetime.now()
     generator = MultiprocessGenerator(args.input_file, args.output_file, args.scale_factor, args.batch_size,
                                       processes=args.processes, seed=args.seed, validate=args.validate,
-                                      collect_report=bool(args.report))
+                                      collect_report=bool(args.report), provenance=not args.no_provenance)
     summary = generator.generate()
     print(f"Generator ran with {generator.processes} process(es), finished in {datetime.now() - start}.")
 

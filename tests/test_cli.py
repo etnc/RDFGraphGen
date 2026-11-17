@@ -122,3 +122,16 @@ def test_generate_rdf_overwrites_the_output_file(tmp_path):
     first = output.read_text(encoding="utf-8")
     generate_rdf(shapes, str(output), 10, seed=1)
     assert output.read_text(encoding="utf-8") == first  # previously, the second run was appended
+
+
+def test_generate_without_provenance(tmp_path, capsys):
+    shapes = write(tmp_path, "shapes.ttl", SHAPES)
+    output = tmp_path / "out.ttl"
+    assert main([shapes, str(output), "20", "--seed", "1", "--processes", "1", "--validate", "--no-provenance"]) == EXIT_OK
+    out = capsys.readouterr().out
+    # every entity is still checked against its shape during generation
+    assert "Conformance check: CONFORMS" in out and "(20 against the shape they were generated from" in out
+    data = Graph().parse(output)
+    assert len(set(data.subjects(None, None))) == 20 and not list(data.triples((None, SH.description, None)))
+    # without the links, 'rdfgen validate' finds nothing to check for shapes without target declarations
+    assert main(["validate", shapes, str(output)]) == EXIT_NOTHING_CHECKED

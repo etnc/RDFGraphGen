@@ -235,16 +235,18 @@ class GeneratedGraph(Graph):
     closed shape, see _link_to_shape); validation of the generated graph uses entity_shapes, so that every entity is
     validated against its shape.
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, provenance=True, **kwargs):
         super().__init__(*args, **kwargs)
         self.entity_shapes = []
+        # provenance=False: no entity is linked to its shape in the data (the record is still kept)
+        self.provenance = provenance
 
 
 def _link_to_shape(result, entity, shape, written):
     """Record that entity was generated from shape, and link it to the shape in the data if written."""
     if isinstance(result, GeneratedGraph):
         result.entity_shapes.append((entity, shape))
-    if written:
+    if written and getattr(result, "provenance", True):
         result.add((entity, SH.description, shape))
 
 
@@ -659,11 +661,11 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
 """
 
 
-def generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, number_of_samples, batchID):
+def generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, number_of_samples, batchID, provenance=True):
     global COUNTER, BNODE_COUNTER
     COUNTER, BNODE_COUNTER = 100, 0  # identifiers are unique per batch (batchID) and independent of the process
 
-    result_graph = GeneratedGraph()
+    result_graph = GeneratedGraph(provenance=provenance)
     result_graph.bind("schemaorg", SCH)
 
     # Find independent node shapes in the provided shapes_graph (in a fixed order, for reproducibility)
@@ -714,18 +716,19 @@ def generate_rdf_graphs_from_shacl_constraints(shape_file, number):
     return generate_graph(shape_file, number)
 
 
-def generate_batch(shapes_graph, dictionary, number, batch_index, seed=None):
+def generate_batch(shapes_graph, dictionary, number, batch_index, seed=None, provenance=True):
     """
     Generate one batch: `number` entities per top-level node shape, with identifiers that are unique to the
     batch. With a seed, the batch depends only on (seed, batch_index), not on the process that generates it.
+    provenance=False: the entities are not linked to their shapes (sh:description) in the data.
     """
     if seed is not None:
         # The generator (and exrex) use the global random module; seeding with a string is stable across runs
         random.seed(f"{seed}/{batch_index}")
-    return generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, number, f'B{batch_index}')
+    return generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, number, f'B{batch_index}', provenance)
 
 
-def generate_graph(shapes, scale_factor, seed=None):
+def generate_graph(shapes, scale_factor, seed=None, provenance=True):
     """
     Generate a synthetic RDF graph in memory and return it as an rdflib Graph.
 
@@ -733,17 +736,22 @@ def generate_graph(shapes, scale_factor, seed=None):
     scale_factor: the number of entities generated for each top-level node shape.
     seed: optional; the same seed always produces the same graph. The result is the same as the first batch
           of 'rdfgen ... --seed SEED' with a batch size of at least scale_factor.
+    provenance: link each entity to the shape it was generated from (entity sh:description shape), so that a
+          validation of the graph can check each entity against its shape (see rdf_graph_gen.validation). With
+          provenance=False, the data has no such links; validate_generated still uses them for the returned graph.
     """
     shapes_graph = shapes if isinstance(shapes, Graph) else Graph().parse(shapes)
     dictionary = generate_dictionary_from_shapes_graph(shapes_graph)
-    return generate_batch(shapes_graph, dictionary, scale_factor, 1, seed)
+    return generate_batch(shapes_graph, dictionary, scale_factor, 1, seed, provenance)
 
 
-def generate_rdf(shape_file, output_file, number, batch_size=1000, seed=None, processes=1):
+def generate_rdf(shape_file, output_file, number, batch_size=1000, seed=None, processes=1, provenance=True):
     """
     Generate a synthetic RDF graph and write it to output_file (Turtle), in batches of batch_size entities.
     With processes > 1, the batches are generated in parallel. The same seed always produces the same file,
-    regardless of the number of processes.
+    regardless of the number of processes. provenance=False: the entities are not linked to their shapes
+    (sh:description) in the output.
     """
     from rdf_graph_gen.multiprocess_generate import MultiprocessGenerator
-    MultiprocessGenerator(shape_file, output_file, number, batch_size, processes=processes, seed=seed).generate()
+    MultiprocessGenerator(shape_file, output_file, number, batch_size, processes=processes, seed=seed,
+                          provenance=provenance).generate()

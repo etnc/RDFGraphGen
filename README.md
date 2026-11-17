@@ -54,6 +54,8 @@ A generated graph conforms if every generated entity conforms to the shape it wa
 
 With `--validate`, each batch is checked right after it is generated, so the check scales with the generation. The `validate` command loads the whole graph into memory, so it is intended for small and medium-sized graphs.
 
+Entities of closed shapes (`sh:closed true`) are not linked to their shape, since the link would break the shape, and `--no-provenance` leaves out all links. `--validate` still checks every entity against its shape; the `validate` command checks such entities only through the target declarations of the shapes and the shapes that refer to them (`sh:node`).
+
 ## Examples
 
 Examples of SHACL shapes based on Schema.org and other types, along with generated synthetic RDF graphs based on these shapes, can be found in the [generated examples](generated_examples/) directory in this repo.
