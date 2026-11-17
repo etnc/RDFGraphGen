@@ -596,6 +596,37 @@ BINARY_DATATYPES = {
 }
 
 
+ABSOLUTE_IRI = r"[A-Za-z][A-Za-z0-9+.-]*:[^\s<>\"{}|\\^`]+"
+
+
+def generate_iri(patterns, min_length, max_length, base_iri, is_new):
+    """
+    An IRI for a node whose IRI must match sh:pattern (all of patterns) and have a length within the bounds (None:
+    no bound), for which is_new is true (e.g. an IRI that the graph does not use yet), or None if none is found. With
+    a pattern, the IRI is generated from it (it must be an absolute IRI); without one, it is base_iri followed by a
+    random word of a length that fits the bounds.
+    """
+    min_length = None if min_length is None else int(min_length)
+    max_length = None if max_length is None else int(max_length)
+    for _ in range(20):
+        if patterns:
+            literal = generate_string(set(), min_length, max_length, patterns[0])
+        else:
+            word_min = None if min_length is None else max(min_length - len(base_iri), 1)
+            word_max = None if max_length is None else max_length - len(base_iri)
+            if word_max is not None and word_max < 1:
+                return None
+            word = generate_string(set(), word_min, word_max, None)
+            literal = None if word is None else base_iri + str(word)
+        if literal is None:
+            continue
+        text = str(literal)
+        if (re.fullmatch(ABSOLUTE_IRI, text) and _has_length(text, min_length, max_length)
+                and all(re.search(str(pattern), text) for pattern in patterns) and is_new(URIRef(text))):
+            return URIRef(text)
+    return None
+
+
 def generate_typed_string(existing_values, datatype, min_length, max_length, pattern):
     """
     A value of a datatype whose values are written as strings (e.g. xsd:token, xsd:anyURI, xsd:hexBinary), typed

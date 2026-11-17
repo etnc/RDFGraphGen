@@ -232,7 +232,46 @@ def checked_base_iri(base_iri):
 
 
 def _entity_iri(result, batchID, number):
-    return URIRef(f'{getattr(result, "base_iri", DEFAULT_BASE_IRI)}Node{batchID}_{number}')
+    """The IRI of the entity with this number: generated from its constraints (see _new_entity_iri), or numbered."""
+    iri = getattr(result, "iris_from_constraints", {}).get(number)
+    return iri if iri is not None else URIRef(f'{getattr(result, "base_iri", DEFAULT_BASE_IRI)}Node{batchID}_{number}')
+
+
+def _iri_form(shape_dictionary, iri_form=None):
+    """
+    The constraints of a shape on the IRI of a node (sh:pattern, sh:minLength, sh:maxLength: they apply to the text of
+    an IRI, and never hold for a blank node), combined with iri_form (those of the property whose value the node is,
+    for sh:node), as (patterns, minimum length, maximum length); None if there are none.
+    """
+    patterns = [str(pattern) for pattern in parameter_values(shape_dictionary, SH.pattern)]
+    min_length, max_length = shape_dictionary.get(SH.minLength), shape_dictionary.get(SH.maxLength)
+    if iri_form is not None:
+        patterns += iri_form[0]
+        min_length = max((n for n in (min_length, iri_form[1]) if n is not None), key=int, default=None)
+        max_length = min((n for n in (max_length, iri_form[2]) if n is not None), key=int, default=None)
+    if not patterns and min_length is None and max_length is None:
+        return None
+    return patterns, min_length, max_length
+
+
+def _new_entity_iri(result, batchID, form=None):
+    """
+    A new IRI for an entity: numbered (e.g. http://example.org/ns#NodeB1_100), or, if its IRI must have a certain
+    form (see _iri_form), generated from it (and remembered under its number, see _entity_iri).
+    """
+    global COUNTER
+    number = COUNTER
+    COUNTER += 1
+    if form is not None:
+        iri = generate_iri(*form, getattr(result, "base_iri", DEFAULT_BASE_IRI),
+                           lambda iri: (iri, None, None) not in result and (None, None, iri) not in result)
+        if iri is not None:
+            if isinstance(result, GeneratedGraph):
+                result.iris_from_constraints[number] = iri
+            return iri
+        warnings.warn(f"No new IRI with the pattern(s) {form[0]} and a length from {form[1]} to {form[2]} was "
+                      f"found, so the node gets a numbered IRI.", stacklevel=2)
+    return _entity_iri(result, batchID, number)
 
 
 def _blank_node(batchID, number):
@@ -254,6 +293,8 @@ class GeneratedGraph(Graph):
         self.provenance = provenance
         # the IRIs of the generated entities start with this
         self.base_iri = checked_base_iri(base_iri)
+        # IRIs generated from the constraints of their nodes (sh:pattern), by the number of the entity
+        self.iris_from_constraints = {}
 
 
 def _link_to_shape(result, entity, shape, written):
@@ -320,7 +361,7 @@ def _generate_checked(xone_lists, negated_shapes, generate, result, dictionary, 
 
 def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictionary,
                             property_pair_constraint_components_parent, parent_class, batchID, final_attempt=False,
-                            ancestors=(), node_kind=None, checked=False):
+                            ancestors=(), node_kind=None, checked=False, iri_form=None):
     # initialization
     property_pair_constraint_components = []
     global COUNTER, BNODE_COUNTER
@@ -347,7 +388,8 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     if (xone_lists or negated_shapes) and not checked:
         return _generate_checked(xone_lists, negated_shapes, lambda: dictionary_to_rdf_graph(
             postponed_shape, shape_name, result, parent, dictionary, property_pair_constraint_components_parent,
-            parent_class, batchID, final_attempt, ancestors, node_kind, checked=True), result, dictionary, batchID)
+            parent_class, batchID, final_attempt, ancestors, node_kind, checked=True, iri_form=iri_form), result,
+            dictionary, batchID)
 
     # A shape can have several sh:xone, sh:and and sh:or lists, and each of them must hold, so each list is used.
     # (The lists are read from the copy, so that merging never changes the shared shape dictionaries.)
@@ -389,11 +431,20 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     kinds = {kind for kind in (shape_dictionary.get(SH.nodeKind), node_kind) if kind is not None}
     blank = bool(kinds & {SH.BlankNode, SH.BlankNodeOrLiteral})
 
+    # The node is the value (of a property shape, or the entity of a node shape), unless the value comes from
+    # elsewhere (an entity of sh:node, a value of sh:in) or is a literal. Its sh:pattern, sh:minLength and
+    # sh:maxLength (iri_form: those of the property, for an entity of sh:node) then constrain its IRI.
+    value_node = bool(shape_name or kinds & {SH.IRI, SH.BlankNodeOrIRI, SH.IRIOrLiteral} or _classes(shape_dictionary)
+                      or shape_dictionary.get("properties") or _ends_with_inverse_step(shape_dictionary))
+    if shape_dictionary.get(SH.path) is not None and (parameter_values(shape_dictionary, SH.node)
+                                                       or shape_dictionary.get(URIRef(SH + "in"))):
+        value_node = False
+    form = _iri_form(shape_dictionary, iri_form) if value_node else None
+
     # Entities of a named shape are IRIs, and other nodes (e.g. values with nested properties) blank nodes, unless
-    # the node kind requires the other kind
-    if (shape_name or kinds & {SH.IRI, SH.IRIOrLiteral}) and not blank:
-        node = _entity_iri(result, batchID, COUNTER)
-        COUNTER += 1
+    # the node kind requires the other kind, or the IRI must have a certain form
+    if (shape_name or kinds & {SH.IRI, SH.IRIOrLiteral} or form is not None) and not blank:
+        node = _new_entity_iri(result, batchID, form)
     else:
         node = _blank_node(batchID, BNODE_COUNTER)
         BNODE_COUNTER += 1
@@ -515,7 +566,8 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
             if properties:
                 entity_shape["properties"] = properties
         entity = dictionary_to_rdf_graph(entity_shape, node_shapes[0], result, None, dictionary, [], sh_class, batchID,
-                                         ancestors=ancestors, node_kind=shape_dictionary.get(SH.nodeKind))
+                                         ancestors=ancestors, node_kind=shape_dictionary.get(SH.nodeKind),
+                                         iri_form=_iri_form(shape_dictionary))
         linked = (entity, SH.description, node_shapes[0]) in result  # not for entities of closed shapes
         for name in node_shapes[1:]:
             _link_to_shape(result, entity, name, linked)

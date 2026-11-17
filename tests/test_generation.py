@@ -177,6 +177,21 @@ def test_failed_attempts_for_xone_leave_no_data():
     assert {entity for entity, _ in graph.entity_shapes} == entities
 
 
+def test_failed_attempts_for_xone_leave_no_iris_from_patterns():
+    # values whose IRIs are generated from a pattern, in entities that are generated again for sh:xone
+    shapes = parse_turtle("""
+        ex:S a sh:NodeShape ;
+            sh:property [ sh:path ex:member ; sh:minCount 1 ; sh:maxCount 1 ; sh:pattern "^https://m[.]example[.]com/[a-z]{8}$" ;
+                          sh:property [ sh:path ex:name ; sh:minCount 1 ] ] ;
+            sh:xone ( [ sh:property [ sh:path ex:a ; sh:minCount 1 ] ] [ sh:property [ sh:path ex:b ; sh:maxCount 1 ] ] ) .
+    """)
+    graph = generate_graph(shapes, 30, seed=1)
+    members = set(graph.objects(None, URIRef("http://example.org/member")))
+    assert len(members) == 30 and all(str(m).startswith("https://m.example.com/") for m in members)
+    # the members of failed attempts are removed: every node with a name is the member of an entity
+    assert set(graph.subjects(URIRef("http://example.org/name"), None)) == members
+
+
 def test_every_instance_of_a_class_is_used():
     # the classes of a property are added to its values, not to nodes that are then not used
     shapes = parse_turtle("""

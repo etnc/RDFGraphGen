@@ -337,6 +337,18 @@ CASES = [
     case("nodeKind-IRI-on-node-shape-used-as-blank-node", """ex:S a sh:NodeShape ;
             sh:property [ sh:path ex:p ; sh:node ex:T ; sh:nodeKind sh:BlankNodeOrIRI ; sh:minCount 1 ] .
             ex:T a sh:NodeShape ; sh:nodeKind sh:IRI ; sh:property [ sh:path ex:name ; sh:minCount 1 ] ."""),
+    # sh:pattern and lengths apply to the text of IRIs (and never hold for blank nodes)
+    case("iri-values-with-a-pattern", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:nodeKind sh:IRI ;
+            sh:pattern "^https://www[.]wikidata[.]org/entity/Q[1-9][0-9]{0,5}$" ; sh:minCount 2 ; sh:maxCount 2 ] ."""),
+    case("iri-values-with-a-maximum-length", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:nodeKind sh:IRI ;
+            sh:maxLength 30 ; sh:minCount 1 ] ."""),
+    case("instances-of-a-class-with-a-pattern", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:class ex:Person ;
+            sh:pattern "^https://people[.]example[.]com/[a-z]{6}$" ; sh:minCount 1 ] ."""),
+    case("entities-of-sh-node-with-a-pattern", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:node ex:T ;
+            sh:pattern "^https://t[.]example[.]com/[0-9]{6}$" ; sh:minCount 1 ] .
+            ex:T a sh:NodeShape ; sh:property [ sh:path ex:name ; sh:minCount 1 ] ."""),
+    case("node-shape-with-a-pattern", """ex:S a sh:NodeShape ; sh:pattern "^https://s[.]example[.]com/[a-z0-9]{8}$" ;
+            sh:property [ sh:path ex:q ; sh:minCount 1 ] ."""),
     case("two-shapes-targeting-one-class", """ex:A a sh:NodeShape ; sh:targetClass ex:C ; sh:property [ sh:path ex:p ; sh:datatype xsd:integer ] .
             ex:B a sh:NodeShape ; sh:targetClass ex:C ; sh:property [ sh:path ex:q ; sh:minCount 1 ] ."""),
     # every instance of a class conforms to the shapes that target the class
