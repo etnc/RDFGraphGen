@@ -3,12 +3,13 @@
 # Scale factor: 5, batch size: 1000, seed: 1
 # Base IRI: http://example.org/ns#, links of entities to their shapes (sh:description): yes
 
+@prefix ex: <http://example.com/ns#> .
 @prefix schema: <https://schema.org/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://example.org/ns#NodeB1_188> a schema:Person ;
-    sh:description <http://example.com/ns#SpeakerShape> ;
+    sh:description ex:SpeakerShape ;
     schema:affiliation [ schema:name "fgcCul3hw5Vd" ] ;
     schema:email "nancy_mann@example.com" ;
     schema:familyName "Mann" ;
@@ -17,7 +18,7 @@
     schema:sameAs <https://orcid.org/0000-0005-8634-4510> .
 
 <http://example.org/ns#NodeB1_192> a schema:Person ;
-    sh:description <http://example.com/ns#SpeakerShape> ;
+    sh:description ex:SpeakerShape ;
     schema:affiliation [ schema:name "dOOym6UL7vwYg" ] ;
     schema:email "inga_flynn@example.com" ;
     schema:familyName "Flynn" ;
@@ -26,7 +27,7 @@
     schema:sameAs <https://orcid.org/0000-0004-8278-5230> .
 
 <http://example.org/ns#NodeB1_196> a schema:Person ;
-    sh:description <http://example.com/ns#SpeakerShape> ;
+    sh:description ex:SpeakerShape ;
     schema:affiliation [ schema:name "o88X4XdVUF08WC" ] ;
     schema:email "von_chappell@example.com" ;
     schema:familyName "Chappell" ;
@@ -35,7 +36,7 @@
     schema:sameAs <https://orcid.org/0000-0004-6070-3341> .
 
 <http://example.org/ns#NodeB1_200> a schema:Person ;
-    sh:description <http://example.com/ns#SpeakerShape> ;
+    sh:description ex:SpeakerShape ;
     schema:affiliation [ schema:name "I6bPDvgfQtqX4kE" ] ;
     schema:email "tomi_egan@example.com" ;
     schema:familyName "Egan" ;
@@ -44,7 +45,7 @@
     schema:sameAs <https://orcid.org/0000-0004-9483-8951> .
 
 <http://example.org/ns#NodeB1_204> a schema:Person ;
-    sh:description <http://example.com/ns#SpeakerShape> ;
+    sh:description ex:SpeakerShape ;
     schema:affiliation [ schema:name "s6wT6iQffino" ] ;
     schema:email "hyacinthe_hartley@example.com" ;
     schema:familyName "Hartley" ;
@@ -52,8 +53,8 @@
     schema:knows _:B1b577 ;
     schema:sameAs <https://orcid.org/0000-0002-5552-3845> .
 
-<http://example.org/ns#NodeB1_208> a <http://example.com/ns#Talk> ;
-    sh:description <http://example.com/ns#TalkShape> ;
+<http://example.org/ns#NodeB1_208> a ex:Talk ;
+    sh:description ex:TalkShape ;
     schema:duration "PT16M43S"^^xsd:duration ;
     schema:eventAttendanceMode schema:OnlineEventAttendanceMode ;
     schema:eventStatus schema:EventRescheduled ;
@@ -80,8 +81,8 @@
             schema:knows _:B1b632 ;
             schema:sameAs <https://orcid.org/0000-0006-8452-1421> ] .
 
-<http://example.org/ns#NodeB1_218> a <http://example.com/ns#Talk> ;
-    sh:description <http://example.com/ns#TalkShape> ;
+<http://example.org/ns#NodeB1_218> a ex:Talk ;
+    sh:description ex:TalkShape ;
     schema:duration "PT39M8S"^^xsd:duration ;
     schema:eventAttendanceMode schema:OfflineEventAttendanceMode ;
     schema:eventStatus schema:EventRescheduled ;
@@ -94,8 +95,8 @@
             schema:knows _:B1b653 ;
             schema:sameAs <https://orcid.org/0000-0002-2000-7257> ] .
 
-<http://example.org/ns#NodeB1_222> a <http://example.com/ns#Talk> ;
-    sh:description <http://example.com/ns#TalkShape> ;
+<http://example.org/ns#NodeB1_222> a ex:Talk ;
+    sh:description ex:TalkShape ;
     schema:duration "PT33M20S"^^xsd:duration ;
     schema:eventAttendanceMode schema:OnlineEventAttendanceMode ;
     schema:eventStatus schema:EventRescheduled ;
@@ -115,8 +116,8 @@
             schema:knows _:B1b692 ;
             schema:sameAs <https://orcid.org/0000-0005-1907-6047> ] .
 
-<http://example.org/ns#NodeB1_229> a <http://example.com/ns#Talk> ;
-    sh:description <http://example.com/ns#TalkShape> ;
+<http://example.org/ns#NodeB1_229> a ex:Talk ;
+    sh:description ex:TalkShape ;
     schema:duration "PT25M55S"^^xsd:duration ;
     schema:eventAttendanceMode schema:OfflineEventAttendanceMode ;
     schema:eventStatus schema:EventPostponed ;
@@ -129,8 +130,8 @@
             schema:knows _:B1b713 ;
             schema:sameAs <https://orcid.org/0000-0009-7837-1986> ] .
 
-<http://example.org/ns#NodeB1_233> a <http://example.com/ns#Talk> ;
-    sh:description <http://example.com/ns#TalkShape> ;
+<http://example.org/ns#NodeB1_233> a ex:Talk ;
+    sh:description ex:TalkShape ;
     schema:duration "PT42M1S"^^xsd:duration ;
     schema:eventAttendanceMode schema:OnlineEventAttendanceMode ;
     schema:eventStatus schema:EventScheduled ;
@@ -144,7 +145,7 @@
             schema:sameAs <https://orcid.org/0000-0004-6047-8742> ] .
 
 <http://example.org/ns#NodeB1_101> a schema:Place ;
-    sh:description <http://example.com/ns#VenueShape> ;
+    sh:description ex:VenueShape ;
     schema:address <http://example.org/ns#NodeB1_102> ;
     schema:maximumAttendeeCapacity "1203"^^xsd:positiveInteger ;
     schema:name "8SsamXgu8kXh" .
@@ -155,19 +156,19 @@
     schema:streetAddress "ZpPJW5jtAi" .
 
 <http://example.org/ns#NodeB1_112> a schema:Offer ;
-    sh:description <http://example.com/ns#TicketShape> ;
+    sh:description ex:TicketShape ;
     schema:category "student" ;
     schema:price 305.06 ;
     schema:priceCurrency "EUR" .
 
 <http://example.org/ns#NodeB1_113> a schema:Offer ;
-    sh:description <http://example.com/ns#TicketShape> ;
+    sh:description ex:TicketShape ;
     schema:category "speaker" ;
     schema:price 180.41 ;
     schema:priceCurrency "EUR" .
 
 <http://example.org/ns#NodeB1_115> a schema:Place ;
-    sh:description <http://example.com/ns#VenueShape> ;
+    sh:description ex:VenueShape ;
     schema:address <http://example.org/ns#NodeB1_116> ;
     schema:maximumAttendeeCapacity "1031"^^xsd:positiveInteger ;
     schema:name "ojO8UHJ2" .
@@ -178,25 +179,25 @@
     schema:streetAddress "hLk7hfBGpV" .
 
 <http://example.org/ns#NodeB1_129> a schema:Offer ;
-    sh:description <http://example.com/ns#TicketShape> ;
+    sh:description ex:TicketShape ;
     schema:category "student" ;
     schema:price 372.44 ;
     schema:priceCurrency "EUR" .
 
 <http://example.org/ns#NodeB1_130> a schema:Offer ;
-    sh:description <http://example.com/ns#TicketShape> ;
+    sh:description ex:TicketShape ;
     schema:category "speaker" ;
     schema:price 464.73 ;
     schema:priceCurrency "EUR" .
 
 <http://example.org/ns#NodeB1_131> a schema:Offer ;
-    sh:description <http://example.com/ns#TicketShape> ;
+    sh:description ex:TicketShape ;
     schema:category "regular" ;
     schema:price 473.19 ;
     schema:priceCurrency "EUR" .
 
 <http://example.org/ns#NodeB1_133> a schema:Place ;
-    sh:description <http://example.com/ns#VenueShape> ;
+    sh:description ex:VenueShape ;
     schema:address <http://example.org/ns#NodeB1_134> ;
     schema:maximumAttendeeCapacity "1110"^^xsd:positiveInteger ;
     schema:name "DjekVIxxQusUU" .
@@ -207,25 +208,25 @@
     schema:streetAddress "Wssv1iG7mK" .
 
 <http://example.org/ns#NodeB1_153> a schema:Offer ;
-    sh:description <http://example.com/ns#TicketShape> ;
+    sh:description ex:TicketShape ;
     schema:category "student" ;
     schema:price 460.77 ;
     schema:priceCurrency "EUR" .
 
 <http://example.org/ns#NodeB1_154> a schema:Offer ;
-    sh:description <http://example.com/ns#TicketShape> ;
+    sh:description ex:TicketShape ;
     schema:category "speaker" ;
     schema:price 843.67 ;
     schema:priceCurrency "EUR" .
 
 <http://example.org/ns#NodeB1_155> a schema:Offer ;
-    sh:description <http://example.com/ns#TicketShape> ;
+    sh:description ex:TicketShape ;
     schema:category "regular" ;
     schema:price 701.58 ;
     schema:priceCurrency "EUR" .
 
 <http://example.org/ns#NodeB1_157> a schema:Place ;
-    sh:description <http://example.com/ns#VenueShape> ;
+    sh:description ex:VenueShape ;
     schema:address <http://example.org/ns#NodeB1_158> ;
     schema:maximumAttendeeCapacity "924"^^xsd:positiveInteger ;
     schema:name "AhaMkwUxnS0" .
@@ -236,25 +237,25 @@
     schema:streetAddress "Q6XHviW3u5" .
 
 <http://example.org/ns#NodeB1_168> a schema:Offer ;
-    sh:description <http://example.com/ns#TicketShape> ;
+    sh:description ex:TicketShape ;
     schema:category "student" ;
     schema:price 189.43 ;
     schema:priceCurrency "EUR" .
 
 <http://example.org/ns#NodeB1_169> a schema:Offer ;
-    sh:description <http://example.com/ns#TicketShape> ;
+    sh:description ex:TicketShape ;
     schema:category "student" ;
     schema:price 604.15 ;
     schema:priceCurrency "EUR" .
 
 <http://example.org/ns#NodeB1_170> a schema:Offer ;
-    sh:description <http://example.com/ns#TicketShape> ;
+    sh:description ex:TicketShape ;
     schema:category "speaker" ;
     schema:price 814.82 ;
     schema:priceCurrency "EUR" .
 
 <http://example.org/ns#NodeB1_172> a schema:Place ;
-    sh:description <http://example.com/ns#VenueShape> ;
+    sh:description ex:VenueShape ;
     schema:address <http://example.org/ns#NodeB1_173> ;
     schema:maximumAttendeeCapacity "209"^^xsd:positiveInteger ;
     schema:name "V993EjuIIu" .
@@ -265,19 +266,19 @@
     schema:streetAddress "7Qk5bc9zPWz18" .
 
 <http://example.org/ns#NodeB1_186> a schema:Offer ;
-    sh:description <http://example.com/ns#TicketShape> ;
+    sh:description ex:TicketShape ;
     schema:category "student" ;
     schema:price 235.08 ;
     schema:priceCurrency "EUR" .
 
 <http://example.org/ns#NodeB1_187> a schema:Offer ;
-    sh:description <http://example.com/ns#TicketShape> ;
+    sh:description ex:TicketShape ;
     schema:category "speaker" ;
     schema:price 153.38 ;
     schema:priceCurrency "EUR" .
 
-<http://example.org/ns#NodeB1_100> a <http://example.com/ns#Conference> ;
-    sh:description <http://example.com/ns#ConferenceShape> ;
+<http://example.org/ns#NodeB1_100> a ex:Conference ;
+    sh:description ex:ConferenceShape ;
     schema:endDate "2027-07-16T08:55:52+00:00"^^xsd:dateTime ;
     schema:location <http://example.org/ns#NodeB1_101> ;
     schema:name "ZSf3FRXLW"@de,
@@ -287,8 +288,8 @@
     schema:startDate "2027-02-19T01:31:52+00:00"^^xsd:dateTime ;
     schema:url "https://wddctpdrd.example.org/"^^xsd:anyURI .
 
-<http://example.org/ns#NodeB1_114> a <http://example.com/ns#Conference> ;
-    sh:description <http://example.com/ns#ConferenceShape> ;
+<http://example.org/ns#NodeB1_114> a ex:Conference ;
+    sh:description ex:ConferenceShape ;
     schema:endDate "2027-08-04T22:43:36+00:00"^^xsd:dateTime ;
     schema:location <http://example.org/ns#NodeB1_115> ;
     schema:name "WMM2pHAfl"@en ;
@@ -298,8 +299,8 @@
     schema:startDate "2027-06-14T13:28:21+00:00"^^xsd:dateTime ;
     schema:url "https://ebqdfglv.example.org/"^^xsd:anyURI .
 
-<http://example.org/ns#NodeB1_156> a <http://example.com/ns#Conference> ;
-    sh:description <http://example.com/ns#ConferenceShape> ;
+<http://example.org/ns#NodeB1_156> a ex:Conference ;
+    sh:description ex:ConferenceShape ;
     schema:endDate "2027-02-17T16:54:36+00:00"^^xsd:dateTime ;
     schema:location <http://example.org/ns#NodeB1_157> ;
     schema:name "PJTuwJ2zzozh"@de,
@@ -310,8 +311,8 @@
     schema:startDate "2027-02-02T06:32:58+00:00"^^xsd:dateTime ;
     schema:url "https://nbfzvmg.example.org/"^^xsd:anyURI .
 
-<http://example.org/ns#NodeB1_132> a <http://example.com/ns#Conference> ;
-    sh:description <http://example.com/ns#ConferenceShape> ;
+<http://example.org/ns#NodeB1_132> a ex:Conference ;
+    sh:description ex:ConferenceShape ;
     schema:endDate "2027-05-02T08:02:38+00:00"^^xsd:dateTime ;
     schema:location <http://example.org/ns#NodeB1_133> ;
     schema:name "gH6xP5weYxN"@de ;
@@ -321,8 +322,8 @@
     schema:startDate "2027-04-06T16:49:31+00:00"^^xsd:dateTime ;
     schema:url "https://bnwemkmqocvs.example.org/"^^xsd:anyURI .
 
-<http://example.org/ns#NodeB1_171> a <http://example.com/ns#Conference> ;
-    sh:description <http://example.com/ns#ConferenceShape> ;
+<http://example.org/ns#NodeB1_171> a ex:Conference ;
+    sh:description ex:ConferenceShape ;
     schema:endDate "2027-09-25T23:51:19+00:00"^^xsd:dateTime ;
     schema:location <http://example.org/ns#NodeB1_172> ;
     schema:name "lQ8US2qD"@en ;
@@ -331,7 +332,7 @@
     schema:startDate "2027-01-10T18:23:19+00:00"^^xsd:dateTime ;
     schema:url "https://wyboimua.example.org/"^^xsd:anyURI .
 
-[] a <http://example.com/ns#Talk> ;
+[] a ex:Talk ;
     schema:duration "PT44M30S"^^xsd:duration ;
     schema:eventAttendanceMode schema:OnlineEventAttendanceMode ;
     schema:eventStatus schema:EventRescheduled ;
@@ -352,7 +353,7 @@
             schema:sameAs <https://orcid.org/0000-0006-9453-2545> ] ;
     schema:superEvent <http://example.org/ns#NodeB1_100> .
 
-[] a <http://example.com/ns#Talk> ;
+[] a ex:Talk ;
     schema:duration "PT25M40S"^^xsd:duration ;
     schema:eventAttendanceMode schema:OfflineEventAttendanceMode ;
     schema:eventStatus schema:EventScheduled ;
@@ -366,7 +367,7 @@
             schema:sameAs <https://orcid.org/0000-0009-8066-7356> ] ;
     schema:superEvent <http://example.org/ns#NodeB1_114> .
 
-[] a <http://example.com/ns#Talk> ;
+[] a ex:Talk ;
     schema:duration "PT34M35S"^^xsd:duration ;
     schema:eventAttendanceMode schema:OnlineEventAttendanceMode ;
     schema:eventStatus schema:EventPostponed ;
@@ -394,7 +395,7 @@
             schema:sameAs <https://orcid.org/0000-0003-8881-3404> ] ;
     schema:superEvent <http://example.org/ns#NodeB1_132> .
 
-[] a <http://example.com/ns#Talk> ;
+[] a ex:Talk ;
     schema:duration "PT41M"^^xsd:duration ;
     schema:eventAttendanceMode schema:OnlineEventAttendanceMode ;
     schema:eventStatus schema:EventPostponed ;
@@ -408,7 +409,7 @@
             schema:sameAs <https://orcid.org/0000-0001-7978-438X> ] ;
     schema:superEvent <http://example.org/ns#NodeB1_132> .
 
-[] a <http://example.com/ns#Talk> ;
+[] a ex:Talk ;
     schema:duration "PT49M6S"^^xsd:duration ;
     schema:eventAttendanceMode schema:OfflineEventAttendanceMode ;
     schema:eventStatus schema:EventScheduled ;
@@ -429,7 +430,7 @@
             schema:sameAs <https://orcid.org/0000-0007-0569-3198> ] ;
     schema:superEvent <http://example.org/ns#NodeB1_132> .
 
-[] a <http://example.com/ns#Talk> ;
+[] a ex:Talk ;
     schema:duration "PT54M21S"^^xsd:duration ;
     schema:eventAttendanceMode schema:OfflineEventAttendanceMode ;
     schema:eventStatus schema:EventScheduled ;
@@ -443,7 +444,7 @@
             schema:sameAs <https://orcid.org/0000-0008-8864-5344> ] ;
     schema:superEvent <http://example.org/ns#NodeB1_156> .
 
-[] a <http://example.com/ns#Talk> ;
+[] a ex:Talk ;
     schema:duration "PT35M46S"^^xsd:duration ;
     schema:eventAttendanceMode schema:OnlineEventAttendanceMode ;
     schema:eventStatus schema:EventScheduled ;
@@ -464,7 +465,7 @@
             schema:sameAs <https://orcid.org/0000-0006-6225-5524> ] ;
     schema:superEvent <http://example.org/ns#NodeB1_156> .
 
-[] a <http://example.com/ns#Talk> ;
+[] a ex:Talk ;
     schema:duration "PT56M7S"^^xsd:duration ;
     schema:eventAttendanceMode schema:OfflineEventAttendanceMode ;
     schema:eventStatus schema:EventRescheduled ;
@@ -485,7 +486,7 @@
             schema:sameAs <https://orcid.org/0000-0007-7473-2747> ] ;
     schema:superEvent <http://example.org/ns#NodeB1_171> .
 
-[] a <http://example.com/ns#Talk> ;
+[] a ex:Talk ;
     schema:duration "PT29M47S"^^xsd:duration ;
     schema:eventAttendanceMode schema:OnlineEventAttendanceMode ;
     schema:eventStatus schema:EventPostponed ;
@@ -499,7 +500,7 @@
             schema:sameAs <https://orcid.org/0000-0005-6056-643X> ] ;
     schema:superEvent <http://example.org/ns#NodeB1_171> .
 
-[] a <http://example.com/ns#Talk> ;
+[] a ex:Talk ;
     schema:duration "PT41M51S"^^xsd:duration ;
     schema:eventAttendanceMode schema:OnlineEventAttendanceMode ;
     schema:eventStatus schema:EventPostponed ;
@@ -513,7 +514,7 @@
             schema:sameAs <https://orcid.org/0000-0004-8274-6756> ] ;
     schema:superEvent <http://example.org/ns#NodeB1_171> .
 
-[] a <http://example.com/ns#Talk> ;
+[] a ex:Talk ;
     schema:duration "PT39M45S"^^xsd:duration ;
     schema:eventAttendanceMode schema:OfflineEventAttendanceMode ;
     schema:eventStatus schema:EventPostponed ;
@@ -527,7 +528,7 @@
             schema:sameAs <https://orcid.org/0000-0003-1792-5504> ] ;
     schema:superEvent <http://example.org/ns#NodeB1_100> .
 
-[] a <http://example.com/ns#Talk> ;
+[] a ex:Talk ;
     schema:duration "PT52M3S"^^xsd:duration ;
     schema:eventAttendanceMode schema:OnlineEventAttendanceMode ;
     schema:eventStatus schema:EventScheduled ;

@@ -3,273 +3,274 @@
 # Scale factor: 7, batch size: 1000, seed: 1
 # Base IRI: http://example.org/ns#, links of entities to their shapes (sh:description): yes
 
-@prefix schemaorg: <http://schema.org/> .
+@prefix ex: <http://example.com/ns#> .
+@prefix schema: <http://schema.org/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<http://example.org/ns#NodeB1_100> a schemaorg:TVSeries ;
-    schemaorg:actor <http://example.org/ns#NodeB1_102>,
+<http://example.org/ns#NodeB1_100> a schema:TVSeries ;
+    schema:actor <http://example.org/ns#NodeB1_102>,
         <http://example.org/ns#NodeB1_103>,
         <http://example.org/ns#NodeB1_104> ;
-    schemaorg:datePublished "1994-01-19"^^xsd:date ;
-    schemaorg:director <http://example.org/ns#NodeB1_101> ;
-    schemaorg:endDate "2019-04-14"^^xsd:date ;
-    schemaorg:genre "Action" ;
-    schemaorg:name "A Separation" ;
-    schemaorg:numberOfEpisodes 19 ;
-    schemaorg:numberOfSeasons 5 ;
-    schemaorg:startDate "1963-08-30"^^xsd:date ;
-    schemaorg:titleEIDR "10.5240/4795-70B4-D450-8A40-C288-S" ;
-    sh:description <http://example.com/ns#TVSeriesShape> .
+    schema:datePublished "1994-01-19"^^xsd:date ;
+    schema:director <http://example.org/ns#NodeB1_101> ;
+    schema:endDate "2019-04-14"^^xsd:date ;
+    schema:genre "Action" ;
+    schema:name "A Separation" ;
+    schema:numberOfEpisodes 19 ;
+    schema:numberOfSeasons 5 ;
+    schema:startDate "1963-08-30"^^xsd:date ;
+    schema:titleEIDR "10.5240/4795-70B4-D450-8A40-C288-S" ;
+    sh:description ex:TVSeriesShape .
 
-<http://example.org/ns#NodeB1_105> a schemaorg:TVSeries ;
-    schemaorg:actor <http://example.org/ns#NodeB1_107>,
+<http://example.org/ns#NodeB1_105> a schema:TVSeries ;
+    schema:actor <http://example.org/ns#NodeB1_107>,
         <http://example.org/ns#NodeB1_108>,
         <http://example.org/ns#NodeB1_109> ;
-    schemaorg:datePublished "1941-12-28"^^xsd:date ;
-    schemaorg:director <http://example.org/ns#NodeB1_106> ;
-    schemaorg:endDate "1985-04-11"^^xsd:date ;
-    schemaorg:genre "Sports Comedy" ;
-    schemaorg:name "Shanghai Fortress" ;
-    schemaorg:numberOfEpisodes 42 ;
-    schemaorg:numberOfSeasons 12 ;
-    schemaorg:startDate "1913-09-19"^^xsd:date ;
-    schemaorg:titleEIDR "10.5240/BB62-3497-474D-CFD6-4979-P" ;
-    sh:description <http://example.com/ns#TVSeriesShape> .
+    schema:datePublished "1941-12-28"^^xsd:date ;
+    schema:director <http://example.org/ns#NodeB1_106> ;
+    schema:endDate "1985-04-11"^^xsd:date ;
+    schema:genre "Sports Comedy" ;
+    schema:name "Shanghai Fortress" ;
+    schema:numberOfEpisodes 42 ;
+    schema:numberOfSeasons 12 ;
+    schema:startDate "1913-09-19"^^xsd:date ;
+    schema:titleEIDR "10.5240/BB62-3497-474D-CFD6-4979-P" ;
+    sh:description ex:TVSeriesShape .
 
-<http://example.org/ns#NodeB1_110> a schemaorg:TVSeries ;
-    schemaorg:actor <http://example.org/ns#NodeB1_112>,
+<http://example.org/ns#NodeB1_110> a schema:TVSeries ;
+    schema:actor <http://example.org/ns#NodeB1_112>,
         <http://example.org/ns#NodeB1_113>,
         <http://example.org/ns#NodeB1_114> ;
-    schemaorg:datePublished "1956-04-28"^^xsd:date ;
-    schemaorg:director <http://example.org/ns#NodeB1_111> ;
-    schemaorg:endDate "1975-02-21"^^xsd:date ;
-    schemaorg:genre "Animation Comedy Drama" ;
-    schemaorg:name "Two Catalonias" ;
-    schemaorg:numberOfEpisodes 2 ;
-    schemaorg:numberOfSeasons 1 ;
-    schemaorg:startDate "1943-09-08"^^xsd:date ;
-    schemaorg:titleEIDR "10.5240/F36E-E7CE-07FD-F63B-E532-1" ;
-    sh:description <http://example.com/ns#TVSeriesShape> .
+    schema:datePublished "1956-04-28"^^xsd:date ;
+    schema:director <http://example.org/ns#NodeB1_111> ;
+    schema:endDate "1975-02-21"^^xsd:date ;
+    schema:genre "Animation Comedy Drama" ;
+    schema:name "Two Catalonias" ;
+    schema:numberOfEpisodes 2 ;
+    schema:numberOfSeasons 1 ;
+    schema:startDate "1943-09-08"^^xsd:date ;
+    schema:titleEIDR "10.5240/F36E-E7CE-07FD-F63B-E532-1" ;
+    sh:description ex:TVSeriesShape .
 
-<http://example.org/ns#NodeB1_115> a schemaorg:TVSeries ;
-    schemaorg:actor <http://example.org/ns#NodeB1_117>,
+<http://example.org/ns#NodeB1_115> a schema:TVSeries ;
+    schema:actor <http://example.org/ns#NodeB1_117>,
         <http://example.org/ns#NodeB1_118>,
         <http://example.org/ns#NodeB1_119> ;
-    schemaorg:datePublished "1943-09-29"^^xsd:date ;
-    schemaorg:director <http://example.org/ns#NodeB1_116> ;
-    schemaorg:endDate "1989-03-06"^^xsd:date ;
-    schemaorg:genre "Documentary" ;
-    schemaorg:name "The Conjuring" ;
-    schemaorg:numberOfEpisodes 31 ;
-    schemaorg:numberOfSeasons 25 ;
-    schemaorg:startDate "1911-11-08"^^xsd:date ;
-    schemaorg:titleEIDR "10.5240/1934-6BAD-6444-D404-76E2-F" ;
-    sh:description <http://example.com/ns#TVSeriesShape> .
+    schema:datePublished "1943-09-29"^^xsd:date ;
+    schema:director <http://example.org/ns#NodeB1_116> ;
+    schema:endDate "1989-03-06"^^xsd:date ;
+    schema:genre "Documentary" ;
+    schema:name "The Conjuring" ;
+    schema:numberOfEpisodes 31 ;
+    schema:numberOfSeasons 25 ;
+    schema:startDate "1911-11-08"^^xsd:date ;
+    schema:titleEIDR "10.5240/1934-6BAD-6444-D404-76E2-F" ;
+    sh:description ex:TVSeriesShape .
 
-<http://example.org/ns#NodeB1_120> a schemaorg:TVSeries ;
-    schemaorg:actor <http://example.org/ns#NodeB1_122>,
+<http://example.org/ns#NodeB1_120> a schema:TVSeries ;
+    schema:actor <http://example.org/ns#NodeB1_122>,
         <http://example.org/ns#NodeB1_123>,
         <http://example.org/ns#NodeB1_124> ;
-    schemaorg:datePublished "2008-08-19"^^xsd:date ;
-    schemaorg:director <http://example.org/ns#NodeB1_121> ;
-    schemaorg:endDate "2015-10-07"^^xsd:date ;
-    schemaorg:genre "Mystery Romance" ;
-    schemaorg:name "Die Ontwaking" ;
-    schemaorg:numberOfEpisodes 37 ;
-    schemaorg:numberOfSeasons 33 ;
-    schemaorg:startDate "1971-11-21"^^xsd:date ;
-    schemaorg:titleEIDR "10.5240/1853-7D25-DAD7-67E5-D984-2" ;
-    sh:description <http://example.com/ns#TVSeriesShape> .
+    schema:datePublished "2008-08-19"^^xsd:date ;
+    schema:director <http://example.org/ns#NodeB1_121> ;
+    schema:endDate "2015-10-07"^^xsd:date ;
+    schema:genre "Mystery Romance" ;
+    schema:name "Die Ontwaking" ;
+    schema:numberOfEpisodes 37 ;
+    schema:numberOfSeasons 33 ;
+    schema:startDate "1971-11-21"^^xsd:date ;
+    schema:titleEIDR "10.5240/1853-7D25-DAD7-67E5-D984-2" ;
+    sh:description ex:TVSeriesShape .
 
-<http://example.org/ns#NodeB1_125> a schemaorg:TVSeries ;
-    schemaorg:actor <http://example.org/ns#NodeB1_127>,
+<http://example.org/ns#NodeB1_125> a schema:TVSeries ;
+    schema:actor <http://example.org/ns#NodeB1_127>,
         <http://example.org/ns#NodeB1_128>,
         <http://example.org/ns#NodeB1_129> ;
-    schemaorg:datePublished "1984-01-31"^^xsd:date ;
-    schemaorg:director <http://example.org/ns#NodeB1_126> ;
-    schemaorg:endDate "1985-11-27"^^xsd:date ;
-    schemaorg:genre "Crime Comedy" ;
-    schemaorg:name "American Honey" ;
-    schemaorg:numberOfEpisodes 9 ;
-    schemaorg:numberOfSeasons 9 ;
-    schemaorg:startDate "1973-04-17"^^xsd:date ;
-    schemaorg:titleEIDR "10.5240/59D6-506D-96A1-8233-4CD7-4" ;
-    sh:description <http://example.com/ns#TVSeriesShape> .
+    schema:datePublished "1984-01-31"^^xsd:date ;
+    schema:director <http://example.org/ns#NodeB1_126> ;
+    schema:endDate "1985-11-27"^^xsd:date ;
+    schema:genre "Crime Comedy" ;
+    schema:name "American Honey" ;
+    schema:numberOfEpisodes 9 ;
+    schema:numberOfSeasons 9 ;
+    schema:startDate "1973-04-17"^^xsd:date ;
+    schema:titleEIDR "10.5240/59D6-506D-96A1-8233-4CD7-4" ;
+    sh:description ex:TVSeriesShape .
 
-<http://example.org/ns#NodeB1_130> a schemaorg:TVSeries ;
-    schemaorg:actor <http://example.org/ns#NodeB1_132>,
+<http://example.org/ns#NodeB1_130> a schema:TVSeries ;
+    schema:actor <http://example.org/ns#NodeB1_132>,
         <http://example.org/ns#NodeB1_133>,
         <http://example.org/ns#NodeB1_134> ;
-    schemaorg:datePublished "1977-10-07"^^xsd:date ;
-    schemaorg:director <http://example.org/ns#NodeB1_131> ;
-    schemaorg:endDate "2014-01-03"^^xsd:date ;
-    schemaorg:genre "Action Adventure Comedy" ;
-    schemaorg:name "Evil" ;
-    schemaorg:numberOfEpisodes 9 ;
-    schemaorg:numberOfSeasons 1 ;
-    schemaorg:startDate "1939-08-03"^^xsd:date ;
-    schemaorg:titleEIDR "10.5240/404B-75A0-CD73-0906-EAC3-F" ;
-    sh:description <http://example.com/ns#TVSeriesShape> .
+    schema:datePublished "1977-10-07"^^xsd:date ;
+    schema:director <http://example.org/ns#NodeB1_131> ;
+    schema:endDate "2014-01-03"^^xsd:date ;
+    schema:genre "Action Adventure Comedy" ;
+    schema:name "Evil" ;
+    schema:numberOfEpisodes 9 ;
+    schema:numberOfSeasons 1 ;
+    schema:startDate "1939-08-03"^^xsd:date ;
+    schema:titleEIDR "10.5240/404B-75A0-CD73-0906-EAC3-F" ;
+    sh:description ex:TVSeriesShape .
 
-<http://example.org/ns#NodeB1_101> a schemaorg:Person ;
-    schemaorg:email "jacqui_lutz@example.com" ;
-    schemaorg:familyName "Lutz" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Jacqui" ;
-    schemaorg:telephone "366-462-9219" ;
-    sh:description <http://example.com/ns#DirectorShape> .
+<http://example.org/ns#NodeB1_101> a schema:Person ;
+    schema:email "jacqui_lutz@example.com" ;
+    schema:familyName "Lutz" ;
+    schema:gender "female" ;
+    schema:givenName "Jacqui" ;
+    schema:telephone "366-462-9219" ;
+    sh:description ex:DirectorShape .
 
-<http://example.org/ns#NodeB1_102> a schemaorg:Person ;
-    schemaorg:gender "female" ;
-    schemaorg:name "Wanda Bright" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_102> a schema:Person ;
+    schema:gender "female" ;
+    schema:name "Wanda Bright" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_103> a schemaorg:Person ;
-    schemaorg:gender "male" ;
-    schemaorg:name "Hillery Ahmed" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_103> a schema:Person ;
+    schema:gender "male" ;
+    schema:name "Hillery Ahmed" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_104> a schemaorg:Person ;
-    schemaorg:gender "female" ;
-    schemaorg:name "Karisa Vaughn" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_104> a schema:Person ;
+    schema:gender "female" ;
+    schema:name "Karisa Vaughn" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_106> a schemaorg:Person ;
-    schemaorg:email "rockwell_clemons@example.com" ;
-    schemaorg:familyName "Clemons" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Rockwell" ;
-    schemaorg:telephone "959-307-8015" ;
-    sh:description <http://example.com/ns#DirectorShape> .
+<http://example.org/ns#NodeB1_106> a schema:Person ;
+    schema:email "rockwell_clemons@example.com" ;
+    schema:familyName "Clemons" ;
+    schema:gender "male" ;
+    schema:givenName "Rockwell" ;
+    schema:telephone "959-307-8015" ;
+    sh:description ex:DirectorShape .
 
-<http://example.org/ns#NodeB1_107> a schemaorg:Person ;
-    schemaorg:gender "male" ;
-    schemaorg:name "Whitman Wilkinson" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_107> a schema:Person ;
+    schema:gender "male" ;
+    schema:name "Whitman Wilkinson" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_108> a schemaorg:Person ;
-    schemaorg:gender "female" ;
-    schemaorg:name "Anitra Odonnell" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_108> a schema:Person ;
+    schema:gender "female" ;
+    schema:name "Anitra Odonnell" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_109> a schemaorg:Person ;
-    schemaorg:gender "female" ;
-    schemaorg:name "Ginevra Chandler" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_109> a schema:Person ;
+    schema:gender "female" ;
+    schema:name "Ginevra Chandler" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_111> a schemaorg:Person ;
-    schemaorg:email "xena_clark@example.com" ;
-    schemaorg:familyName "Clark" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Xena" ;
-    schemaorg:telephone "(900) 790-9440" ;
-    sh:description <http://example.com/ns#DirectorShape> .
+<http://example.org/ns#NodeB1_111> a schema:Person ;
+    schema:email "xena_clark@example.com" ;
+    schema:familyName "Clark" ;
+    schema:gender "female" ;
+    schema:givenName "Xena" ;
+    schema:telephone "(900) 790-9440" ;
+    sh:description ex:DirectorShape .
 
-<http://example.org/ns#NodeB1_112> a schemaorg:Person ;
-    schemaorg:gender "male" ;
-    schemaorg:name "Townie Shaffer" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_112> a schema:Person ;
+    schema:gender "male" ;
+    schema:name "Townie Shaffer" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_113> a schemaorg:Person ;
-    schemaorg:gender "male" ;
-    schemaorg:name "Kingsley Rowland" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_113> a schema:Person ;
+    schema:gender "male" ;
+    schema:name "Kingsley Rowland" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_114> a schemaorg:Person ;
-    schemaorg:gender "male" ;
-    schemaorg:name "Eben Rosado" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_114> a schema:Person ;
+    schema:gender "male" ;
+    schema:name "Eben Rosado" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_116> a schemaorg:Person ;
-    schemaorg:email "leisha_goldman@example.com" ;
-    schemaorg:familyName "Goldman" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Leisha" ;
-    schemaorg:telephone "(182) 373-0762" ;
-    sh:description <http://example.com/ns#DirectorShape> .
+<http://example.org/ns#NodeB1_116> a schema:Person ;
+    schema:email "leisha_goldman@example.com" ;
+    schema:familyName "Goldman" ;
+    schema:gender "female" ;
+    schema:givenName "Leisha" ;
+    schema:telephone "(182) 373-0762" ;
+    sh:description ex:DirectorShape .
 
-<http://example.org/ns#NodeB1_117> a schemaorg:Person ;
-    schemaorg:gender "female" ;
-    schemaorg:name "Lottie Zimmerman" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_117> a schema:Person ;
+    schema:gender "female" ;
+    schema:name "Lottie Zimmerman" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_118> a schemaorg:Person ;
-    schemaorg:gender "female" ;
-    schemaorg:name "Gert Orozco" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_118> a schema:Person ;
+    schema:gender "female" ;
+    schema:name "Gert Orozco" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_119> a schemaorg:Person ;
-    schemaorg:gender "female" ;
-    schemaorg:name "Rubie Sanford" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_119> a schema:Person ;
+    schema:gender "female" ;
+    schema:name "Rubie Sanford" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_121> a schemaorg:Person ;
-    schemaorg:email "lissi_beasley@example.com" ;
-    schemaorg:familyName "Beasley" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Lissi" ;
-    schemaorg:telephone "(589) 449-8663" ;
-    sh:description <http://example.com/ns#DirectorShape> .
+<http://example.org/ns#NodeB1_121> a schema:Person ;
+    schema:email "lissi_beasley@example.com" ;
+    schema:familyName "Beasley" ;
+    schema:gender "female" ;
+    schema:givenName "Lissi" ;
+    schema:telephone "(589) 449-8663" ;
+    sh:description ex:DirectorShape .
 
-<http://example.org/ns#NodeB1_122> a schemaorg:Person ;
-    schemaorg:gender "female" ;
-    schemaorg:name "Bambi Castro" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_122> a schema:Person ;
+    schema:gender "female" ;
+    schema:name "Bambi Castro" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_123> a schemaorg:Person ;
-    schemaorg:gender "male" ;
-    schemaorg:name "Chelton Randolph" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_123> a schema:Person ;
+    schema:gender "male" ;
+    schema:name "Chelton Randolph" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_124> a schemaorg:Person ;
-    schemaorg:gender "female" ;
-    schemaorg:name "Sarah Baez" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_124> a schema:Person ;
+    schema:gender "female" ;
+    schema:name "Sarah Baez" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_126> a schemaorg:Person ;
-    schemaorg:email "chevalier_cervantes@example.com" ;
-    schemaorg:familyName "Cervantes" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Chevalier" ;
-    schemaorg:telephone "(116) 194-8719" ;
-    sh:description <http://example.com/ns#DirectorShape> .
+<http://example.org/ns#NodeB1_126> a schema:Person ;
+    schema:email "chevalier_cervantes@example.com" ;
+    schema:familyName "Cervantes" ;
+    schema:gender "male" ;
+    schema:givenName "Chevalier" ;
+    schema:telephone "(116) 194-8719" ;
+    sh:description ex:DirectorShape .
 
-<http://example.org/ns#NodeB1_127> a schemaorg:Person ;
-    schemaorg:gender "female" ;
-    schemaorg:name "Brianne Velazquez" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_127> a schema:Person ;
+    schema:gender "female" ;
+    schema:name "Brianne Velazquez" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_128> a schemaorg:Person ;
-    schemaorg:gender "female" ;
-    schemaorg:name "Kora Davies" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_128> a schema:Person ;
+    schema:gender "female" ;
+    schema:name "Kora Davies" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_129> a schemaorg:Person ;
-    schemaorg:gender "male" ;
-    schemaorg:name "Berk Pike" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_129> a schema:Person ;
+    schema:gender "male" ;
+    schema:name "Berk Pike" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_131> a schemaorg:Person ;
-    schemaorg:email "wyatan_luna@example.com" ;
-    schemaorg:familyName "Luna" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Wyatan" ;
-    schemaorg:telephone "238-131-5405" ;
-    sh:description <http://example.com/ns#DirectorShape> .
+<http://example.org/ns#NodeB1_131> a schema:Person ;
+    schema:email "wyatan_luna@example.com" ;
+    schema:familyName "Luna" ;
+    schema:gender "male" ;
+    schema:givenName "Wyatan" ;
+    schema:telephone "238-131-5405" ;
+    sh:description ex:DirectorShape .
 
-<http://example.org/ns#NodeB1_132> a schemaorg:Person ;
-    schemaorg:gender "male" ;
-    schemaorg:name "Kin Sanderson" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_132> a schema:Person ;
+    schema:gender "male" ;
+    schema:name "Kin Sanderson" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_133> a schemaorg:Person ;
-    schemaorg:gender "male" ;
-    schemaorg:name "Jud Yang" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_133> a schema:Person ;
+    schema:gender "male" ;
+    schema:name "Jud Yang" ;
+    sh:description ex:ActorShape .
 
-<http://example.org/ns#NodeB1_134> a schemaorg:Person ;
-    schemaorg:gender "male" ;
-    schemaorg:name "Eberhard Bond" ;
-    sh:description <http://example.com/ns#ActorShape> .
+<http://example.org/ns#NodeB1_134> a schema:Person ;
+    schema:gender "male" ;
+    schema:name "Eberhard Bond" ;
+    sh:description ex:ActorShape .
 

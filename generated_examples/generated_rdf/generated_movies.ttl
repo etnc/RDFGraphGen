@@ -3,177 +3,178 @@
 # Scale factor: 10, batch size: 1000, seed: 1
 # Base IRI: http://example.org/ns#, links of entities to their shapes (sh:description): yes
 
-@prefix schemaorg: <http://schema.org/> .
+@prefix ex: <http://example.com/ns#> .
+@prefix schema: <http://schema.org/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<http://example.org/ns#NodeB1_100> a schemaorg:Movie ;
-    schemaorg:award "Television Academy" ;
-    schemaorg:dateCreated "1980-12-15"^^xsd:date ;
-    schemaorg:datePublished "2013-12-04"^^xsd:date ;
-    schemaorg:director <http://example.org/ns#NodeB1_101> ;
-    schemaorg:genre "Post-Apocalyptic" ;
-    schemaorg:inLanguage "L8SsamXguXhspjb" ;
-    schemaorg:name "Catastroika" ;
-    sh:description <http://example.com/ns#MovieShape> .
+<http://example.org/ns#NodeB1_100> a schema:Movie ;
+    schema:award "Television Academy" ;
+    schema:dateCreated "1980-12-15"^^xsd:date ;
+    schema:datePublished "2013-12-04"^^xsd:date ;
+    schema:director <http://example.org/ns#NodeB1_101> ;
+    schema:genre "Post-Apocalyptic" ;
+    schema:inLanguage "L8SsamXguXhspjb" ;
+    schema:name "Catastroika" ;
+    sh:description ex:MovieShape .
 
-<http://example.org/ns#NodeB1_102> a schemaorg:Movie ;
-    schemaorg:award "Television Academy" ;
-    schemaorg:dateCreated "1995-04-14"^^xsd:date ;
-    schemaorg:datePublished "1970-09-20"^^xsd:date ;
-    schemaorg:director <http://example.org/ns#NodeB1_103> ;
-    schemaorg:genre "Family Animation" ;
-    schemaorg:inLanguage "O5G5WYz3Bln" ;
-    schemaorg:name "A Haunted House 2" ;
-    sh:description <http://example.com/ns#MovieShape> .
+<http://example.org/ns#NodeB1_102> a schema:Movie ;
+    schema:award "Television Academy" ;
+    schema:dateCreated "1995-04-14"^^xsd:date ;
+    schema:datePublished "1970-09-20"^^xsd:date ;
+    schema:director <http://example.org/ns#NodeB1_103> ;
+    schema:genre "Family Animation" ;
+    schema:inLanguage "O5G5WYz3Bln" ;
+    schema:name "A Haunted House 2" ;
+    sh:description ex:MovieShape .
 
-<http://example.org/ns#NodeB1_104> a schemaorg:Movie ;
-    schemaorg:award "MTV Movie & TV Awards" ;
-    schemaorg:dateCreated "1986-09-24"^^xsd:date ;
-    schemaorg:datePublished "1981-08-11"^^xsd:date ;
-    schemaorg:director <http://example.org/ns#NodeB1_105> ;
-    schemaorg:genre "Science Fiction Adventure" ;
-    schemaorg:inLanguage "SHhj0s3Uom3" ;
-    schemaorg:name "A Sound of Thunder" ;
-    sh:description <http://example.com/ns#MovieShape> .
+<http://example.org/ns#NodeB1_104> a schema:Movie ;
+    schema:award "MTV Movie & TV Awards" ;
+    schema:dateCreated "1986-09-24"^^xsd:date ;
+    schema:datePublished "1981-08-11"^^xsd:date ;
+    schema:director <http://example.org/ns#NodeB1_105> ;
+    schema:genre "Science Fiction Adventure" ;
+    schema:inLanguage "SHhj0s3Uom3" ;
+    schema:name "A Sound of Thunder" ;
+    sh:description ex:MovieShape .
 
-<http://example.org/ns#NodeB1_106> a schemaorg:Movie ;
-    schemaorg:award "Hugo Awards" ;
-    schemaorg:dateCreated "2008-02-01"^^xsd:date ;
-    schemaorg:datePublished "1999-08-06"^^xsd:date ;
-    schemaorg:director <http://example.org/ns#NodeB1_107> ;
-    schemaorg:genre "Musical Biography" ;
-    schemaorg:inLanguage "kbNYaELj" ;
-    schemaorg:name "Violent Saturday" ;
-    sh:description <http://example.com/ns#MovieShape> .
+<http://example.org/ns#NodeB1_106> a schema:Movie ;
+    schema:award "Hugo Awards" ;
+    schema:dateCreated "2008-02-01"^^xsd:date ;
+    schema:datePublished "1999-08-06"^^xsd:date ;
+    schema:director <http://example.org/ns#NodeB1_107> ;
+    schema:genre "Musical Biography" ;
+    schema:inLanguage "kbNYaELj" ;
+    schema:name "Violent Saturday" ;
+    sh:description ex:MovieShape .
 
-<http://example.org/ns#NodeB1_108> a schemaorg:Movie ;
-    schemaorg:award "Daytime Creative Arts Emmy Awards" ;
-    schemaorg:dateCreated "2017-08-13"^^xsd:date ;
-    schemaorg:datePublished "1978-04-04"^^xsd:date ;
-    schemaorg:director <http://example.org/ns#NodeB1_109> ;
-    schemaorg:genre "Action Crime Thriller" ;
-    schemaorg:inLanguage "HrTXWDpVzCA" ;
-    schemaorg:name "Derrida" ;
-    sh:description <http://example.com/ns#MovieShape> .
+<http://example.org/ns#NodeB1_108> a schema:Movie ;
+    schema:award "Daytime Creative Arts Emmy Awards" ;
+    schema:dateCreated "2017-08-13"^^xsd:date ;
+    schema:datePublished "1978-04-04"^^xsd:date ;
+    schema:director <http://example.org/ns#NodeB1_109> ;
+    schema:genre "Action Crime Thriller" ;
+    schema:inLanguage "HrTXWDpVzCA" ;
+    schema:name "Derrida" ;
+    sh:description ex:MovieShape .
 
-<http://example.org/ns#NodeB1_110> a schemaorg:Movie ;
-    schemaorg:award "Screen Actors Guild Awards" ;
-    schemaorg:dateCreated "2015-01-09"^^xsd:date ;
-    schemaorg:datePublished "2007-11-18"^^xsd:date ;
-    schemaorg:director <http://example.org/ns#NodeB1_111> ;
-    schemaorg:genre "Documentary Biography Drama" ;
-    schemaorg:inLanguage "aGse15eRh1JOj" ;
-    schemaorg:name "Le pélican" ;
-    sh:description <http://example.com/ns#MovieShape> .
+<http://example.org/ns#NodeB1_110> a schema:Movie ;
+    schema:award "Screen Actors Guild Awards" ;
+    schema:dateCreated "2015-01-09"^^xsd:date ;
+    schema:datePublished "2007-11-18"^^xsd:date ;
+    schema:director <http://example.org/ns#NodeB1_111> ;
+    schema:genre "Documentary Biography Drama" ;
+    schema:inLanguage "aGse15eRh1JOj" ;
+    schema:name "Le pélican" ;
+    sh:description ex:MovieShape .
 
-<http://example.org/ns#NodeB1_112> a schemaorg:Movie ;
-    schemaorg:award "Sports Emmy Awards" ;
-    schemaorg:dateCreated "1981-06-29"^^xsd:date ;
-    schemaorg:datePublished "2000-09-11"^^xsd:date ;
-    schemaorg:director <http://example.org/ns#NodeB1_113> ;
-    schemaorg:genre "Adventure Comedy" ;
-    schemaorg:inLanguage "BfEKPjXCYw" ;
-    schemaorg:name "Li Xiao Long" ;
-    sh:description <http://example.com/ns#MovieShape> .
+<http://example.org/ns#NodeB1_112> a schema:Movie ;
+    schema:award "Sports Emmy Awards" ;
+    schema:dateCreated "1981-06-29"^^xsd:date ;
+    schema:datePublished "2000-09-11"^^xsd:date ;
+    schema:director <http://example.org/ns#NodeB1_113> ;
+    schema:genre "Adventure Comedy" ;
+    schema:inLanguage "BfEKPjXCYw" ;
+    schema:name "Li Xiao Long" ;
+    sh:description ex:MovieShape .
 
-<http://example.org/ns#NodeB1_114> a schemaorg:Movie ;
-    schemaorg:award "Sundance Film Festival" ;
-    schemaorg:dateCreated "1978-01-01"^^xsd:date ;
-    schemaorg:datePublished "1980-12-23"^^xsd:date ;
-    schemaorg:director <http://example.org/ns#NodeB1_115> ;
-    schemaorg:genre "Musical Comedy" ;
-    schemaorg:inLanguage "ZsvojLlqcQh" ;
-    schemaorg:name "The Millionaire" ;
-    sh:description <http://example.com/ns#MovieShape> .
+<http://example.org/ns#NodeB1_114> a schema:Movie ;
+    schema:award "Sundance Film Festival" ;
+    schema:dateCreated "1978-01-01"^^xsd:date ;
+    schema:datePublished "1980-12-23"^^xsd:date ;
+    schema:director <http://example.org/ns#NodeB1_115> ;
+    schema:genre "Musical Comedy" ;
+    schema:inLanguage "ZsvojLlqcQh" ;
+    schema:name "The Millionaire" ;
+    sh:description ex:MovieShape .
 
-<http://example.org/ns#NodeB1_116> a schemaorg:Movie ;
-    schemaorg:award "Sundance Film Festival" ;
-    schemaorg:dateCreated "1999-02-14"^^xsd:date ;
-    schemaorg:datePublished "1982-11-11"^^xsd:date ;
-    schemaorg:director <http://example.org/ns#NodeB1_117> ;
-    schemaorg:genre "Horror" ;
-    schemaorg:inLanguage "pWM2pHAYNf" ;
-    schemaorg:name "Gasland" ;
-    sh:description <http://example.com/ns#MovieShape> .
+<http://example.org/ns#NodeB1_116> a schema:Movie ;
+    schema:award "Sundance Film Festival" ;
+    schema:dateCreated "1999-02-14"^^xsd:date ;
+    schema:datePublished "1982-11-11"^^xsd:date ;
+    schema:director <http://example.org/ns#NodeB1_117> ;
+    schema:genre "Horror" ;
+    schema:inLanguage "pWM2pHAYNf" ;
+    schema:name "Gasland" ;
+    sh:description ex:MovieShape .
 
-<http://example.org/ns#NodeB1_118> a schemaorg:Movie ;
-    schemaorg:award "Venice Film Festival" ;
-    schemaorg:dateCreated "1993-04-13"^^xsd:date ;
-    schemaorg:datePublished "1994-10-12"^^xsd:date ;
-    schemaorg:director <http://example.org/ns#NodeB1_119> ;
-    schemaorg:genre "Biographical Documentary" ;
-    schemaorg:inLanguage "fBGVeMs4G1" ;
-    schemaorg:name "Últimas imágenes del naufragio" ;
-    sh:description <http://example.com/ns#MovieShape> .
+<http://example.org/ns#NodeB1_118> a schema:Movie ;
+    schema:award "Venice Film Festival" ;
+    schema:dateCreated "1993-04-13"^^xsd:date ;
+    schema:datePublished "1994-10-12"^^xsd:date ;
+    schema:director <http://example.org/ns#NodeB1_119> ;
+    schema:genre "Biographical Documentary" ;
+    schema:inLanguage "fBGVeMs4G1" ;
+    schema:name "Últimas imágenes del naufragio" ;
+    sh:description ex:MovieShape .
 
-<http://example.org/ns#NodeB1_101> a schemaorg:Person ;
-    schemaorg:email "benton_388@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Benton" ;
-    schemaorg:telephone "(784) 661-6280" ;
-    sh:description <http://example.com/ns#DirectorShape> .
+<http://example.org/ns#NodeB1_101> a schema:Person ;
+    schema:email "benton_388@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Benton" ;
+    schema:telephone "(784) 661-6280" ;
+    sh:description ex:DirectorShape .
 
-<http://example.org/ns#NodeB1_103> a schemaorg:Person ;
-    schemaorg:email "ivory_178@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Ivory" ;
-    schemaorg:telephone "292-445-0361" ;
-    sh:description <http://example.com/ns#DirectorShape> .
+<http://example.org/ns#NodeB1_103> a schema:Person ;
+    schema:email "ivory_178@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Ivory" ;
+    schema:telephone "292-445-0361" ;
+    sh:description ex:DirectorShape .
 
-<http://example.org/ns#NodeB1_105> a schemaorg:Person ;
-    schemaorg:email "eliza_127@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Eliza" ;
-    schemaorg:telephone "(579) 504-0120" ;
-    sh:description <http://example.com/ns#DirectorShape> .
+<http://example.org/ns#NodeB1_105> a schema:Person ;
+    schema:email "eliza_127@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Eliza" ;
+    schema:telephone "(579) 504-0120" ;
+    sh:description ex:DirectorShape .
 
-<http://example.org/ns#NodeB1_107> a schemaorg:Person ;
-    schemaorg:email "ford_758@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Ford" ;
-    schemaorg:telephone "792-394-4352" ;
-    sh:description <http://example.com/ns#DirectorShape> .
+<http://example.org/ns#NodeB1_107> a schema:Person ;
+    schema:email "ford_758@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Ford" ;
+    schema:telephone "792-394-4352" ;
+    sh:description ex:DirectorShape .
 
-<http://example.org/ns#NodeB1_109> a schemaorg:Person ;
-    schemaorg:email "nina_887@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Nina" ;
-    schemaorg:telephone "945-525-5744" ;
-    sh:description <http://example.com/ns#DirectorShape> .
+<http://example.org/ns#NodeB1_109> a schema:Person ;
+    schema:email "nina_887@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Nina" ;
+    schema:telephone "945-525-5744" ;
+    sh:description ex:DirectorShape .
 
-<http://example.org/ns#NodeB1_111> a schemaorg:Person ;
-    schemaorg:email "tait_754@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Tait" ;
-    schemaorg:telephone "(898) 372-8104" ;
-    sh:description <http://example.com/ns#DirectorShape> .
+<http://example.org/ns#NodeB1_111> a schema:Person ;
+    schema:email "tait_754@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Tait" ;
+    schema:telephone "(898) 372-8104" ;
+    sh:description ex:DirectorShape .
 
-<http://example.org/ns#NodeB1_113> a schemaorg:Person ;
-    schemaorg:email "joyce_274@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Joyce" ;
-    schemaorg:telephone "280-588-9941" ;
-    sh:description <http://example.com/ns#DirectorShape> .
+<http://example.org/ns#NodeB1_113> a schema:Person ;
+    schema:email "joyce_274@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Joyce" ;
+    schema:telephone "280-588-9941" ;
+    sh:description ex:DirectorShape .
 
-<http://example.org/ns#NodeB1_115> a schemaorg:Person ;
-    schemaorg:email "bartolomeo_210@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Bartolomeo" ;
-    schemaorg:telephone "(228) 620-5339" ;
-    sh:description <http://example.com/ns#DirectorShape> .
+<http://example.org/ns#NodeB1_115> a schema:Person ;
+    schema:email "bartolomeo_210@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Bartolomeo" ;
+    schema:telephone "(228) 620-5339" ;
+    sh:description ex:DirectorShape .
 
-<http://example.org/ns#NodeB1_117> a schemaorg:Person ;
-    schemaorg:email "chantal_628@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Chantal" ;
-    schemaorg:telephone "(989) 020-3685" ;
-    sh:description <http://example.com/ns#DirectorShape> .
+<http://example.org/ns#NodeB1_117> a schema:Person ;
+    schema:email "chantal_628@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Chantal" ;
+    schema:telephone "(989) 020-3685" ;
+    sh:description ex:DirectorShape .
 
-<http://example.org/ns#NodeB1_119> a schemaorg:Person ;
-    schemaorg:email "georgia_745@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Georgia" ;
-    schemaorg:telephone "081-358-7880" ;
-    sh:description <http://example.com/ns#DirectorShape> .
+<http://example.org/ns#NodeB1_119> a schema:Person ;
+    schema:email "georgia_745@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Georgia" ;
+    schema:telephone "081-358-7880" ;
+    sh:description ex:DirectorShape .
 

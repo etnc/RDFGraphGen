@@ -3,31 +3,31 @@
 # Scale factor: 2, batch size: 1000, seed: 1
 # Base IRI: http://example.org/ns#, links of entities to their shapes (sh:description): yes
 
-@prefix ns1: <http://example.com/ns#> .
+@prefix ex: <http://example.com/ns#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<http://example.org/ns#NodeB1_100> a ns1:Product ;
-    ns1:dateOfExpiration "2007-04-26"^^xsd:date ;
-    ns1:dateOfProduction "1971-02-08"^^xsd:date ;
-    ns1:identifier "F9GxvSh9hMEJhD",
+<http://example.org/ns#NodeB1_100> a ex:Product ;
+    ex:dateOfExpiration "2007-04-26"^^xsd:date ;
+    ex:dateOfProduction "1971-02-08"^^xsd:date ;
+    ex:identifier "F9GxvSh9hMEJhD",
         "IZor6dahVnbmv",
         "L8SsamXguXhspjb",
         "R0VUQPyfqzlJ",
         "ZpPJW5jtAi",
         "zeNIGWX7Tr" ;
-    ns1:name "ZSf3FRXLWj" ;
-    sh:description ns1:ProductShape .
+    ex:name "ZSf3FRXLWj" ;
+    sh:description ex:ProductShape .
 
-<http://example.org/ns#NodeB1_101> a ns1:Product ;
-    ns1:dateOfExpiration "2007-05-02"^^xsd:date ;
-    ns1:dateOfProduction "1985-11-09"^^xsd:date ;
-    ns1:identifier "44iP2SQchHc",
+<http://example.org/ns#NodeB1_101> a ex:Product ;
+    ex:dateOfExpiration "2007-05-02"^^xsd:date ;
+    ex:dateOfProduction "1985-11-09"^^xsd:date ;
+    ex:identifier "44iP2SQchHc",
         "ELjrtaeM",
         "OaRrBb2elXYwib",
         "j3BVF3zVBH",
         "pWAUxua8M2ca",
         "tUYnwjknPePh" ;
-    ns1:name "9NmJahulWH" ;
-    sh:description ns1:ProductShape .
+    ex:name "9NmJahulWH" ;
+    sh:description ex:ProductShape .
 

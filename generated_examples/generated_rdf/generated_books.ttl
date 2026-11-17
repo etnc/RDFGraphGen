@@ -3,1003 +3,1004 @@
 # Scale factor: 30, batch size: 1000, seed: 1
 # Base IRI: http://example.org/ns#, links of entities to their shapes (sh:description): yes
 
-@prefix schemaorg: <http://schema.org/> .
+@prefix ex: <http://example.com/ns#> .
+@prefix schema: <http://schema.org/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<http://example.org/ns#NodeB1_100> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_101>,
+<http://example.org/ns#NodeB1_100> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_101>,
         <http://example.org/ns#NodeB1_102>,
         <http://example.org/ns#NodeB1_103> ;
-    schemaorg:award "The Agatha Awards" ;
-    schemaorg:bookEdition schemaorg:Paperback ;
-    schemaorg:dateCreated "1953-07-08"^^xsd:date ;
-    schemaorg:datePublished "2000-08-15"^^xsd:date ;
-    schemaorg:genre "Celebrity Biography",
+    schema:award "The Agatha Awards" ;
+    schema:bookEdition schema:Paperback ;
+    schema:dateCreated "1953-07-08"^^xsd:date ;
+    schema:datePublished "2000-08-15"^^xsd:date ;
+    schema:genre "Celebrity Biography",
         "Religion and Spirituality",
         "Science Fiction",
         "Travel Memoir" ;
-    schemaorg:identifier "tzwc9293" ;
-    schemaorg:inLanguage "en-US" ;
-    schemaorg:isbn "661-4-28-921964-7" ;
-    schemaorg:name "Fuselfieber" ;
-    schemaorg:numberOfPages 121 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "tzwc9293" ;
+    schema:inLanguage "en-US" ;
+    schema:isbn "661-4-28-921964-7" ;
+    schema:name "Fuselfieber" ;
+    schema:numberOfPages 121 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_104> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_105>,
+<http://example.org/ns#NodeB1_104> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_105>,
         <http://example.org/ns#NodeB1_106>,
         <http://example.org/ns#NodeB1_107> ;
-    schemaorg:award "Hugo Award" ;
-    schemaorg:bookEdition schemaorg:Paperback ;
-    schemaorg:dateCreated "1999-12-21"^^xsd:date ;
-    schemaorg:datePublished "2004-11-13"^^xsd:date ;
-    schemaorg:genre "Hard Science Fiction",
+    schema:award "Hugo Award" ;
+    schema:bookEdition schema:Paperback ;
+    schema:dateCreated "1999-12-21"^^xsd:date ;
+    schema:datePublished "2004-11-13"^^xsd:date ;
+    schema:genre "Hard Science Fiction",
         "History",
         "Paranormal" ;
-    schemaorg:identifier "eaxs3220" ;
-    schemaorg:inLanguage "en-US" ;
-    schemaorg:isbn "531-8-12-332326-7" ;
-    schemaorg:name "Death and the King's Horseman" ;
-    schemaorg:numberOfPages 131 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "eaxs3220" ;
+    schema:inLanguage "en-US" ;
+    schema:isbn "531-8-12-332326-7" ;
+    schema:name "Death and the King's Horseman" ;
+    schema:numberOfPages 131 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_108> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_109> ;
-    schemaorg:award "Costa Book Awards" ;
-    schemaorg:bookEdition schemaorg:Hardcover ;
-    schemaorg:dateCreated "1982-04-09"^^xsd:date ;
-    schemaorg:datePublished "2013-03-01"^^xsd:date ;
-    schemaorg:genre "Experimental Fiction",
+<http://example.org/ns#NodeB1_108> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_109> ;
+    schema:award "Costa Book Awards" ;
+    schema:bookEdition schema:Hardcover ;
+    schema:dateCreated "1982-04-09"^^xsd:date ;
+    schema:datePublished "2013-03-01"^^xsd:date ;
+    schema:genre "Experimental Fiction",
         "Legal Thriller",
         "Political Memoir",
         "Travel Guide" ;
-    schemaorg:identifier "jjts6084" ;
-    schemaorg:inLanguage "en-US" ;
-    schemaorg:isbn "688-7-50-111182-2" ;
-    schemaorg:name "Creating the Worlds of Star Wars: 365 Days" ;
-    schemaorg:numberOfPages 131 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "jjts6084" ;
+    schema:inLanguage "en-US" ;
+    schema:isbn "688-7-50-111182-2" ;
+    schema:name "Creating the Worlds of Star Wars: 365 Days" ;
+    schema:numberOfPages 131 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_110> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_111> ;
-    schemaorg:award "The Women's Prize for Fiction" ;
-    schemaorg:bookEdition schemaorg:GraphicNovel ;
-    schemaorg:dateCreated "1963-07-30"^^xsd:date ;
-    schemaorg:datePublished "1979-01-02"^^xsd:date ;
-    schemaorg:genre "Historical Fantasy",
+<http://example.org/ns#NodeB1_110> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_111> ;
+    schema:award "The Women's Prize for Fiction" ;
+    schema:bookEdition schema:GraphicNovel ;
+    schema:dateCreated "1963-07-30"^^xsd:date ;
+    schema:datePublished "1979-01-02"^^xsd:date ;
+    schema:genre "Historical Fantasy",
         "Religious Texts" ;
-    schemaorg:identifier "nege2866" ;
-    schemaorg:inLanguage "en-GB" ;
-    schemaorg:isbn "971-3-98-659310-1" ;
-    schemaorg:name "Euripides III: Hecuba / Andromache / The Trojan Women / Ion (Complete Greek Tragedies  #7)" ;
-    schemaorg:numberOfPages 114 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "nege2866" ;
+    schema:inLanguage "en-GB" ;
+    schema:isbn "971-3-98-659310-1" ;
+    schema:name "Euripides III: Hecuba / Andromache / The Trojan Women / Ion (Complete Greek Tragedies  #7)" ;
+    schema:numberOfPages 114 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_112> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_113>,
+<http://example.org/ns#NodeB1_112> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_113>,
         <http://example.org/ns#NodeB1_114>,
         <http://example.org/ns#NodeB1_115> ;
-    schemaorg:award "Pulitzer Prize" ;
-    schemaorg:bookEdition schemaorg:AudiobookFormat ;
-    schemaorg:dateCreated "1970-02-06"^^xsd:date ;
-    schemaorg:datePublished "2008-12-07"^^xsd:date ;
-    schemaorg:genre "Economics",
+    schema:award "Pulitzer Prize" ;
+    schema:bookEdition schema:AudiobookFormat ;
+    schema:dateCreated "1970-02-06"^^xsd:date ;
+    schema:datePublished "2008-12-07"^^xsd:date ;
+    schema:genre "Economics",
         "Environment and Nature",
         "History",
         "Psychological Fiction" ;
-    schemaorg:identifier "wqwy9589" ;
-    schemaorg:inLanguage "en-GB" ;
-    schemaorg:isbn "139-9-86-216856-3" ;
-    schemaorg:name "The Second World War: A Complete History" ;
-    schemaorg:numberOfPages 113 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "wqwy9589" ;
+    schema:inLanguage "en-GB" ;
+    schema:isbn "139-9-86-216856-3" ;
+    schema:name "The Second World War: A Complete History" ;
+    schema:numberOfPages 113 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_116> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_117>,
+<http://example.org/ns#NodeB1_116> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_117>,
         <http://example.org/ns#NodeB1_118> ;
-    schemaorg:award "Nobel Prize in Literature" ;
-    schemaorg:bookEdition schemaorg:AudiobookFormat ;
-    schemaorg:dateCreated "1958-04-16"^^xsd:date ;
-    schemaorg:datePublished "1979-08-22"^^xsd:date ;
-    schemaorg:genre "Cooking and Food",
+    schema:award "Nobel Prize in Literature" ;
+    schema:bookEdition schema:AudiobookFormat ;
+    schema:dateCreated "1958-04-16"^^xsd:date ;
+    schema:datePublished "1979-08-22"^^xsd:date ;
+    schema:genre "Cooking and Food",
         "Non-Fiction",
         "Travel",
         "Travel Writing" ;
-    schemaorg:identifier "emwn9188" ;
-    schemaorg:inLanguage "en-GB" ;
-    schemaorg:isbn "869-6-67-320986-8" ;
-    schemaorg:name "Danny  Champion Du Monde" ;
-    schemaorg:numberOfPages 129 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "emwn9188" ;
+    schema:inLanguage "en-GB" ;
+    schema:isbn "869-6-67-320986-8" ;
+    schema:name "Danny  Champion Du Monde" ;
+    schema:numberOfPages 129 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_119> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_120>,
+<http://example.org/ns#NodeB1_119> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_120>,
         <http://example.org/ns#NodeB1_121> ;
-    schemaorg:award "Hugo Award" ;
-    schemaorg:bookEdition schemaorg:Paperback ;
-    schemaorg:dateCreated "1998-07-23"^^xsd:date ;
-    schemaorg:datePublished "2004-06-16"^^xsd:date ;
-    schemaorg:genre "Adventure Memoir",
+    schema:award "Hugo Award" ;
+    schema:bookEdition schema:Paperback ;
+    schema:dateCreated "1998-07-23"^^xsd:date ;
+    schema:datePublished "2004-06-16"^^xsd:date ;
+    schema:genre "Adventure Memoir",
         "African Literature",
         "Motivational and Inspirational",
         "Space Opera" ;
-    schemaorg:identifier "hcdk7723" ;
-    schemaorg:inLanguage "en-GB" ;
-    schemaorg:isbn "479-4-33-595753-7" ;
-    schemaorg:name "Tree (Eyewitness Books)" ;
-    schemaorg:numberOfPages 125 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "hcdk7723" ;
+    schema:inLanguage "en-GB" ;
+    schema:isbn "479-4-33-595753-7" ;
+    schema:name "Tree (Eyewitness Books)" ;
+    schema:numberOfPages 125 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_122> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_123> ;
-    schemaorg:award "Man Booker Prize" ;
-    schemaorg:bookEdition schemaorg:GraphicNovel ;
-    schemaorg:dateCreated "1983-07-12"^^xsd:date ;
-    schemaorg:datePublished "2018-04-29"^^xsd:date ;
-    schemaorg:genre "Fantasy",
+<http://example.org/ns#NodeB1_122> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_123> ;
+    schema:award "Man Booker Prize" ;
+    schema:bookEdition schema:GraphicNovel ;
+    schema:dateCreated "1983-07-12"^^xsd:date ;
+    schema:datePublished "2018-04-29"^^xsd:date ;
+    schema:genre "Fantasy",
         "Space Western" ;
-    schemaorg:identifier "zlfd9372" ;
-    schemaorg:inLanguage "en-US" ;
-    schemaorg:isbn "631-9-62-571283-9" ;
-    schemaorg:name "It's Kind of a Funny Story" ;
-    schemaorg:numberOfPages 143 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "zlfd9372" ;
+    schema:inLanguage "en-US" ;
+    schema:isbn "631-9-62-571283-9" ;
+    schema:name "It's Kind of a Funny Story" ;
+    schema:numberOfPages 143 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_124> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_125> ;
-    schemaorg:award "The Edgar Allan Poe Awards" ;
-    schemaorg:bookEdition schemaorg:Paperback ;
-    schemaorg:dateCreated "1956-12-13"^^xsd:date ;
-    schemaorg:datePublished "1990-06-15"^^xsd:date ;
-    schemaorg:genre "Legal Thriller",
+<http://example.org/ns#NodeB1_124> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_125> ;
+    schema:award "The Edgar Allan Poe Awards" ;
+    schema:bookEdition schema:Paperback ;
+    schema:dateCreated "1956-12-13"^^xsd:date ;
+    schema:datePublished "1990-06-15"^^xsd:date ;
+    schema:genre "Legal Thriller",
         "Middle Eastern Literature",
         "Psychology",
         "Science" ;
-    schemaorg:identifier "telq5993" ;
-    schemaorg:inLanguage "en-US" ;
-    schemaorg:isbn "181-8-66-735649-8" ;
-    schemaorg:name "Tim" ;
-    schemaorg:numberOfPages 145 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "telq5993" ;
+    schema:inLanguage "en-US" ;
+    schema:isbn "181-8-66-735649-8" ;
+    schema:name "Tim" ;
+    schema:numberOfPages 145 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_126> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_127> ;
-    schemaorg:award "The O. Henry Awards" ;
-    schemaorg:bookEdition schemaorg:GraphicNovel ;
-    schemaorg:dateCreated "1970-09-01"^^xsd:date ;
-    schemaorg:datePublished "1987-11-17"^^xsd:date ;
-    schemaorg:genre "Instructional and How-To",
+<http://example.org/ns#NodeB1_126> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_127> ;
+    schema:award "The O. Henry Awards" ;
+    schema:bookEdition schema:GraphicNovel ;
+    schema:dateCreated "1970-09-01"^^xsd:date ;
+    schema:datePublished "1987-11-17"^^xsd:date ;
+    schema:genre "Instructional and How-To",
         "Memoirs and Biographies" ;
-    schemaorg:identifier "mggi5252" ;
-    schemaorg:inLanguage "en-GB" ;
-    schemaorg:isbn "170-9-62-982403-8" ;
-    schemaorg:name "Wyrms" ;
-    schemaorg:numberOfPages 135 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "mggi5252" ;
+    schema:inLanguage "en-GB" ;
+    schema:isbn "170-9-62-982403-8" ;
+    schema:name "Wyrms" ;
+    schema:numberOfPages 135 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_128> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_129>,
+<http://example.org/ns#NodeB1_128> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_129>,
         <http://example.org/ns#NodeB1_130> ;
-    schemaorg:award "Hugo Award" ;
-    schemaorg:bookEdition schemaorg:Paperback ;
-    schemaorg:dateCreated "1964-09-23"^^xsd:date ;
-    schemaorg:datePublished "2009-11-09"^^xsd:date ;
-    schemaorg:genre "Horror",
+    schema:award "Hugo Award" ;
+    schema:bookEdition schema:Paperback ;
+    schema:dateCreated "1964-09-23"^^xsd:date ;
+    schema:datePublished "2009-11-09"^^xsd:date ;
+    schema:genre "Horror",
         "Literary Fiction" ;
-    schemaorg:identifier "wemk8719" ;
-    schemaorg:inLanguage "en-US" ;
-    schemaorg:isbn "128-5-54-628022-0" ;
-    schemaorg:name "Cold Counsel: Women in Old Norse Literature and Myth" ;
-    schemaorg:numberOfPages 148 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "wemk8719" ;
+    schema:inLanguage "en-US" ;
+    schema:isbn "128-5-54-628022-0" ;
+    schema:name "Cold Counsel: Women in Old Norse Literature and Myth" ;
+    schema:numberOfPages 148 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_131> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_132> ;
-    schemaorg:award "The Cervantes Prize" ;
-    schemaorg:bookEdition schemaorg:AudiobookFormat ;
-    schemaorg:dateCreated "1939-09-24"^^xsd:date ;
-    schemaorg:datePublished "1979-04-01"^^xsd:date ;
-    schemaorg:genre "European Literature",
+<http://example.org/ns#NodeB1_131> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_132> ;
+    schema:award "The Cervantes Prize" ;
+    schema:bookEdition schema:AudiobookFormat ;
+    schema:dateCreated "1939-09-24"^^xsd:date ;
+    schema:datePublished "1979-04-01"^^xsd:date ;
+    schema:genre "European Literature",
         "Historical Fantasy",
         "Magazine and Journal" ;
-    schemaorg:identifier "vhkk7611" ;
-    schemaorg:inLanguage "en-US" ;
-    schemaorg:isbn "690-2-49-433701-1" ;
-    schemaorg:name "Bite Club (Bite Club  #1)" ;
-    schemaorg:numberOfPages 117 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "vhkk7611" ;
+    schema:inLanguage "en-US" ;
+    schema:isbn "690-2-49-433701-1" ;
+    schema:name "Bite Club (Bite Club  #1)" ;
+    schema:numberOfPages 117 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_133> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_134> ;
-    schemaorg:award "Newbery Medal" ;
-    schemaorg:bookEdition schemaorg:Paperback ;
-    schemaorg:dateCreated "1934-08-11"^^xsd:date ;
-    schemaorg:datePublished "1977-12-15"^^xsd:date ;
-    schemaorg:genre "Health and Wellness",
+<http://example.org/ns#NodeB1_133> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_134> ;
+    schema:award "Newbery Medal" ;
+    schema:bookEdition schema:Paperback ;
+    schema:dateCreated "1934-08-11"^^xsd:date ;
+    schema:datePublished "1977-12-15"^^xsd:date ;
+    schema:genre "Health and Wellness",
         "Legal Fiction" ;
-    schemaorg:identifier "jbbo9813" ;
-    schemaorg:inLanguage "en-US" ;
-    schemaorg:isbn "397-6-62-063388-1" ;
-    schemaorg:name "Jean-Paul Sartre: (The Giants of Philosophy)" ;
-    schemaorg:numberOfPages 148 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "jbbo9813" ;
+    schema:inLanguage "en-US" ;
+    schema:isbn "397-6-62-063388-1" ;
+    schema:name "Jean-Paul Sartre: (The Giants of Philosophy)" ;
+    schema:numberOfPages 148 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_135> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_136> ;
-    schemaorg:award "Man Booker Prize" ;
-    schemaorg:bookEdition schemaorg:GraphicNovel ;
-    schemaorg:dateCreated "1994-11-08"^^xsd:date ;
-    schemaorg:datePublished "2019-03-20"^^xsd:date ;
-    schemaorg:genre "African Literature",
+<http://example.org/ns#NodeB1_135> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_136> ;
+    schema:award "Man Booker Prize" ;
+    schema:bookEdition schema:GraphicNovel ;
+    schema:dateCreated "1994-11-08"^^xsd:date ;
+    schema:datePublished "2019-03-20"^^xsd:date ;
+    schema:genre "African Literature",
         "Detective Fiction",
         "Fan Fiction",
         "Psychology" ;
-    schemaorg:identifier "hsqt2218" ;
-    schemaorg:inLanguage "en-GB" ;
-    schemaorg:isbn "078-4-59-609498-8" ;
-    schemaorg:name "Immigrant Acts: On Asian American Cultural Politics" ;
-    schemaorg:numberOfPages 120 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "hsqt2218" ;
+    schema:inLanguage "en-GB" ;
+    schema:isbn "078-4-59-609498-8" ;
+    schema:name "Immigrant Acts: On Asian American Cultural Politics" ;
+    schema:numberOfPages 120 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_137> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_138> ;
-    schemaorg:award "The Bram Stoker Awards" ;
-    schemaorg:bookEdition schemaorg:GraphicNovel ;
-    schemaorg:dateCreated "1937-08-15"^^xsd:date ;
-    schemaorg:datePublished "1985-11-08"^^xsd:date ;
-    schemaorg:genre "Children's",
+<http://example.org/ns#NodeB1_137> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_138> ;
+    schema:award "The Bram Stoker Awards" ;
+    schema:bookEdition schema:GraphicNovel ;
+    schema:dateCreated "1937-08-15"^^xsd:date ;
+    schema:datePublished "1985-11-08"^^xsd:date ;
+    schema:genre "Children's",
         "Cookbook",
         "Health and Wellness",
         "Horror" ;
-    schemaorg:identifier "fdeo0597" ;
-    schemaorg:inLanguage "en-GB" ;
-    schemaorg:isbn "916-5-56-986504-3" ;
-    schemaorg:name "ツバサ-RESERVoir CHRoNiCLE- 7" ;
-    schemaorg:numberOfPages 106 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "fdeo0597" ;
+    schema:inLanguage "en-GB" ;
+    schema:isbn "916-5-56-986504-3" ;
+    schema:name "ツバサ-RESERVoir CHRoNiCLE- 7" ;
+    schema:numberOfPages 106 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_139> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_140>,
+<http://example.org/ns#NodeB1_139> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_140>,
         <http://example.org/ns#NodeB1_141>,
         <http://example.org/ns#NodeB1_142> ;
-    schemaorg:award "Man Booker Prize" ;
-    schemaorg:bookEdition schemaorg:EBook ;
-    schemaorg:dateCreated "1971-06-14"^^xsd:date ;
-    schemaorg:datePublished "1992-12-25"^^xsd:date ;
-    schemaorg:genre "Horror",
+    schema:award "Man Booker Prize" ;
+    schema:bookEdition schema:EBook ;
+    schema:dateCreated "1971-06-14"^^xsd:date ;
+    schema:datePublished "1992-12-25"^^xsd:date ;
+    schema:genre "Horror",
         "Political Thriller",
         "Religious Memoir",
         "Travelogue" ;
-    schemaorg:identifier "xlrg4832" ;
-    schemaorg:inLanguage "en-GB" ;
-    schemaorg:isbn "950-8-66-441584-6" ;
-    schemaorg:name "The Runaway Jury" ;
-    schemaorg:numberOfPages 130 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "xlrg4832" ;
+    schema:inLanguage "en-GB" ;
+    schema:isbn "950-8-66-441584-6" ;
+    schema:name "The Runaway Jury" ;
+    schema:numberOfPages 130 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_143> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_144>,
+<http://example.org/ns#NodeB1_143> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_144>,
         <http://example.org/ns#NodeB1_145> ;
-    schemaorg:award "Costa Book Awards" ;
-    schemaorg:bookEdition schemaorg:EBook ;
-    schemaorg:dateCreated "1978-08-07"^^xsd:date ;
-    schemaorg:datePublished "1978-11-29"^^xsd:date ;
-    schemaorg:genre "Epic Fantasy",
+    schema:award "Costa Book Awards" ;
+    schema:bookEdition schema:EBook ;
+    schema:dateCreated "1978-08-07"^^xsd:date ;
+    schema:datePublished "1978-11-29"^^xsd:date ;
+    schema:genre "Epic Fantasy",
         "Science and Nature" ;
-    schemaorg:identifier "nxwk5007" ;
-    schemaorg:inLanguage "en-US" ;
-    schemaorg:isbn "640-6-57-653798-2" ;
-    schemaorg:name "Adrift in the Pacific: Two Years Holiday (Extraordinary Voyages  #32)" ;
-    schemaorg:numberOfPages 139 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "nxwk5007" ;
+    schema:inLanguage "en-US" ;
+    schema:isbn "640-6-57-653798-2" ;
+    schema:name "Adrift in the Pacific: Two Years Holiday (Extraordinary Voyages  #32)" ;
+    schema:numberOfPages 139 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_146> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_147> ;
-    schemaorg:award "Pulitzer Prize" ;
-    schemaorg:bookEdition schemaorg:Paperback ;
-    schemaorg:dateCreated "1934-02-08"^^xsd:date ;
-    schemaorg:datePublished "1974-08-13"^^xsd:date ;
-    schemaorg:genre "Adventure Fiction",
+<http://example.org/ns#NodeB1_146> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_147> ;
+    schema:award "Pulitzer Prize" ;
+    schema:bookEdition schema:Paperback ;
+    schema:dateCreated "1934-02-08"^^xsd:date ;
+    schema:datePublished "1974-08-13"^^xsd:date ;
+    schema:genre "Adventure Fiction",
         "Family Saga" ;
-    schemaorg:identifier "jqkt2263" ;
-    schemaorg:inLanguage "en-GB" ;
-    schemaorg:isbn "547-5-68-101784-1" ;
-    schemaorg:name "What a Scare  Jesse Bear" ;
-    schemaorg:numberOfPages 121 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "jqkt2263" ;
+    schema:inLanguage "en-GB" ;
+    schema:isbn "547-5-68-101784-1" ;
+    schema:name "What a Scare  Jesse Bear" ;
+    schema:numberOfPages 121 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_148> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_149>,
+<http://example.org/ns#NodeB1_148> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_149>,
         <http://example.org/ns#NodeB1_150> ;
-    schemaorg:award "The O. Henry Awards" ;
-    schemaorg:bookEdition schemaorg:Hardcover ;
-    schemaorg:dateCreated "1971-04-01"^^xsd:date ;
-    schemaorg:datePublished "1993-09-29"^^xsd:date ;
-    schemaorg:genre "Paranormal",
+    schema:award "The O. Henry Awards" ;
+    schema:bookEdition schema:Hardcover ;
+    schema:dateCreated "1971-04-01"^^xsd:date ;
+    schema:datePublished "1993-09-29"^^xsd:date ;
+    schema:genre "Paranormal",
         "Soft Science Fiction",
         "Steampunk" ;
-    schemaorg:identifier "bnkd9255" ;
-    schemaorg:inLanguage "en-US" ;
-    schemaorg:isbn "285-2-53-941702-8" ;
-    schemaorg:name "Prince Caspian (Chronicles of Narnia  #4)" ;
-    schemaorg:numberOfPages 138 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "bnkd9255" ;
+    schema:inLanguage "en-US" ;
+    schema:isbn "285-2-53-941702-8" ;
+    schema:name "Prince Caspian (Chronicles of Narnia  #4)" ;
+    schema:numberOfPages 138 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_151> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_152>,
+<http://example.org/ns#NodeB1_151> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_152>,
         <http://example.org/ns#NodeB1_153>,
         <http://example.org/ns#NodeB1_154> ;
-    schemaorg:award "The Women's Prize for Fiction" ;
-    schemaorg:bookEdition schemaorg:AudiobookFormat ;
-    schemaorg:dateCreated "1931-11-09"^^xsd:date ;
-    schemaorg:datePublished "1976-02-03"^^xsd:date ;
-    schemaorg:genre "Business",
+    schema:award "The Women's Prize for Fiction" ;
+    schema:bookEdition schema:AudiobookFormat ;
+    schema:dateCreated "1931-11-09"^^xsd:date ;
+    schema:datePublished "1976-02-03"^^xsd:date ;
+    schema:genre "Business",
         "Self-Improvement" ;
-    schemaorg:identifier "tvhd3896" ;
-    schemaorg:inLanguage "en-GB" ;
-    schemaorg:isbn "036-7-60-084810-1" ;
-    schemaorg:name "The Five Dysfunctions of a Team: A Leadership Fable" ;
-    schemaorg:numberOfPages 104 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "tvhd3896" ;
+    schema:inLanguage "en-GB" ;
+    schema:isbn "036-7-60-084810-1" ;
+    schema:name "The Five Dysfunctions of a Team: A Leadership Fable" ;
+    schema:numberOfPages 104 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_155> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_156>,
+<http://example.org/ns#NodeB1_155> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_156>,
         <http://example.org/ns#NodeB1_157> ;
-    schemaorg:award "The Women's Prize for Fiction" ;
-    schemaorg:bookEdition schemaorg:GraphicNovel ;
-    schemaorg:dateCreated "1956-04-11"^^xsd:date ;
-    schemaorg:datePublished "1987-01-29"^^xsd:date ;
-    schemaorg:genre "Classic Literature",
+    schema:award "The Women's Prize for Fiction" ;
+    schema:bookEdition schema:GraphicNovel ;
+    schema:dateCreated "1956-04-11"^^xsd:date ;
+    schema:datePublished "1987-01-29"^^xsd:date ;
+    schema:genre "Classic Literature",
         "Spiritual and New Age" ;
-    schemaorg:identifier "amxj9506" ;
-    schemaorg:inLanguage "en-GB" ;
-    schemaorg:isbn "129-4-98-493756-6" ;
-    schemaorg:name "The Woman in Black" ;
-    schemaorg:numberOfPages 110 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "amxj9506" ;
+    schema:inLanguage "en-GB" ;
+    schema:isbn "129-4-98-493756-6" ;
+    schema:name "The Woman in Black" ;
+    schema:numberOfPages 110 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_158> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_159> ;
-    schemaorg:award "The James Tait Black Memorial Prize" ;
-    schemaorg:bookEdition schemaorg:AudiobookFormat ;
-    schemaorg:dateCreated "2004-11-01"^^xsd:date ;
-    schemaorg:datePublished "2012-08-30"^^xsd:date ;
-    schemaorg:genre "Experimental Fiction",
+<http://example.org/ns#NodeB1_158> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_159> ;
+    schema:award "The James Tait Black Memorial Prize" ;
+    schema:bookEdition schema:AudiobookFormat ;
+    schema:dateCreated "2004-11-01"^^xsd:date ;
+    schema:datePublished "2012-08-30"^^xsd:date ;
+    schema:genre "Experimental Fiction",
         "True Crime" ;
-    schemaorg:identifier "qazi3207" ;
-    schemaorg:inLanguage "en-US" ;
-    schemaorg:isbn "597-4-73-422976-6" ;
-    schemaorg:name "The Silver Pigs (Marcus Didius Falco  #1)" ;
-    schemaorg:numberOfPages 129 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "qazi3207" ;
+    schema:inLanguage "en-US" ;
+    schema:isbn "597-4-73-422976-6" ;
+    schema:name "The Silver Pigs (Marcus Didius Falco  #1)" ;
+    schema:numberOfPages 129 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_160> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_161>,
+<http://example.org/ns#NodeB1_160> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_161>,
         <http://example.org/ns#NodeB1_162> ;
-    schemaorg:award "National Book Critics Circle Award" ;
-    schemaorg:bookEdition schemaorg:GraphicNovel ;
-    schemaorg:dateCreated "1964-08-09"^^xsd:date ;
-    schemaorg:datePublished "1998-02-03"^^xsd:date ;
-    schemaorg:genre "Paranormal",
+    schema:award "National Book Critics Circle Award" ;
+    schema:bookEdition schema:GraphicNovel ;
+    schema:dateCreated "1964-08-09"^^xsd:date ;
+    schema:datePublished "1998-02-03"^^xsd:date ;
+    schema:genre "Paranormal",
         "Western" ;
-    schemaorg:identifier "gvfa5669" ;
-    schemaorg:inLanguage "en-GB" ;
-    schemaorg:isbn "358-8-60-218199-4" ;
-    schemaorg:name "Existentialism from Dostoevsky to Sartre" ;
-    schemaorg:numberOfPages 140 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "gvfa5669" ;
+    schema:inLanguage "en-GB" ;
+    schema:isbn "358-8-60-218199-4" ;
+    schema:name "Existentialism from Dostoevsky to Sartre" ;
+    schema:numberOfPages 140 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_163> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_164>,
+<http://example.org/ns#NodeB1_163> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_164>,
         <http://example.org/ns#NodeB1_165> ;
-    schemaorg:award "The Bram Stoker Awards" ;
-    schemaorg:bookEdition schemaorg:GraphicNovel ;
-    schemaorg:dateCreated "1991-09-10"^^xsd:date ;
-    schemaorg:datePublished "2009-01-29"^^xsd:date ;
-    schemaorg:genre "Religious Texts",
+    schema:award "The Bram Stoker Awards" ;
+    schema:bookEdition schema:GraphicNovel ;
+    schema:dateCreated "1991-09-10"^^xsd:date ;
+    schema:datePublished "2009-01-29"^^xsd:date ;
+    schema:genre "Religious Texts",
         "Science and Nature",
         "Young Adult" ;
-    schemaorg:identifier "wdwh9609" ;
-    schemaorg:inLanguage "en-US" ;
-    schemaorg:isbn "096-6-99-815762-8" ;
-    schemaorg:name "Prey" ;
-    schemaorg:numberOfPages 140 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "wdwh9609" ;
+    schema:inLanguage "en-US" ;
+    schema:isbn "096-6-99-815762-8" ;
+    schema:name "Prey" ;
+    schema:numberOfPages 140 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_166> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_167> ;
-    schemaorg:award "The Agatha Awards" ;
-    schemaorg:bookEdition schemaorg:EBook ;
-    schemaorg:dateCreated "1965-05-11"^^xsd:date ;
-    schemaorg:datePublished "1993-02-18"^^xsd:date ;
-    schemaorg:genre "Celebrity Biography",
+<http://example.org/ns#NodeB1_166> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_167> ;
+    schema:award "The Agatha Awards" ;
+    schema:bookEdition schema:EBook ;
+    schema:dateCreated "1965-05-11"^^xsd:date ;
+    schema:datePublished "1993-02-18"^^xsd:date ;
+    schema:genre "Celebrity Biography",
         "Thriller" ;
-    schemaorg:identifier "uxed7715" ;
-    schemaorg:inLanguage "en-GB" ;
-    schemaorg:isbn "092-8-02-248089-8" ;
-    schemaorg:name "The Lord of the Rings: The Making of the Movie Trilogy" ;
-    schemaorg:numberOfPages 127 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "uxed7715" ;
+    schema:inLanguage "en-GB" ;
+    schema:isbn "092-8-02-248089-8" ;
+    schema:name "The Lord of the Rings: The Making of the Movie Trilogy" ;
+    schema:numberOfPages 127 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_168> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_169>,
+<http://example.org/ns#NodeB1_168> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_169>,
         <http://example.org/ns#NodeB1_170>,
         <http://example.org/ns#NodeB1_171> ;
-    schemaorg:award "The Edgar Allan Poe Awards" ;
-    schemaorg:bookEdition schemaorg:EBook ;
-    schemaorg:dateCreated "1988-11-11"^^xsd:date ;
-    schemaorg:datePublished "1998-07-22"^^xsd:date ;
-    schemaorg:genre "Alternate History Fantasy",
+    schema:award "The Edgar Allan Poe Awards" ;
+    schema:bookEdition schema:EBook ;
+    schema:dateCreated "1988-11-11"^^xsd:date ;
+    schema:datePublished "1998-07-22"^^xsd:date ;
+    schema:genre "Alternate History Fantasy",
         "Cosy Mystery",
         "Religious Memoir" ;
-    schemaorg:identifier "cxiy4614" ;
-    schemaorg:inLanguage "en-US" ;
-    schemaorg:isbn "656-9-22-570243-1" ;
-    schemaorg:name "The Home Front" ;
-    schemaorg:numberOfPages 108 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "cxiy4614" ;
+    schema:inLanguage "en-US" ;
+    schema:isbn "656-9-22-570243-1" ;
+    schema:name "The Home Front" ;
+    schema:numberOfPages 108 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_172> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_173> ;
-    schemaorg:award "National Book Award" ;
-    schemaorg:bookEdition schemaorg:AudiobookFormat ;
-    schemaorg:dateCreated "1982-02-25"^^xsd:date ;
-    schemaorg:datePublished "1993-07-28"^^xsd:date ;
-    schemaorg:genre "Crafts and Hobbies",
+<http://example.org/ns#NodeB1_172> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_173> ;
+    schema:award "National Book Award" ;
+    schema:bookEdition schema:AudiobookFormat ;
+    schema:dateCreated "1982-02-25"^^xsd:date ;
+    schema:datePublished "1993-07-28"^^xsd:date ;
+    schema:genre "Crafts and Hobbies",
         "Nature Writing",
         "Religious Memoir" ;
-    schemaorg:identifier "edrm6010" ;
-    schemaorg:inLanguage "en-US" ;
-    schemaorg:isbn "129-8-91-154918-7" ;
-    schemaorg:name "Clown Girl" ;
-    schemaorg:numberOfPages 114 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "edrm6010" ;
+    schema:inLanguage "en-US" ;
+    schema:isbn "129-8-91-154918-7" ;
+    schema:name "Clown Girl" ;
+    schema:numberOfPages 114 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_174> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_175>,
+<http://example.org/ns#NodeB1_174> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_175>,
         <http://example.org/ns#NodeB1_176>,
         <http://example.org/ns#NodeB1_177> ;
-    schemaorg:award "The Agatha Awards" ;
-    schemaorg:bookEdition schemaorg:GraphicNovel ;
-    schemaorg:dateCreated "1966-09-23"^^xsd:date ;
-    schemaorg:datePublished "1996-08-17"^^xsd:date ;
-    schemaorg:genre "Biography and Autobiography",
+    schema:award "The Agatha Awards" ;
+    schema:bookEdition schema:GraphicNovel ;
+    schema:dateCreated "1966-09-23"^^xsd:date ;
+    schema:datePublished "1996-08-17"^^xsd:date ;
+    schema:genre "Biography and Autobiography",
         "True Crime" ;
-    schemaorg:identifier "xbuh1863" ;
-    schemaorg:inLanguage "en-US" ;
-    schemaorg:isbn "449-1-07-215094-8" ;
-    schemaorg:name "Oh My Stars" ;
-    schemaorg:numberOfPages 102 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "xbuh1863" ;
+    schema:inLanguage "en-US" ;
+    schema:isbn "449-1-07-215094-8" ;
+    schema:name "Oh My Stars" ;
+    schema:numberOfPages 102 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_178> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_179>,
+<http://example.org/ns#NodeB1_178> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_179>,
         <http://example.org/ns#NodeB1_180> ;
-    schemaorg:award "Caldecott Medal" ;
-    schemaorg:bookEdition schemaorg:Paperback ;
-    schemaorg:dateCreated "1960-07-04"^^xsd:date ;
-    schemaorg:datePublished "1980-03-31"^^xsd:date ;
-    schemaorg:genre "Crime",
+    schema:award "Caldecott Medal" ;
+    schema:bookEdition schema:Paperback ;
+    schema:dateCreated "1960-07-04"^^xsd:date ;
+    schema:datePublished "1980-03-31"^^xsd:date ;
+    schema:genre "Crime",
         "Cyberpunk",
         "Detective Fiction",
         "Parenting and Family" ;
-    schemaorg:identifier "cpwj2073" ;
-    schemaorg:inLanguage "en-GB" ;
-    schemaorg:isbn "729-1-08-030200-3" ;
-    schemaorg:name "Insects & Spiders" ;
-    schemaorg:numberOfPages 148 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "cpwj2073" ;
+    schema:inLanguage "en-GB" ;
+    schema:isbn "729-1-08-030200-3" ;
+    schema:name "Insects & Spiders" ;
+    schema:numberOfPages 148 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_181> a schemaorg:Book ;
-    schemaorg:author <http://example.org/ns#NodeB1_182>,
+<http://example.org/ns#NodeB1_181> a schema:Book ;
+    schema:author <http://example.org/ns#NodeB1_182>,
         <http://example.org/ns#NodeB1_183>,
         <http://example.org/ns#NodeB1_184> ;
-    schemaorg:award "The Giller Prize" ;
-    schemaorg:bookEdition schemaorg:GraphicNovel ;
-    schemaorg:dateCreated "1979-01-18"^^xsd:date ;
-    schemaorg:datePublished "2003-12-04"^^xsd:date ;
-    schemaorg:genre "Celebrity Biography",
+    schema:award "The Giller Prize" ;
+    schema:bookEdition schema:GraphicNovel ;
+    schema:dateCreated "1979-01-18"^^xsd:date ;
+    schema:datePublished "2003-12-04"^^xsd:date ;
+    schema:genre "Celebrity Biography",
         "Space Opera" ;
-    schemaorg:identifier "pytj7659" ;
-    schemaorg:inLanguage "en-GB" ;
-    schemaorg:isbn "737-2-44-739394-8" ;
-    schemaorg:name "Novels  1926-1929" ;
-    schemaorg:numberOfPages 113 ;
-    sh:description <http://example.com/ns#BookShape> .
+    schema:identifier "pytj7659" ;
+    schema:inLanguage "en-GB" ;
+    schema:isbn "737-2-44-739394-8" ;
+    schema:name "Novels  1926-1929" ;
+    schema:numberOfPages 113 ;
+    sh:description ex:BookShape .
 
-<http://example.org/ns#NodeB1_101> a schemaorg:Person ;
-    schemaorg:birthDate "1950-02-06"^^xsd:date ;
-    schemaorg:deathDate "1973-03-28"^^xsd:date ;
-    schemaorg:email "constantin_298@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Constantin" ;
-    schemaorg:telephone "494-315-1432" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_101> a schema:Person ;
+    schema:birthDate "1950-02-06"^^xsd:date ;
+    schema:deathDate "1973-03-28"^^xsd:date ;
+    schema:email "constantin_298@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Constantin" ;
+    schema:telephone "494-315-1432" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_102> a schemaorg:Person ;
-    schemaorg:birthDate "1994-07-30"^^xsd:date ;
-    schemaorg:deathDate "1995-06-14"^^xsd:date ;
-    schemaorg:email "brandie_449@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Brandie" ;
-    schemaorg:telephone "(804) 520-6198" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_102> a schema:Person ;
+    schema:birthDate "1994-07-30"^^xsd:date ;
+    schema:deathDate "1995-06-14"^^xsd:date ;
+    schema:email "brandie_449@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Brandie" ;
+    schema:telephone "(804) 520-6198" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_103> a schemaorg:Person ;
-    schemaorg:birthDate "1939-09-05"^^xsd:date ;
-    schemaorg:deathDate "1989-03-17"^^xsd:date ;
-    schemaorg:email "nara_422@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Nara" ;
-    schemaorg:telephone "(586) 283-3959" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_103> a schema:Person ;
+    schema:birthDate "1939-09-05"^^xsd:date ;
+    schema:deathDate "1989-03-17"^^xsd:date ;
+    schema:email "nara_422@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Nara" ;
+    schema:telephone "(586) 283-3959" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_105> a schemaorg:Person ;
-    schemaorg:birthDate "1956-08-23"^^xsd:date ;
-    schemaorg:deathDate "2003-03-09"^^xsd:date ;
-    schemaorg:email "alecia_287@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Alecia" ;
-    schemaorg:telephone "435-231-8443" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_105> a schema:Person ;
+    schema:birthDate "1956-08-23"^^xsd:date ;
+    schema:deathDate "2003-03-09"^^xsd:date ;
+    schema:email "alecia_287@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Alecia" ;
+    schema:telephone "435-231-8443" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_106> a schemaorg:Person ;
-    schemaorg:birthDate "1967-06-25"^^xsd:date ;
-    schemaorg:deathDate "1992-08-09"^^xsd:date ;
-    schemaorg:email "dannye_562@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Dannye" ;
-    schemaorg:telephone "(944) 197-5794" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_106> a schema:Person ;
+    schema:birthDate "1967-06-25"^^xsd:date ;
+    schema:deathDate "1992-08-09"^^xsd:date ;
+    schema:email "dannye_562@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Dannye" ;
+    schema:telephone "(944) 197-5794" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_107> a schemaorg:Person ;
-    schemaorg:birthDate "1990-06-05"^^xsd:date ;
-    schemaorg:deathDate "1992-01-24"^^xsd:date ;
-    schemaorg:email "nikita_335@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Nikita" ;
-    schemaorg:telephone "(386) 687-3784" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_107> a schema:Person ;
+    schema:birthDate "1990-06-05"^^xsd:date ;
+    schema:deathDate "1992-01-24"^^xsd:date ;
+    schema:email "nikita_335@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Nikita" ;
+    schema:telephone "(386) 687-3784" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_109> a schemaorg:Person ;
-    schemaorg:birthDate "1946-02-23"^^xsd:date ;
-    schemaorg:deathDate "1981-06-29"^^xsd:date ;
-    schemaorg:email "jonny_241@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Jonny" ;
-    schemaorg:telephone "885-104-2875" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_109> a schema:Person ;
+    schema:birthDate "1946-02-23"^^xsd:date ;
+    schema:deathDate "1981-06-29"^^xsd:date ;
+    schema:email "jonny_241@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Jonny" ;
+    schema:telephone "885-104-2875" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_111> a schemaorg:Person ;
-    schemaorg:birthDate "1981-05-26"^^xsd:date ;
-    schemaorg:deathDate "2003-11-22"^^xsd:date ;
-    schemaorg:email "sancho_127@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Sancho" ;
-    schemaorg:telephone "(015) 449-8663" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_111> a schema:Person ;
+    schema:birthDate "1981-05-26"^^xsd:date ;
+    schema:deathDate "2003-11-22"^^xsd:date ;
+    schema:email "sancho_127@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Sancho" ;
+    schema:telephone "(015) 449-8663" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_113> a schemaorg:Person ;
-    schemaorg:birthDate "1990-10-19"^^xsd:date ;
-    schemaorg:deathDate "1991-06-17"^^xsd:date ;
-    schemaorg:email "timmie_614@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Timmie" ;
-    schemaorg:telephone "081-358-7880" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_113> a schema:Person ;
+    schema:birthDate "1990-10-19"^^xsd:date ;
+    schema:deathDate "1991-06-17"^^xsd:date ;
+    schema:email "timmie_614@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Timmie" ;
+    schema:telephone "081-358-7880" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_114> a schemaorg:Person ;
-    schemaorg:birthDate "1938-04-15"^^xsd:date ;
-    schemaorg:deathDate "1980-05-21"^^xsd:date ;
-    schemaorg:email "christof_241@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Christof" ;
-    schemaorg:telephone "(116) 194-8719" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_114> a schema:Person ;
+    schema:birthDate "1938-04-15"^^xsd:date ;
+    schema:deathDate "1980-05-21"^^xsd:date ;
+    schema:email "christof_241@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Christof" ;
+    schema:telephone "(116) 194-8719" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_115> a schemaorg:Person ;
-    schemaorg:birthDate "1945-07-01"^^xsd:date ;
-    schemaorg:deathDate "1986-12-16"^^xsd:date ;
-    schemaorg:email "milena_676@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Milena" ;
-    schemaorg:telephone "074-191-6875" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_115> a schema:Person ;
+    schema:birthDate "1945-07-01"^^xsd:date ;
+    schema:deathDate "1986-12-16"^^xsd:date ;
+    schema:email "milena_676@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Milena" ;
+    schema:telephone "074-191-6875" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_117> a schemaorg:Person ;
-    schemaorg:birthDate "1971-10-26"^^xsd:date ;
-    schemaorg:deathDate "2004-06-09"^^xsd:date ;
-    schemaorg:email "nikki_637@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Nikki" ;
-    schemaorg:telephone "(540) 615-4505" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_117> a schema:Person ;
+    schema:birthDate "1971-10-26"^^xsd:date ;
+    schema:deathDate "2004-06-09"^^xsd:date ;
+    schema:email "nikki_637@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Nikki" ;
+    schema:telephone "(540) 615-4505" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_118> a schemaorg:Person ;
-    schemaorg:birthDate "1971-05-19"^^xsd:date ;
-    schemaorg:deathDate "2016-03-30"^^xsd:date ;
-    schemaorg:email "wendi_909@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Wendi" ;
-    schemaorg:telephone "(091) 832-2543" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_118> a schema:Person ;
+    schema:birthDate "1971-05-19"^^xsd:date ;
+    schema:deathDate "2016-03-30"^^xsd:date ;
+    schema:email "wendi_909@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Wendi" ;
+    schema:telephone "(091) 832-2543" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_120> a schemaorg:Person ;
-    schemaorg:birthDate "1973-02-10"^^xsd:date ;
-    schemaorg:deathDate "2000-10-30"^^xsd:date ;
-    schemaorg:email "mable_106@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Mable" ;
-    schemaorg:telephone "229-475-2986" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_120> a schema:Person ;
+    schema:birthDate "1973-02-10"^^xsd:date ;
+    schema:deathDate "2000-10-30"^^xsd:date ;
+    schema:email "mable_106@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Mable" ;
+    schema:telephone "229-475-2986" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_121> a schemaorg:Person ;
-    schemaorg:birthDate "1985-11-10"^^xsd:date ;
-    schemaorg:deathDate "2004-08-21"^^xsd:date ;
-    schemaorg:email "sayers_568@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Sayers" ;
-    schemaorg:telephone "(092) 518-9566" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_121> a schema:Person ;
+    schema:birthDate "1985-11-10"^^xsd:date ;
+    schema:deathDate "2004-08-21"^^xsd:date ;
+    schema:email "sayers_568@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Sayers" ;
+    schema:telephone "(092) 518-9566" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_123> a schemaorg:Person ;
-    schemaorg:birthDate "1950-09-26"^^xsd:date ;
-    schemaorg:deathDate "1975-01-27"^^xsd:date ;
-    schemaorg:email "koren_491@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Koren" ;
-    schemaorg:telephone "468-652-7298" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_123> a schema:Person ;
+    schema:birthDate "1950-09-26"^^xsd:date ;
+    schema:deathDate "1975-01-27"^^xsd:date ;
+    schema:email "koren_491@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Koren" ;
+    schema:telephone "468-652-7298" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_125> a schemaorg:Person ;
-    schemaorg:birthDate "1994-04-13"^^xsd:date ;
-    schemaorg:deathDate "2000-11-09"^^xsd:date ;
-    schemaorg:email "odelle_480@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Odelle" ;
-    schemaorg:telephone "(249) 760-5374" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_125> a schema:Person ;
+    schema:birthDate "1994-04-13"^^xsd:date ;
+    schema:deathDate "2000-11-09"^^xsd:date ;
+    schema:email "odelle_480@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Odelle" ;
+    schema:telephone "(249) 760-5374" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_127> a schemaorg:Person ;
-    schemaorg:birthDate "2000-12-16"^^xsd:date ;
-    schemaorg:deathDate "2019-01-13"^^xsd:date ;
-    schemaorg:email "sara-ann_906@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Sara-Ann" ;
-    schemaorg:telephone "051-731-5552" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_127> a schema:Person ;
+    schema:birthDate "2000-12-16"^^xsd:date ;
+    schema:deathDate "2019-01-13"^^xsd:date ;
+    schema:email "sara-ann_906@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Sara-Ann" ;
+    schema:telephone "051-731-5552" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_129> a schemaorg:Person ;
-    schemaorg:birthDate "1961-09-29"^^xsd:date ;
-    schemaorg:deathDate "1996-01-03"^^xsd:date ;
-    schemaorg:email "honey_345@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Honey" ;
-    schemaorg:telephone "180-764-2326" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_129> a schema:Person ;
+    schema:birthDate "1961-09-29"^^xsd:date ;
+    schema:deathDate "1996-01-03"^^xsd:date ;
+    schema:email "honey_345@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Honey" ;
+    schema:telephone "180-764-2326" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_130> a schemaorg:Person ;
-    schemaorg:birthDate "2003-02-23"^^xsd:date ;
-    schemaorg:deathDate "2019-08-16"^^xsd:date ;
-    schemaorg:email "rhiamon_285@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Rhiamon" ;
-    schemaorg:telephone "034-970-9308" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_130> a schema:Person ;
+    schema:birthDate "2003-02-23"^^xsd:date ;
+    schema:deathDate "2019-08-16"^^xsd:date ;
+    schema:email "rhiamon_285@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Rhiamon" ;
+    schema:telephone "034-970-9308" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_132> a schemaorg:Person ;
-    schemaorg:birthDate "1949-07-18"^^xsd:date ;
-    schemaorg:deathDate "1979-07-20"^^xsd:date ;
-    schemaorg:email "sorcha_614@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Sorcha" ;
-    schemaorg:telephone "026-454-6579" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_132> a schema:Person ;
+    schema:birthDate "1949-07-18"^^xsd:date ;
+    schema:deathDate "1979-07-20"^^xsd:date ;
+    schema:email "sorcha_614@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Sorcha" ;
+    schema:telephone "026-454-6579" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_134> a schemaorg:Person ;
-    schemaorg:birthDate "1952-09-24"^^xsd:date ;
-    schemaorg:deathDate "1986-04-30"^^xsd:date ;
-    schemaorg:email "tedra_262@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Tedra" ;
-    schemaorg:telephone "(369) 257-8419" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_134> a schema:Person ;
+    schema:birthDate "1952-09-24"^^xsd:date ;
+    schema:deathDate "1986-04-30"^^xsd:date ;
+    schema:email "tedra_262@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Tedra" ;
+    schema:telephone "(369) 257-8419" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_136> a schemaorg:Person ;
-    schemaorg:birthDate "1964-01-04"^^xsd:date ;
-    schemaorg:deathDate "1996-02-20"^^xsd:date ;
-    schemaorg:email "sunny_575@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Sunny" ;
-    schemaorg:telephone "414-398-3320" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_136> a schema:Person ;
+    schema:birthDate "1964-01-04"^^xsd:date ;
+    schema:deathDate "1996-02-20"^^xsd:date ;
+    schema:email "sunny_575@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Sunny" ;
+    schema:telephone "414-398-3320" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_138> a schemaorg:Person ;
-    schemaorg:birthDate "1967-01-16"^^xsd:date ;
-    schemaorg:deathDate "1975-01-01"^^xsd:date ;
-    schemaorg:email "clementina_904@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Clementina" ;
-    schemaorg:telephone "438-386-7840" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_138> a schema:Person ;
+    schema:birthDate "1967-01-16"^^xsd:date ;
+    schema:deathDate "1975-01-01"^^xsd:date ;
+    schema:email "clementina_904@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Clementina" ;
+    schema:telephone "438-386-7840" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_140> a schemaorg:Person ;
-    schemaorg:birthDate "2006-07-14"^^xsd:date ;
-    schemaorg:deathDate "2014-03-21"^^xsd:date ;
-    schemaorg:email "lauree_395@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Lauree" ;
-    schemaorg:telephone "(565) 703-4583" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_140> a schema:Person ;
+    schema:birthDate "2006-07-14"^^xsd:date ;
+    schema:deathDate "2014-03-21"^^xsd:date ;
+    schema:email "lauree_395@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Lauree" ;
+    schema:telephone "(565) 703-4583" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_141> a schemaorg:Person ;
-    schemaorg:birthDate "1966-06-13"^^xsd:date ;
-    schemaorg:deathDate "2001-11-08"^^xsd:date ;
-    schemaorg:email "hillard_461@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Hillard" ;
-    schemaorg:telephone "027-484-4634" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_141> a schema:Person ;
+    schema:birthDate "1966-06-13"^^xsd:date ;
+    schema:deathDate "2001-11-08"^^xsd:date ;
+    schema:email "hillard_461@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Hillard" ;
+    schema:telephone "027-484-4634" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_142> a schemaorg:Person ;
-    schemaorg:birthDate "1996-01-27"^^xsd:date ;
-    schemaorg:deathDate "2011-10-31"^^xsd:date ;
-    schemaorg:email "jerald_865@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Jerald" ;
-    schemaorg:telephone "(551) 340-6003" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_142> a schema:Person ;
+    schema:birthDate "1996-01-27"^^xsd:date ;
+    schema:deathDate "2011-10-31"^^xsd:date ;
+    schema:email "jerald_865@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Jerald" ;
+    schema:telephone "(551) 340-6003" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_144> a schemaorg:Person ;
-    schemaorg:birthDate "1964-11-21"^^xsd:date ;
-    schemaorg:deathDate "2009-06-03"^^xsd:date ;
-    schemaorg:email "jerrome_862@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Jerrome" ;
-    schemaorg:telephone "792-738-6932" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_144> a schema:Person ;
+    schema:birthDate "1964-11-21"^^xsd:date ;
+    schema:deathDate "2009-06-03"^^xsd:date ;
+    schema:email "jerrome_862@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Jerrome" ;
+    schema:telephone "792-738-6932" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_145> a schemaorg:Person ;
-    schemaorg:birthDate "2001-08-25"^^xsd:date ;
-    schemaorg:deathDate "2020-04-01"^^xsd:date ;
-    schemaorg:email "claude_671@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Claude" ;
-    schemaorg:telephone "(856) 684-8534" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_145> a schema:Person ;
+    schema:birthDate "2001-08-25"^^xsd:date ;
+    schema:deathDate "2020-04-01"^^xsd:date ;
+    schema:email "claude_671@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Claude" ;
+    schema:telephone "(856) 684-8534" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_147> a schemaorg:Person ;
-    schemaorg:birthDate "2006-04-02"^^xsd:date ;
-    schemaorg:deathDate "2020-02-06"^^xsd:date ;
-    schemaorg:email "manon_308@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Manon" ;
-    schemaorg:telephone "207-360-2855" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_147> a schema:Person ;
+    schema:birthDate "2006-04-02"^^xsd:date ;
+    schema:deathDate "2020-02-06"^^xsd:date ;
+    schema:email "manon_308@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Manon" ;
+    schema:telephone "207-360-2855" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_149> a schemaorg:Person ;
-    schemaorg:birthDate "1947-02-22"^^xsd:date ;
-    schemaorg:deathDate "1994-12-09"^^xsd:date ;
-    schemaorg:email "yalonda_140@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Yalonda" ;
-    schemaorg:telephone "(379) 132-0434" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_149> a schema:Person ;
+    schema:birthDate "1947-02-22"^^xsd:date ;
+    schema:deathDate "1994-12-09"^^xsd:date ;
+    schema:email "yalonda_140@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Yalonda" ;
+    schema:telephone "(379) 132-0434" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_150> a schemaorg:Person ;
-    schemaorg:birthDate "2009-12-26"^^xsd:date ;
-    schemaorg:deathDate "2012-07-08"^^xsd:date ;
-    schemaorg:email "alessandro_218@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Alessandro" ;
-    schemaorg:telephone "534-764-6763" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_150> a schema:Person ;
+    schema:birthDate "2009-12-26"^^xsd:date ;
+    schema:deathDate "2012-07-08"^^xsd:date ;
+    schema:email "alessandro_218@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Alessandro" ;
+    schema:telephone "534-764-6763" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_152> a schemaorg:Person ;
-    schemaorg:birthDate "1978-09-27"^^xsd:date ;
-    schemaorg:deathDate "2005-07-20"^^xsd:date ;
-    schemaorg:email "jere_572@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Jere" ;
-    schemaorg:telephone "(959) 322-5498" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_152> a schema:Person ;
+    schema:birthDate "1978-09-27"^^xsd:date ;
+    schema:deathDate "2005-07-20"^^xsd:date ;
+    schema:email "jere_572@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Jere" ;
+    schema:telephone "(959) 322-5498" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_153> a schemaorg:Person ;
-    schemaorg:birthDate "1961-11-06"^^xsd:date ;
-    schemaorg:deathDate "1978-11-10"^^xsd:date ;
-    schemaorg:email "melany_522@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Melany" ;
-    schemaorg:telephone "200-823-8808" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_153> a schema:Person ;
+    schema:birthDate "1961-11-06"^^xsd:date ;
+    schema:deathDate "1978-11-10"^^xsd:date ;
+    schema:email "melany_522@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Melany" ;
+    schema:telephone "200-823-8808" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_154> a schemaorg:Person ;
-    schemaorg:birthDate "1933-11-18"^^xsd:date ;
-    schemaorg:deathDate "1976-02-01"^^xsd:date ;
-    schemaorg:email "silvie_693@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Silvie" ;
-    schemaorg:telephone "173-108-8658" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_154> a schema:Person ;
+    schema:birthDate "1933-11-18"^^xsd:date ;
+    schema:deathDate "1976-02-01"^^xsd:date ;
+    schema:email "silvie_693@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Silvie" ;
+    schema:telephone "173-108-8658" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_156> a schemaorg:Person ;
-    schemaorg:birthDate "1971-06-29"^^xsd:date ;
-    schemaorg:deathDate "2009-08-18"^^xsd:date ;
-    schemaorg:email "eda_782@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Eda" ;
-    schemaorg:telephone "(851) 534-8987" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_156> a schema:Person ;
+    schema:birthDate "1971-06-29"^^xsd:date ;
+    schema:deathDate "2009-08-18"^^xsd:date ;
+    schema:email "eda_782@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Eda" ;
+    schema:telephone "(851) 534-8987" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_157> a schemaorg:Person ;
-    schemaorg:birthDate "1981-10-23"^^xsd:date ;
-    schemaorg:deathDate "2015-03-26"^^xsd:date ;
-    schemaorg:email "cob_499@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Cob" ;
-    schemaorg:telephone "686-849-4043" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_157> a schema:Person ;
+    schema:birthDate "1981-10-23"^^xsd:date ;
+    schema:deathDate "2015-03-26"^^xsd:date ;
+    schema:email "cob_499@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Cob" ;
+    schema:telephone "686-849-4043" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_159> a schemaorg:Person ;
-    schemaorg:birthDate "1968-11-04"^^xsd:date ;
-    schemaorg:deathDate "1995-06-12"^^xsd:date ;
-    schemaorg:email "tremaine_280@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Tremaine" ;
-    schemaorg:telephone "(547) 288-2640" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_159> a schema:Person ;
+    schema:birthDate "1968-11-04"^^xsd:date ;
+    schema:deathDate "1995-06-12"^^xsd:date ;
+    schema:email "tremaine_280@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Tremaine" ;
+    schema:telephone "(547) 288-2640" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_161> a schemaorg:Person ;
-    schemaorg:birthDate "1937-10-15"^^xsd:date ;
-    schemaorg:deathDate "1983-11-04"^^xsd:date ;
-    schemaorg:email "ernest_135@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Ernest" ;
-    schemaorg:telephone "047-057-1769" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_161> a schema:Person ;
+    schema:birthDate "1937-10-15"^^xsd:date ;
+    schema:deathDate "1983-11-04"^^xsd:date ;
+    schema:email "ernest_135@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Ernest" ;
+    schema:telephone "047-057-1769" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_162> a schemaorg:Person ;
-    schemaorg:birthDate "1940-05-11"^^xsd:date ;
-    schemaorg:deathDate "1979-09-28"^^xsd:date ;
-    schemaorg:email "leonidas_776@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Leonidas" ;
-    schemaorg:telephone "(906) 069-0916" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_162> a schema:Person ;
+    schema:birthDate "1940-05-11"^^xsd:date ;
+    schema:deathDate "1979-09-28"^^xsd:date ;
+    schema:email "leonidas_776@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Leonidas" ;
+    schema:telephone "(906) 069-0916" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_164> a schemaorg:Person ;
-    schemaorg:birthDate "1961-03-24"^^xsd:date ;
-    schemaorg:deathDate "1975-07-25"^^xsd:date ;
-    schemaorg:email "terrance_465@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Terrance" ;
-    schemaorg:telephone "747-227-7630" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_164> a schema:Person ;
+    schema:birthDate "1961-03-24"^^xsd:date ;
+    schema:deathDate "1975-07-25"^^xsd:date ;
+    schema:email "terrance_465@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Terrance" ;
+    schema:telephone "747-227-7630" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_165> a schemaorg:Person ;
-    schemaorg:birthDate "1998-07-13"^^xsd:date ;
-    schemaorg:deathDate "2014-01-09"^^xsd:date ;
-    schemaorg:email "ignaz_473@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Ignaz" ;
-    schemaorg:telephone "206-996-3867" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_165> a schema:Person ;
+    schema:birthDate "1998-07-13"^^xsd:date ;
+    schema:deathDate "2014-01-09"^^xsd:date ;
+    schema:email "ignaz_473@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Ignaz" ;
+    schema:telephone "206-996-3867" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_167> a schemaorg:Person ;
-    schemaorg:birthDate "1946-11-06"^^xsd:date ;
-    schemaorg:deathDate "1987-06-22"^^xsd:date ;
-    schemaorg:email "ricardo_895@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Ricardo" ;
-    schemaorg:telephone "(114) 612-0781" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_167> a schema:Person ;
+    schema:birthDate "1946-11-06"^^xsd:date ;
+    schema:deathDate "1987-06-22"^^xsd:date ;
+    schema:email "ricardo_895@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Ricardo" ;
+    schema:telephone "(114) 612-0781" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_169> a schemaorg:Person ;
-    schemaorg:birthDate "1982-02-18"^^xsd:date ;
-    schemaorg:deathDate "1992-09-09"^^xsd:date ;
-    schemaorg:email "ferguson_293@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Ferguson" ;
-    schemaorg:telephone "662-809-2623" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_169> a schema:Person ;
+    schema:birthDate "1982-02-18"^^xsd:date ;
+    schema:deathDate "1992-09-09"^^xsd:date ;
+    schema:email "ferguson_293@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Ferguson" ;
+    schema:telephone "662-809-2623" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_170> a schemaorg:Person ;
-    schemaorg:birthDate "2005-05-15"^^xsd:date ;
-    schemaorg:deathDate "2007-02-01"^^xsd:date ;
-    schemaorg:email "hephzibah_820@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Hephzibah" ;
-    schemaorg:telephone "(207) 072-3015" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_170> a schema:Person ;
+    schema:birthDate "2005-05-15"^^xsd:date ;
+    schema:deathDate "2007-02-01"^^xsd:date ;
+    schema:email "hephzibah_820@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Hephzibah" ;
+    schema:telephone "(207) 072-3015" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_171> a schemaorg:Person ;
-    schemaorg:birthDate "1975-10-30"^^xsd:date ;
-    schemaorg:deathDate "1994-05-09"^^xsd:date ;
-    schemaorg:email "merril_250@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Merril" ;
-    schemaorg:telephone "(214) 997-3082" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_171> a schema:Person ;
+    schema:birthDate "1975-10-30"^^xsd:date ;
+    schema:deathDate "1994-05-09"^^xsd:date ;
+    schema:email "merril_250@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Merril" ;
+    schema:telephone "(214) 997-3082" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_173> a schemaorg:Person ;
-    schemaorg:birthDate "1995-02-24"^^xsd:date ;
-    schemaorg:deathDate "2009-11-13"^^xsd:date ;
-    schemaorg:email "ginger_787@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Ginger" ;
-    schemaorg:telephone "369-768-4289" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_173> a schema:Person ;
+    schema:birthDate "1995-02-24"^^xsd:date ;
+    schema:deathDate "2009-11-13"^^xsd:date ;
+    schema:email "ginger_787@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Ginger" ;
+    schema:telephone "369-768-4289" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_175> a schemaorg:Person ;
-    schemaorg:birthDate "1972-11-11"^^xsd:date ;
-    schemaorg:deathDate "2003-07-24"^^xsd:date ;
-    schemaorg:email "bernard_390@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Bernard" ;
-    schemaorg:telephone "(484) 323-8305" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_175> a schema:Person ;
+    schema:birthDate "1972-11-11"^^xsd:date ;
+    schema:deathDate "2003-07-24"^^xsd:date ;
+    schema:email "bernard_390@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Bernard" ;
+    schema:telephone "(484) 323-8305" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_176> a schemaorg:Person ;
-    schemaorg:birthDate "1940-05-29"^^xsd:date ;
-    schemaorg:deathDate "1989-04-17"^^xsd:date ;
-    schemaorg:email "ramon_214@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Ramon" ;
-    schemaorg:telephone "(511) 344-4650" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_176> a schema:Person ;
+    schema:birthDate "1940-05-29"^^xsd:date ;
+    schema:deathDate "1989-04-17"^^xsd:date ;
+    schema:email "ramon_214@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Ramon" ;
+    schema:telephone "(511) 344-4650" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_177> a schemaorg:Person ;
-    schemaorg:birthDate "1957-10-15"^^xsd:date ;
-    schemaorg:deathDate "2007-04-05"^^xsd:date ;
-    schemaorg:email "leoline_349@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Leoline" ;
-    schemaorg:telephone "304-606-9555" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_177> a schema:Person ;
+    schema:birthDate "1957-10-15"^^xsd:date ;
+    schema:deathDate "2007-04-05"^^xsd:date ;
+    schema:email "leoline_349@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Leoline" ;
+    schema:telephone "304-606-9555" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_179> a schemaorg:Person ;
-    schemaorg:birthDate "1988-03-01"^^xsd:date ;
-    schemaorg:deathDate "1997-10-31"^^xsd:date ;
-    schemaorg:email "pavia_885@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Pavia" ;
-    schemaorg:telephone "(330) 060-0823" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_179> a schema:Person ;
+    schema:birthDate "1988-03-01"^^xsd:date ;
+    schema:deathDate "1997-10-31"^^xsd:date ;
+    schema:email "pavia_885@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Pavia" ;
+    schema:telephone "(330) 060-0823" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_180> a schemaorg:Person ;
-    schemaorg:birthDate "1969-05-21"^^xsd:date ;
-    schemaorg:deathDate "1972-06-06"^^xsd:date ;
-    schemaorg:email "christiano_759@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Christiano" ;
-    schemaorg:telephone "(907) 780-7526" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_180> a schema:Person ;
+    schema:birthDate "1969-05-21"^^xsd:date ;
+    schema:deathDate "1972-06-06"^^xsd:date ;
+    schema:email "christiano_759@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Christiano" ;
+    schema:telephone "(907) 780-7526" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_182> a schemaorg:Person ;
-    schemaorg:birthDate "1996-11-16"^^xsd:date ;
-    schemaorg:deathDate "2009-01-02"^^xsd:date ;
-    schemaorg:email "ximenez_617@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Ximenez" ;
-    schemaorg:telephone "511-427-5355" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_182> a schema:Person ;
+    schema:birthDate "1996-11-16"^^xsd:date ;
+    schema:deathDate "2009-01-02"^^xsd:date ;
+    schema:email "ximenez_617@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Ximenez" ;
+    schema:telephone "511-427-5355" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_183> a schemaorg:Person ;
-    schemaorg:birthDate "1938-11-08"^^xsd:date ;
-    schemaorg:deathDate "1978-10-12"^^xsd:date ;
-    schemaorg:email "gerard_865@example.com" ;
-    schemaorg:gender "male" ;
-    schemaorg:givenName "Gerard" ;
-    schemaorg:telephone "792-651-1623" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_183> a schema:Person ;
+    schema:birthDate "1938-11-08"^^xsd:date ;
+    schema:deathDate "1978-10-12"^^xsd:date ;
+    schema:email "gerard_865@example.com" ;
+    schema:gender "male" ;
+    schema:givenName "Gerard" ;
+    schema:telephone "792-651-1623" ;
+    sh:description ex:AuthorShape .
 
-<http://example.org/ns#NodeB1_184> a schemaorg:Person ;
-    schemaorg:birthDate "1977-06-21"^^xsd:date ;
-    schemaorg:deathDate "2014-07-23"^^xsd:date ;
-    schemaorg:email "rosemonde_345@example.com" ;
-    schemaorg:gender "female" ;
-    schemaorg:givenName "Rosemonde" ;
-    schemaorg:telephone "770-781-7383" ;
-    sh:description <http://example.com/ns#AuthorShape> .
+<http://example.org/ns#NodeB1_184> a schema:Person ;
+    schema:birthDate "1977-06-21"^^xsd:date ;
+    schema:deathDate "2014-07-23"^^xsd:date ;
+    schema:email "rosemonde_345@example.com" ;
+    schema:gender "female" ;
+    schema:givenName "Rosemonde" ;
+    schema:telephone "770-781-7383" ;
+    sh:description ex:AuthorShape .
 
