@@ -17,19 +17,16 @@ from rdf_graph_gen.value_generators import dataset_dictionary
 
 # --- The shapes shipped with the repository: experiment suite (paper, Table 1) and examples -------------------------
 
-SHIPPED_SHAPES = [
-    pytest.param("experiment_suite/shape-single-simple.ttl"),
-    pytest.param("experiment_suite/shape-single-complex.ttl"),
-    pytest.param("experiment_suite/shape-three-simple.ttl"),
-    pytest.param("experiment_suite/shape-three-complex.ttl"),
-    pytest.param("generated_examples/shape_examples/book_shape.ttl"),
-    pytest.param("generated_examples/shape_examples/example_product_shape.ttl"),
-    pytest.param("generated_examples/shape_examples/movie_shape.ttl"),
-    pytest.param("generated_examples/shape_examples/random_shape.ttl"),
-    pytest.param("generated_examples/shape_examples/person_shape.ttl"),
-    pytest.param("generated_examples/shape_examples/test_value_generation.ttl"),
-    pytest.param("generated_examples/shape_examples/tv_series_shape.ttl"),
-]
+# Every shapes file in these directories is tested, so a new example cannot be added without being tested
+SHIPPED_SHAPES = sorted(path.relative_to(REPO_ROOT).as_posix()
+                        for directory in ("experiment_suite", "generated_examples/shape_examples")
+                        for path in (REPO_ROOT / directory).glob("*.ttl"))
+
+
+def test_the_shipped_shapes_are_found():
+    # the four shapes of the experiment suite and the seven examples (at least): if the files are missing (e.g. from
+    # a source distribution), the test below would silently test nothing
+    assert len(SHIPPED_SHAPES) >= 11
 
 
 @pytest.mark.parametrize("relative_path", SHIPPED_SHAPES, ids=lambda p: Path(p).stem)
