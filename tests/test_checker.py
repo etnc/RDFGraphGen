@@ -76,6 +76,22 @@ COMPONENTS = [
     ("property-shapes-with-the-same-path",
      "sh:property [ sh:path ex:p ; sh:minInclusive 1 ] ; sh:property [ sh:path ex:p ; sh:maxInclusive 5 ]",
      "ex:x ex:p 3 .", "ex:x ex:p 7 ."),
+    ("qualifiedMinCount", "sh:property [ sh:path ex:p ; sh:qualifiedValueShape [ sh:datatype xsd:integer ] ; "
+                          "sh:qualifiedMinCount 2 ]", 'ex:x ex:p 1, 2, "a" .', 'ex:x ex:p 1, "a" .'),
+    ("qualifiedMaxCount", "sh:property [ sh:path ex:p ; sh:qualifiedValueShape [ sh:datatype xsd:integer ] ; "
+                          "sh:qualifiedMaxCount 1 ]", 'ex:x ex:p 1, "a" .', 'ex:x ex:p 1, 2 .'),
+    ("qualifiedValueShape-named", "sh:property [ sh:path ex:p ; sh:qualifiedValueShape ex:T ; sh:qualifiedMinCount 1 ]",
+     'ex:x ex:p ex:y, ex:z . ex:y ex:name "n" .', "ex:x ex:p ex:y ."),
+    # the hand of the SHACL specification: one thumb and four fingers, each counted only if it is not the other
+    ("qualifiedValueShapesDisjoint", """sh:property [ sh:path ex:digit ; sh:qualifiedValueShape [ sh:class ex:Thumb ] ;
+            sh:qualifiedValueShapesDisjoint true ; sh:qualifiedMinCount 1 ; sh:qualifiedMaxCount 1 ] ;
+        sh:property [ sh:path ex:digit ; sh:qualifiedValueShape [ sh:class ex:Finger ] ;
+            sh:qualifiedValueShapesDisjoint true ; sh:qualifiedMinCount 2 ; sh:qualifiedMaxCount 2 ]""",
+     # ex:b is both, so it counts for neither: one thumb and two fingers (without sh:qualifiedValueShapesDisjoint,
+     # there would be two thumbs)
+     ("ex:x ex:digit ex:t, ex:f1, ex:f2, ex:b . ex:t a ex:Thumb . ex:f1 a ex:Finger . ex:f2 a ex:Finger . "
+      "ex:b a ex:Thumb, ex:Finger ."),
+     "ex:x ex:digit ex:t, ex:f1, ex:f2 . ex:t a ex:Thumb . ex:f1 a ex:Finger . ex:f2 a ex:Finger, ex:Thumb ."),
     # the parser passes the lower bound of ex:p on to ex:q as a hint for the generator; it is not a constraint
     ("lessThan-without-the-generator-hints", "sh:property [ sh:path ex:p ; sh:minInclusive 0 ; sh:lessThan ex:q ]",
      "ex:x ex:q -5 .", "ex:x ex:p -1 ."),
@@ -83,8 +99,6 @@ COMPONENTS = [
 
 NOT_CHECKED = [
     ("closed", "sh:closed true ; sh:property [ sh:path ex:p ]", "ex:x ex:p 1 ."),
-    ("qualifiedValueShape", "sh:property [ sh:path ex:p ; sh:qualifiedValueShape [ sh:datatype xsd:integer ] ; "
-                            "sh:qualifiedMinCount 1 ]", "ex:x ex:p 1 ."),
     ("unsupported-path", "sh:property [ sh:path [ sh:alternativePath ( ex:a ex:b ) ] ; sh:minCount 1 ]",
      "ex:x ex:a 1 ."),
     ("unknown-shape-of-sh-node", "sh:property [ sh:path ex:p ; sh:node ex:Unknown ]", "ex:x ex:p ex:y ."),

@@ -143,7 +143,7 @@ def merge_shape_dictionaries(target, source):
     - sh:in: the values that are in both lists; sh:languageIn: the language tags that both lists allow
     - nested property shapes ("properties"): merged per path, in the same way
     - all values of every parameter are kept ("values"), e.g. all classes and all sh:hasValue values, and all
-      negated shapes of sh:not
+      negated shapes of sh:not and all qualified cardinality constraints (sh:qualifiedValueShape)
     - any other parameter: the value of `target` is kept, if it has one (if the values differ, they cannot both
       hold anyway)
     """
@@ -167,6 +167,9 @@ def merge_shape_dictionaries(target, source):
         elif key == SH["not"]:
             # every negated shape must not hold (a new list, so that the lists of the shapes are not changed)
             target[key] = list(target.get(key) or []) + [shape for shape in value if shape not in (target.get(key) or [])]
+        elif key == "qualified":
+            # every qualified cardinality constraint (sh:qualifiedValueShape) must hold
+            target[key] = list(target.get(key) or []) + [entry for entry in value if entry not in (target.get(key) or [])]
         elif target.get(key) is None:
             target[key] = value
         elif key in LOWER_BOUND_PARAMETERS or key in UPPER_BOUND_PARAMETERS:
@@ -568,6 +571,20 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
                                              {SH.minExclusive if strict else SH.minInclusive: this[SH.minInclusive]})
                 if this.get(SH.minExclusive) is not None:
                     merge_shape_dictionaries(other_dictionary, {SH.minExclusive: this[SH.minExclusive]})
+
+    # sh:qualifiedValueShape: a qualified cardinality constraint, kept as one entry with its shape (parsed, or the
+    # name of a named shape), its counts and sh:qualifiedValueShapesDisjoint. Property shapes with the same path can
+    # each have one, so the entries are kept as a list (see merge_shape_dictionaries).
+    qualified_shapes = parameter_values(shape_dictionary, SH.qualifiedValueShape)
+    if qualified_shapes:
+        qualified_shape = qualified_shapes[0]
+        shape_dictionary["qualified"] = [{
+            "shape": (qualified_shape if isinstance(qualified_shape, URIRef)
+                      else shape_to_dictionary(qualified_shape, shapes_graph, [])),
+            "min": shape_dictionary.get(SH.qualifiedMinCount),
+            "max": shape_dictionary.get(SH.qualifiedMaxCount),
+            "disjoint": shape_dictionary.get(SH.qualifiedValueShapesDisjoint) == Literal(True),
+        }]
 
     warn_if_literal_values_are_required(shape_dictionary, shapes_graph)
     return shape_dictionary

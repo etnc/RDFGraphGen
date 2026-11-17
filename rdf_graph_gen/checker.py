@@ -5,7 +5,7 @@ not hold for the data it generates (the other choices of sh:xone, and sh:not), s
 optional.
 
 The result is True, False, or None if it is not known: for constraint components that are not checked here (e.g.
-sh:closed, sh:qualifiedValueShape), for property paths that are not supported, and for very deep sh:node references.
+sh:closed), for property paths that are not supported, and for very deep sh:node references.
 
 Only the constraints given in the shapes are checked (a shape dictionary's "values"); the parser also adds hints for
 the generator to shape dictionaries (e.g. the lower bound of the other property of sh:lessThan), which are not
@@ -33,7 +33,7 @@ NOT_CONSTRAINTS = {
 
 # Constraints on the set of values of a property shape (checked once per focus node, not per value)
 VALUE_SET_CONSTRAINTS = {SH.minCount, SH.maxCount, SH.hasValue, SH.equals, SH.disjoint, SH.lessThan,
-                         SH.lessThanOrEquals, SH.uniqueLang}
+                         SH.lessThanOrEquals, SH.uniqueLang, SH.qualifiedValueShape}
 
 # sh:node references deeper than this are not followed (the result is not known)
 MAX_DEPTH = 16
@@ -95,7 +95,8 @@ def conforms(graph, focus, shape, dictionary, depth=0):
         values = _path_values(graph, focus, shape)
         if values is None:
             return None
-        results = [_value_set_conforms(graph, focus, values, constraints)]
+        results = [_value_set_conforms(graph, focus, values, constraints),
+                   _qualified_counts_hold(graph, values, shape.get("qualified", []), dictionary, depth)]
         results += [_value_conforms(graph, value, shape, dictionary, depth, in_property_shape=True)
                     for value in values]
     else:
@@ -127,6 +128,41 @@ def _path_values(graph, focus, shape):
         else:
             nodes = {o for node in nodes for o in graph.objects(node, predicate)}
     return nodes
+
+
+def qualified_value_conforms(graph, value, entry, siblings, dictionary, depth=0):
+    """
+    Whether a value counts for a qualified cardinality constraint (an entry of a shape dictionary's "qualified"): it
+    conforms to its shape, and, with sh:qualifiedValueShapesDisjoint, to none of the sibling shapes (those of the
+    other qualified cardinality constraints of the property). True, False, or None if not known.
+    """
+    result = _shape_or_name_conforms(graph, value, entry["shape"], dictionary, depth)
+    if result is False or not entry["disjoint"] or not siblings:
+        return result
+    in_sibling = any_holds(_shape_or_name_conforms(graph, value, sibling["shape"], dictionary, depth)
+                           for sibling in siblings)
+    return all_hold([result, negation(in_sibling)])
+
+
+def _qualified_counts_hold(graph, values, entries, dictionary, depth):
+    """sh:qualifiedMinCount and sh:qualifiedMaxCount of the qualified cardinality constraints of a property."""
+    results = []
+    for entry in entries:
+        siblings = [other for other in entries if other is not entry]
+        counted = [qualified_value_conforms(graph, value, entry, siblings, dictionary, depth) for value in values]
+        sure, unknown = counted.count(True), counted.count(None)
+        if entry["min"] is not None:
+            results.append(True if sure >= int(entry["min"]) else None if sure + unknown >= int(entry["min"]) else False)
+        if entry["max"] is not None:
+            results.append(True if sure + unknown <= int(entry["max"]) else None if sure <= int(entry["max"]) else False)
+    return all_hold(results)
+
+
+def _shape_or_name_conforms(graph, value, shape, dictionary, depth):
+    """conforms() for a shape dictionary, or for the name of a shape in dictionary."""
+    if isinstance(shape, dict):
+        return conforms(graph, value, shape, dictionary, depth + 1)
+    return _shape_conforms(graph, value, shape, dictionary, depth)
 
 
 def _value_set_conforms(graph, focus, values, constraints):
