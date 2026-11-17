@@ -298,3 +298,28 @@ def test_the_output_file_records_how_it_was_generated(tmp_path):
         "# Base IRI: https://data.example.com/, links of entities to their shapes (sh:description): no",
     ]
     assert len(Graph().parse(output)) > 0  # the comment is not part of the graph
+
+
+def test_ntriples_output_does_not_depend_on_the_number_of_processes(tmp_path):
+    outputs = []
+    for processes in (1, 3):
+        output = tmp_path / f"out-{processes}.txt"
+        MultiprocessGenerator(THREE_COMPLEX, str(output), 40, 7, processes=processes, seed=11,
+                              output_format="ntriples").generate()
+        outputs.append(output.read_bytes())
+    assert outputs[0] == outputs[1]
+    graph = Graph().parse(data=outputs[0].decode("utf-8"), format="nt")  # with the comment at the top
+    assert len(set(graph.subjects(SH.description, None))) == 120
+
+
+def test_the_output_format_follows_the_file_name(tmp_path):
+    from rdf_graph_gen.multiprocess_generate import output_format_of
+    assert output_format_of(tmp_path / "out.nt") == "ntriples"
+    assert output_format_of(tmp_path / "out.ttl") == "turtle"
+    assert output_format_of(tmp_path / "out.nt", "turtle") == "turtle"
+    with pytest.raises(ValueError, match="unknown output format"):
+        output_format_of(tmp_path / "out.xml", "xml")
+    output = tmp_path / "out.nt"
+    MultiprocessGenerator(THREE_COMPLEX, str(output), 5, 5, processes=1, seed=1).generate()
+    lines = [line for line in output.read_text(encoding="utf-8").splitlines() if line and not line.startswith("#")]
+    assert lines and all(line.endswith(" .") and not line.startswith("@prefix") for line in lines)

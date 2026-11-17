@@ -40,6 +40,8 @@ The output file starts with a comment that records how it was generated: the RDF
 
 The IRIs of the generated entities start with `http://example.org/ns#`; use `--base-iri` to choose another namespace, e.g. `--base-iri https://data.example.com/`.
 
+The output is written in Turtle, or in N-Triples with `--format ntriples` (the default for an output file ending in `.nt`).
+
 ## Checking Conformance
 
 RDFGraphGen can check whether a generated RDF graph conforms to the input SHACL shapes. This requires the optional validation dependencies:

@@ -817,13 +817,14 @@ def generate_graph(shapes, scale_factor, seed=None, provenance=True, base_iri=DE
 
 
 def generate_rdf(shape_file, output_file, number, batch_size=1000, seed=None, processes=1, provenance=True,
-                 base_iri=DEFAULT_BASE_IRI):
+                 base_iri=DEFAULT_BASE_IRI, output_format=None):
     """
-    Generate a synthetic RDF graph and write it to output_file (Turtle), in batches of batch_size entities.
+    Generate a synthetic RDF graph and write it to output_file, in batches of batch_size entities. output_format:
+    "turtle" or "ntriples" (default: ntriples for an output file ending in .nt, else turtle).
     With processes > 1, the batches are generated in parallel. The same seed always produces the same file,
     regardless of the number of processes. provenance=False: the entities are not linked to their shapes
     (sh:description) in the output. base_iri: the IRIs of the generated entities start with it.
     """
     from rdf_graph_gen.multiprocess_generate import MultiprocessGenerator
     MultiprocessGenerator(shape_file, output_file, number, batch_size, processes=processes, seed=seed,
-                          provenance=provenance, base_iri=base_iri).generate()
+                          provenance=provenance, base_iri=base_iri, output_format=output_format).generate()

@@ -152,3 +152,18 @@ def test_generate_with_an_invalid_base_iri(tmp_path, capsys):
         main([shapes, str(tmp_path / "out.ttl"), "5", "--base-iri", "data/"])
     assert exit_info.value.code == 2
     assert "absolute IRI" in capsys.readouterr().err
+
+
+def test_generate_in_ntriples(tmp_path):
+    shapes = write(tmp_path, "shapes.ttl", SHAPES)
+    output = tmp_path / "out.txt"
+    assert main([shapes, str(output), "5", "--seed", "1", "--processes", "1", "--format", "ntriples"]) == EXIT_OK
+    assert len(set(Graph().parse(output, format="nt").subjects(SH.description, None))) == 5
+
+
+def test_generate_in_an_unknown_format(tmp_path, capsys):
+    shapes = write(tmp_path, "shapes.ttl", SHAPES)
+    with pytest.raises(SystemExit) as exit_info:
+        main([shapes, str(tmp_path / "out.xml"), "5", "--format", "xml"])
+    assert exit_info.value.code == 2
+    assert "invalid choice" in capsys.readouterr().err

@@ -23,18 +23,44 @@ from rdf_graph_gen.shacl_mapping_generator import generate_dictionary_from_shape
 
 REPOSITORY_URL = "https://github.com/etnc/RDFGraphGen"
 
+# The output formats: they can be written batch by batch (formats such as RDF/XML or JSON-LD cannot, since two of
+# their documents cannot simply be joined), with their names in rdflib
+OUTPUT_FORMATS = {"turtle": "turtle", "ntriples": "nt"}
+
+
+def output_format_of(output_file, output_format=None):
+    """The output format: the given one, or else the one of the file name (ntriples for .nt files, else turtle)."""
+    if output_format is None:
+        return "ntriples" if str(output_file).lower().endswith(".nt") else "turtle"
+    if output_format not in OUTPUT_FORMATS:
+        raise ValueError(f"unknown output format {output_format!r} (use one of: {', '.join(OUTPUT_FORMATS)})")
+    return output_format
+
+
+def serialize_batch(graph, output_format):
+    """
+    The text of a batch in the output format. N-Triples lines are sorted, since rdflib writes them in an order that
+    varies between processes, and the output must not depend on the number of processes.
+    """
+    text = graph.serialize(format=OUTPUT_FORMATS[output_format])
+    if output_format == "ntriples":
+        lines = sorted(line for line in text.splitlines() if line.strip())
+        return "".join(line + "\n" for line in lines)
+    return text
+
 # State of a worker process, set once per process by _init_worker
 _worker_state = {}
 
 
 def _init_worker(shapes_graph, dictionary, seed, validate, collect_report, provenance=True,
-                 base_iri=DEFAULT_BASE_IRI):
+                 base_iri=DEFAULT_BASE_IRI, output_format="turtle"):
     _worker_state.update(shapes_graph=shapes_graph, dictionary=dictionary, seed=seed, validate=validate,
-                         collect_report=collect_report, provenance=provenance, base_iri=base_iri)
+                         collect_report=collect_report, provenance=provenance, base_iri=base_iri,
+                         output_format=output_format)
 
 
 def _generate_batch(batch_index, size):
-    """Generate one batch; return its Turtle serialization and, if requested, its validation results."""
+    """Generate one batch; return its text in the output format and, if requested, its validation results."""
     state = _worker_state
     graph = generate_batch(state["shapes_graph"], state["dictionary"], size, batch_index, state["seed"],
                            state["provenance"], state["base_iri"])
@@ -46,14 +72,15 @@ def _generate_batch(batch_index, size):
         report_text = summary.report_graph.serialize(format="nt") if state["collect_report"] else None
         summary.report_graph = None  # keep what is sent back to the main process small
         validation = (summary, report_text)
-    return graph.serialize(format="turtle"), validation
+    return serialize_batch(graph, state["output_format"]), validation
 
 
 class MultiprocessGenerator:
     def __init__(self, shape_file, output_file, graph_number, batch_size=1000, processes=None, seed=None,
-                 validate=False, collect_report=False, provenance=True, base_iri=DEFAULT_BASE_IRI):
+                 validate=False, collect_report=False, provenance=True, base_iri=DEFAULT_BASE_IRI,
+                 output_format=None):
         """
-        shape_file: file with the SHACL shapes; output_file: the generated graph is written to it (Turtle).
+        shape_file: file with the SHACL shapes; output_file: the generated graph is written to it.
         graph_number: the scale factor (entities per top-level node shape); batch_size: entities per batch.
         processes: number of worker processes (default: number of CPUs; 1 = generate in this process).
         seed: optional; the same seed always produces the same output, for any number of processes.
@@ -62,6 +89,7 @@ class MultiprocessGenerator:
         provenance: link each entity to its shape (sh:description) in the output; validate checks every entity
         against its shape either way.
         base_iri: the IRIs of the generated entities start with it (default: http://example.org/ns#).
+        output_format: "turtle" or "ntriples" (default: ntriples for an output file ending in .nt, else turtle).
         """
         self.shape_file = shape_file
         self.output_file = output_file
@@ -73,6 +101,7 @@ class MultiprocessGenerator:
         self.collect_report = collect_report
         self.provenance = provenance
         self.base_iri = checked_base_iri(base_iri)
+        self.output_format = output_format_of(output_file, output_format)
 
         # Parse the shapes in this process first, so that errors in the shapes are reported here.
         # bind_namespaces="core": the prefixes of the shapes file win over rdflib's defaults in summaries.
@@ -126,7 +155,7 @@ class MultiprocessGenerator:
     def _batch_results(self):
         """The results of all batches, in batch order. Only a few batches are held in memory at any time."""
         init_args = (self.shape, self.dictionary, self.seed, self.validate, self.collect_report, self.provenance,
-                     self.base_iri)
+                     self.base_iri, self.output_format)
         number_of_batches = -(-self.graph_number // self.batch_size)
         processes = min(self.processes, number_of_batches)
 
