@@ -36,6 +36,8 @@ There are also some optional parameters. You can find out more by using the:
 
 For reproducible graphs, e.g. for benchmarks, use `--seed`: the same seed always produces the same graph, regardless of the number of worker processes (`--processes`).
 
+The output file starts with a comment that records how it was generated: the RDFGraphGen version, the shapes file and its SHA-256 hash, the scale factor, the batch size, the seed and the options. With the same values, the same graph is generated again.
+
 The IRIs of the generated entities start with `http://example.org/ns#`; use `--base-iri` to choose another namespace, e.g. `--base-iri https://data.example.com/`.
 
 ## Checking Conformance
