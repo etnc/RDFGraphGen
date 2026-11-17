@@ -14,9 +14,9 @@ __generate_rdf(input-shape.ttl, output-graph.ttl, scale-factor)__
 - input-shape.ttl is a Turtle file that contains SHACL shapes
 - output-graph.ttl is a Turtle file that will store the generated RDF entities
 - scale-factor determines the size of the generated RDF graph
-- optional: `batch_size`, `seed` (the same seed always produces the same graph) and `processes`
+- optional: `batch_size`, `seed` (the same seed always produces the same graph), `processes`, `provenance`, `base_iri` and `output_format` (see the command line options below)
 
-__generate_graph(shapes, scale-factor, seed=None)__ returns the generated RDF graph as an rdflib `Graph`, instead of writing it to a file.
+__generate_graph(shapes, scale-factor, seed=None)__ returns the generated RDF graph as an rdflib `Graph`, instead of writing it to a file (optional: `provenance` and `base_iri`).
 
 ## Installation
 
@@ -64,17 +64,47 @@ Entities of closed shapes (`sh:closed true`) are not linked to their shape, sinc
 
 ## Examples
 
-Examples of SHACL shapes based on Schema.org and other types, along with generated synthetic RDF graphs based on these shapes, can be found in the [generated examples](generated_examples/) directory in this repo.
+Examples of SHACL shapes based on Schema.org and other types, along with generated synthetic RDF graphs based on these shapes, can be found in the [generated examples](generated_examples/) directory in this repo. The [conference example](generated_examples/shape_examples/conference_shape.ttl) uses most of the supported SHACL features in one file.
 
 ## Publications
 
 * Milos Jovanovik, Marija Vecovska, Maxime Jakubowski, Katja Hose. "[RDFGraphGen: An RDF Graph Generator based on SHACL Shapes](https://link.springer.com/chapter/10.1007/978-981-95-5009-8_8)". Knowledge Graphs. IJCKG 2025. Lecture Notes in Computer Science, Volume 16297, pp. 111-125, 2026.
 * (preprint) Milos Jovanovik, Marija Vecovska, Maxime Jakubowski, Katja Hose. "[RDFGraphGen: An RDF Graph Generator based on SHACL Shapes](https://arxiv.org/abs/2407.17941)". arXiv:2407.17941.
 
-## Remarks
+## Supported SHACL Features
 
-- A SHACL shape has to have a 'a sh:NodeShape' property and object in order to be recognized as a Node Shape.
-- ``sh:severity`` is ignored because it has no useful info.
-- Only predicate paths are supported at this time.
-- Most common ``sh:datatype`` scenarios are supported.
-- Currently ``sh:nodeKind`` is ignored. 
+RDFGraphGen generates data for the constraints of SHACL Core, except for those listed as not supported below.
+
+| Feature | Support |
+|---|---|
+| Node shapes | Shapes declared with `a sh:NodeShape`. Entities are generated for each top-level node shape, i.e. a shape that no other shape uses; the other shapes are generated as parts of these entities. |
+| Targets | `sh:targetClass`: the generated entities are instances of the class. `sh:targetNode`, `sh:targetSubjectsOf` and `sh:targetObjectsOf` are not used for generation (the conformance check still checks the nodes they select). |
+| Property paths | Predicate, sequence and inverse paths, also nested. Not supported: alternative paths, `sh:zeroOrMorePath`, `sh:oneOrMorePath` and `sh:zeroOrOnePath` (such a property is skipped, with a warning). |
+| Value type | `sh:class`, `sh:datatype` (see below), `sh:nodeKind` |
+| Cardinality | `sh:minCount`, `sh:maxCount` |
+| Value range | `sh:minInclusive`, `sh:minExclusive`, `sh:maxInclusive`, `sh:maxExclusive`, for numbers, dates and times, and durations |
+| String-based | `sh:minLength`, `sh:maxLength`, `sh:pattern`, `sh:languageIn`, `sh:uniqueLang`; lengths and patterns also apply to IRIs (which are then generated from the pattern) and to values of other datatypes |
+| Property pairs | `sh:equals`, `sh:disjoint`, `sh:lessThan`, `sh:lessThanOrEquals` |
+| Logical | `sh:and`, `sh:or`, `sh:xone`, `sh:not` (see the limitations below) |
+| Shape-based | `sh:node`, `sh:property`, `sh:qualifiedValueShape` with `sh:qualifiedMinCount`, `sh:qualifiedMaxCount` and `sh:qualifiedValueShapesDisjoint` |
+| Other | `sh:closed` with `sh:ignoredProperties`, `sh:hasValue`, `sh:in` |
+| Not used | `sh:name`, `sh:description`, `sh:order`, `sh:group`, `sh:defaultValue`, `sh:severity`, `sh:message`, `sh:deactivated` (the data follows deactivated shapes too) |
+| Not supported | SHACL-SPARQL (`sh:sparql`), SHACL Advanced Features, SHACL 1.2 |
+
+Datatypes:
+- `xsd:string`, `rdf:langString` (with language tags), `xsd:boolean`
+- all XSD integer types (`xsd:integer`, `xsd:int`, `xsd:positiveInteger`, `xsd:unsignedByte`, ...), within their value ranges; `xsd:decimal`, `xsd:float`, `xsd:double`
+- dates and times (`xsd:date`, `xsd:dateTime`, `xsd:dateTimeStamp`, `xsd:time`, `xsd:gYear`, `xsd:gYearMonth`, `xsd:gMonth`, `xsd:gMonthDay`, `xsd:gDay`), with the time zone of their bounds; durations (`xsd:duration`, `xsd:dayTimeDuration`, `xsd:yearMonthDuration`)
+- string-based types (`xsd:anyURI`, `xsd:language`, `xsd:token`, `xsd:NCName`, ...), `xsd:hexBinary`, `xsd:base64Binary`, `rdf:HTML`, `rdf:XMLLiteral`
+- other datatypes (e.g. custom ones): random words typed with the datatype, with a warning
+
+For some Schema.org properties of persons, books, movies and TV series (e.g. names, e-mail addresses, genres), realistic values are taken from lists, if they satisfy the constraints of the property. Without `sh:datatype` and `sh:pattern`, a property whose name contains `date` or `number` gets dates or integers, and without `sh:pattern`, a property whose name contains `email` or `telephone` gets values in the form of e-mail addresses or telephone numbers.
+
+Known limitations:
+- The constraints are satisfied one value at a time, not solved together, so combinations that leave very few possible values can fail, e.g. a chain of `sh:lessThan` between integers with tight bounds.
+- `sh:not` is satisfied by avoiding the values of `sh:in` and `sh:hasValue` in the negated shape, and otherwise by generating again until the negated shape does not hold. Data that must break a shape that the generated values usually satisfy (e.g. `sh:not [ sh:datatype xsd:string ]` for a property without a datatype) is not generated.
+- A shape that uses itself, directly or through other shapes, is generated up to three levels deep; deeper values reuse entities generated before.
+- `sh:flags` is not used for generation: the values match the pattern without flags, which is enough for the flags `i`, `m` and `s`.
+- pySHACL evaluates the inverse of a sequence path (`[ sh:inversePath ( ex:a ex:b ) ]`) incorrectly, so `--validate` can report violations of such paths that are not there.
+
+When the generated data does not conform because of one of these limitations, `--validate` reports it.
