@@ -26,8 +26,7 @@ SHIPPED_SHAPES = [
     pytest.param("generated_examples/shape_examples/example_product_shape.ttl"),
     pytest.param("generated_examples/shape_examples/movie_shape.ttl"),
     pytest.param("generated_examples/shape_examples/random_shape.ttl"),
-    pytest.param("generated_examples/shape_examples/person_shape.ttl",
-                 marks=known_bug("the provenance triple (sh:description) is not allowed by the closed AddressShape")),
+    pytest.param("generated_examples/shape_examples/person_shape.ttl"),
     pytest.param("generated_examples/shape_examples/test_value_generation.ttl"),
     pytest.param("generated_examples/shape_examples/tv_series_shape.ttl"),
 ]
@@ -484,9 +483,18 @@ CASES = [
          pytest.mark.filterwarnings("ignore:No data was found")),
 
     # other
+    # closed shapes: the entities are not linked to their shape in the data (sh:description), but still validated
     case("closed", """ex:S a sh:NodeShape ; sh:targetClass ex:C ; sh:closed true ; sh:ignoredProperties ( rdf:type ) ;
-            sh:property [ sh:path ex:p ] .""",
-         known_bug("the provenance triple (sh:description) is not allowed by closed shapes")),
+            sh:property [ sh:path ex:p ] ."""),
+    case("closed-without-targets", """ex:S a sh:NodeShape ; sh:closed true ;
+            sh:property [ sh:path ex:p ; sh:minCount 1 ] ."""),
+    case("closed-that-ignores-the-link-to-the-shape", """ex:S a sh:NodeShape ; sh:closed true ;
+            sh:ignoredProperties ( sh:description ) ; sh:property [ sh:path ex:p ; sh:minCount 1 ] ."""),
+    case("closed-through-sh-node", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:address ; sh:node ex:A ; sh:minCount 1 ] .
+            ex:A a sh:NodeShape ; sh:closed true ; sh:property [ sh:path ex:street ; sh:minCount 1 ] ."""),
+    case("closed-shape-for-a-class", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:author ; sh:class ex:Person ; sh:minCount 1 ] .
+            ex:PersonShape a sh:NodeShape ; sh:targetClass ex:Person ; sh:closed true ; sh:ignoredProperties ( rdf:type ) ;
+                sh:property [ sh:path ex:name ; sh:minCount 1 ] ."""),
     case("qualifiedValueShape", """ex:S a sh:NodeShape ; sh:property [ sh:path ex:p ;
             sh:qualifiedValueShape [ sh:datatype xsd:integer ] ; sh:qualifiedMinCount 2 ] .""",
          known_bug("sh:qualifiedValueShape is not supported")),

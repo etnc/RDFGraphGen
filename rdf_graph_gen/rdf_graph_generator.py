@@ -228,6 +228,37 @@ def _blank_node(batchID, number):
     return BNode(f'{batchID}b{number}')
 
 
+class GeneratedGraph(Graph):
+    """
+    A generated graph. entity_shapes: (entity, shape) for every generated entity, with the shape it was generated
+    from. The data links an entity to its shape with sh:description, except where that would break the shape (a
+    closed shape, see _link_to_shape); validation of the generated graph uses entity_shapes, so that every entity is
+    validated against its shape.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.entity_shapes = []
+
+
+def _link_to_shape(result, entity, shape, written):
+    """Record that entity was generated from shape, and link it to the shape in the data if written."""
+    if isinstance(result, GeneratedGraph):
+        result.entity_shapes.append((entity, shape))
+    if written:
+        result.add((entity, SH.description, shape))
+
+
+def _allows_the_link_to_its_shape(shape_dictionary):
+    """
+    Whether the entities of a shape can have the link to their shape (sh:description): not if the shape is closed
+    (sh:closed true), since a closed shape allows only the properties it declares, unless sh:ignoredProperties
+    lists sh:description.
+    """
+    if Literal(True) not in parameter_values(shape_dictionary, SH.closed):
+        return True
+    return any(SH.description in ignored for ignored in parameter_values(shape_dictionary, SH.ignoredProperties))
+
+
 def _remove_nodes_since(result, batchID, counters):
     """Remove the nodes created since the counters (COUNTER, BNODE_COUNTER) had these values, with their triples."""
     counter, bnode_counter = counters
@@ -236,6 +267,9 @@ def _remove_nodes_since(result, batchID, counters):
     for node in nodes:
         result.remove((node, None, None))
         result.remove((None, None, node))
+    if isinstance(result, GeneratedGraph):
+        removed = set(nodes)
+        result.entity_shapes = [(entity, shape) for entity, shape in result.entity_shapes if entity not in removed]
 
 
 # sh:xone and sh:not: the number of attempts to generate data for which exactly one choice of each sh:xone list holds,
@@ -348,8 +382,8 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
         node = _blank_node(batchID, BNODE_COUNTER)
         BNODE_COUNTER += 1
     if shape_name:
-        # as SH.description add the name of the shape that this node was generated from
-        result.add((node, SH.description, shape_name))
+        # as SH.description add the name of the shape that this node was generated from (see _link_to_shape)
+        _link_to_shape(result, node, shape_name, _allows_the_link_to_its_shape(shape_dictionary))
 
     # the generated entities on the path from the top-level entity to this one, with their shapes (see _earlier_entities)
     for name in ([shape_name] if shape_name else []) + class_shapes:
@@ -466,8 +500,9 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
                 entity_shape["properties"] = properties
         entity = dictionary_to_rdf_graph(entity_shape, node_shapes[0], result, None, dictionary, [], sh_class, batchID,
                                          ancestors=ancestors, node_kind=shape_dictionary.get(SH.nodeKind))
+        linked = (entity, SH.description, node_shapes[0]) in result  # not for entities of closed shapes
         for name in node_shapes[1:]:
-            result.add((entity, SH.description, name))
+            _link_to_shape(result, entity, name, linked)
         return typed(entity)
 
     # for each nested property generate a rdf graph recursively
@@ -628,7 +663,7 @@ def generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, number_of_samp
     global COUNTER, BNODE_COUNTER
     COUNTER, BNODE_COUNTER = 100, 0  # identifiers are unique per batch (batchID) and independent of the process
 
-    result_graph = Graph()
+    result_graph = GeneratedGraph()
     result_graph.bind("schemaorg", SCH)
 
     # Find independent node shapes in the provided shapes_graph (in a fixed order, for reproducibility)

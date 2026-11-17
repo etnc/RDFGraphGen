@@ -499,6 +499,10 @@ def shape_to_dictionary(shape, shapes_graph, property_pair_constraint_components
             # a list of language tags
             add_parameter_value(shape_dictionary, p, [str(tag) for tag in shapes_graph.items(o)])
 
+        elif p == SH.ignoredProperties:
+            # a list of properties (that a closed shape allows in addition to the ones it declares)
+            add_parameter_value(shape_dictionary, p, list(shapes_graph.items(o)))
+
         elif p in {URIRef(SH['or']), URIRef(SH['and']), URIRef(SH['xone'])}:
             # Handle SH:or, SH:and, SH:xone properties: their value is an RDF list of shapes (a shape can have
             # several such lists, and each must hold)

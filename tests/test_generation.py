@@ -141,6 +141,24 @@ def test_inverse_paths_never_make_a_literal_the_subject_of_a_triple():
     assert len(set(graph.subjects(URIRef("http://example.org/name"), None))) == 10  # other properties: generated
 
 
+def test_entities_of_closed_shapes_are_not_linked_to_their_shape_but_validated(tmp_path):
+    shapes = tmp_path / "shapes.ttl"
+    shapes.write_text("""
+        @prefix sh: <http://www.w3.org/ns/shacl#> . @prefix ex: <http://example.org/> .
+        @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+        ex:S a sh:NodeShape ; sh:property [ sh:path ex:address ; sh:node ex:A ; sh:minCount 1 ; sh:maxCount 1 ] .
+        ex:A a sh:NodeShape ; sh:closed true ; sh:property [ sh:path ex:street ; sh:minCount 1 ] .
+    """, encoding="utf-8")
+    output = tmp_path / "out.ttl"
+    summary = MultiprocessGenerator(str(shapes), str(output), 10, 4, processes=1, seed=1, validate=True).generate()
+    # every entity is validated against its shape, also the ones of the closed shape (the addresses)
+    assert summary.conforms and summary.provenance_focus_nodes == 20
+    data = Graph().parse(output)
+    assert set(data.objects(None, SH.description)) == {URIRef("http://example.org/S")}
+    # the written data conforms (the addresses are validated through the sh:node constraint of ex:S)
+    assert validate_generated(load_shapes(path=shapes), data).conforms
+
+
 def test_failed_attempts_for_xone_leave_no_data():
     # entities that are generated again for sh:xone: the nodes of the failed attempts are removed
     shapes = parse_turtle("""
@@ -155,6 +173,8 @@ def test_failed_attempts_for_xone_leave_no_data():
     # every node is an entity or a value of a property of another node (no leftovers of failed attempts)
     assert all(subject in entities or subject in set(graph.objects()) for subject in graph.subjects())
     assert len(set(graph.subjects(URIRef("http://example.org/name"), None))) == 30
+    # the record of the shapes of the entities has no entities of failed attempts either
+    assert {entity for entity, _ in graph.entity_shapes} == entities
 
 
 def test_every_instance_of_a_class_is_used():

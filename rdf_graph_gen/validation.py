@@ -116,7 +116,9 @@ def validate_generated(shapes_graph, data_graph, use_provenance=True, declared_t
 
     With use_provenance=True (the default), each entity that the generator linked to a shape of shapes_graph
     (entity sh:description shape) is validated against that shape, in addition to the focus nodes selected by
-    the target declarations of the shapes. With use_provenance=False, this is a plain SHACL validation.
+    the target declarations of the shapes. For a graph that was just generated (a GeneratedGraph), the generator's
+    record of the shape of every entity is used instead, which also covers the entities that are not linked to
+    their shape in the data (entities of closed shapes). With use_provenance=False, this is a plain SHACL validation.
 
     With declared_target_nodes=False, sh:targetNode declarations of the shapes are ignored. This is used when a
     generated graph is validated batch by batch: the constant nodes selected by sh:targetNode are the same in
@@ -190,7 +192,12 @@ def build_validation_shapes(shapes_graph, data_graph, use_provenance=True, decla
     if use_provenance:
         generated_from = defaultdict(set)
         known_shapes = _shape_nodes(shapes_graph)
-        for node, shape in data_graph.subject_objects(PROVENANCE_PREDICATE):
+        # A graph that was just generated knows the shape of every entity (also of those that are not linked to
+        # their shape in the data, e.g. entities of closed shapes); otherwise, the links in the data are used
+        entity_shapes = getattr(data_graph, "entity_shapes", None)
+        if entity_shapes is None:
+            entity_shapes = data_graph.subject_objects(PROVENANCE_PREDICATE)
+        for node, shape in entity_shapes:
             if shape in known_shapes:
                 generated_from[shape].add(node)
         for shape, nodes in generated_from.items():
