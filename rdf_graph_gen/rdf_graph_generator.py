@@ -1,4 +1,5 @@
 import random
+import re
 import warnings
 from copy import deepcopy
 from rdflib import Graph, BNode, Literal
@@ -219,8 +220,19 @@ def _earlier_entities(ancestors, value_shape, node):
     return [entity for entity in earlier if entity != node]
 
 
-def _entity_iri(batchID, number):
-    return URIRef(f'http://example.org/ns#Node{batchID}_{number}')
+# The IRIs of generated entities start with this base IRI, unless another one is given (--base-iri)
+DEFAULT_BASE_IRI = "http://example.org/ns#"
+
+
+def checked_base_iri(base_iri):
+    """The base IRI for generated entities, if it is an absolute IRI; raises ValueError otherwise."""
+    if not re.fullmatch(r"[A-Za-z][A-Za-z0-9+.-]*:[^\s<>\"{}|\\^`]+", base_iri or ""):
+        raise ValueError(f"the base IRI must be an absolute IRI, e.g. https://data.example.com/ (not {base_iri!r})")
+    return base_iri
+
+
+def _entity_iri(result, batchID, number):
+    return URIRef(f'{getattr(result, "base_iri", DEFAULT_BASE_IRI)}Node{batchID}_{number}')
 
 
 def _blank_node(batchID, number):
@@ -235,11 +247,13 @@ class GeneratedGraph(Graph):
     closed shape, see _link_to_shape); validation of the generated graph uses entity_shapes, so that every entity is
     validated against its shape.
     """
-    def __init__(self, *args, provenance=True, **kwargs):
+    def __init__(self, *args, provenance=True, base_iri=DEFAULT_BASE_IRI, **kwargs):
         super().__init__(*args, **kwargs)
         self.entity_shapes = []
         # provenance=False: no entity is linked to its shape in the data (the record is still kept)
         self.provenance = provenance
+        # the IRIs of the generated entities start with this
+        self.base_iri = checked_base_iri(base_iri)
 
 
 def _link_to_shape(result, entity, shape, written):
@@ -264,7 +278,7 @@ def _allows_the_link_to_its_shape(shape_dictionary):
 def _remove_nodes_since(result, batchID, counters):
     """Remove the nodes created since the counters (COUNTER, BNODE_COUNTER) had these values, with their triples."""
     counter, bnode_counter = counters
-    nodes = [_entity_iri(batchID, n) for n in range(counter, COUNTER)]
+    nodes = [_entity_iri(result, batchID, n) for n in range(counter, COUNTER)]
     nodes += [_blank_node(batchID, n) for n in range(bnode_counter, BNODE_COUNTER)]
     for node in nodes:
         result.remove((node, None, None))
@@ -378,7 +392,7 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
     # Entities of a named shape are IRIs, and other nodes (e.g. values with nested properties) blank nodes, unless
     # the node kind requires the other kind
     if (shape_name or kinds & {SH.IRI, SH.IRIOrLiteral}) and not blank:
-        node = _entity_iri(batchID, COUNTER)
+        node = _entity_iri(result, batchID, COUNTER)
         COUNTER += 1
     else:
         node = _blank_node(batchID, BNODE_COUNTER)
@@ -661,11 +675,12 @@ def dictionary_to_rdf_graph(shape_dictionary, shape_name, result, parent, dictio
 """
 
 
-def generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, number_of_samples, batchID, provenance=True):
+def generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, number_of_samples, batchID, provenance=True,
+                                        base_iri=DEFAULT_BASE_IRI):
     global COUNTER, BNODE_COUNTER
     COUNTER, BNODE_COUNTER = 100, 0  # identifiers are unique per batch (batchID) and independent of the process
 
-    result_graph = GeneratedGraph(provenance=provenance)
+    result_graph = GeneratedGraph(provenance=provenance, base_iri=base_iri)
     result_graph.bind("schemaorg", SCH)
 
     # Find independent node shapes in the provided shapes_graph (in a fixed order, for reproducibility)
@@ -716,19 +731,22 @@ def generate_rdf_graphs_from_shacl_constraints(shape_file, number):
     return generate_graph(shape_file, number)
 
 
-def generate_batch(shapes_graph, dictionary, number, batch_index, seed=None, provenance=True):
+def generate_batch(shapes_graph, dictionary, number, batch_index, seed=None, provenance=True,
+                   base_iri=DEFAULT_BASE_IRI):
     """
     Generate one batch: `number` entities per top-level node shape, with identifiers that are unique to the
     batch. With a seed, the batch depends only on (seed, batch_index), not on the process that generates it.
     provenance=False: the entities are not linked to their shapes (sh:description) in the data.
+    base_iri: the IRIs of the generated entities start with it.
     """
     if seed is not None:
         # The generator (and exrex) use the global random module; seeding with a string is stable across runs
         random.seed(f"{seed}/{batch_index}")
-    return generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, number, f'B{batch_index}', provenance)
+    return generate_rdf_graphs_from_dictionary(shapes_graph, dictionary, number, f'B{batch_index}', provenance,
+                                               base_iri)
 
 
-def generate_graph(shapes, scale_factor, seed=None, provenance=True):
+def generate_graph(shapes, scale_factor, seed=None, provenance=True, base_iri=DEFAULT_BASE_IRI):
     """
     Generate a synthetic RDF graph in memory and return it as an rdflib Graph.
 
@@ -739,19 +757,21 @@ def generate_graph(shapes, scale_factor, seed=None, provenance=True):
     provenance: link each entity to the shape it was generated from (entity sh:description shape), so that a
           validation of the graph can check each entity against its shape (see rdf_graph_gen.validation). With
           provenance=False, the data has no such links; validate_generated still uses them for the returned graph.
+    base_iri: the IRIs of the generated entities start with it (default: http://example.org/ns#).
     """
     shapes_graph = shapes if isinstance(shapes, Graph) else Graph().parse(shapes)
     dictionary = generate_dictionary_from_shapes_graph(shapes_graph)
-    return generate_batch(shapes_graph, dictionary, scale_factor, 1, seed, provenance)
+    return generate_batch(shapes_graph, dictionary, scale_factor, 1, seed, provenance, base_iri)
 
 
-def generate_rdf(shape_file, output_file, number, batch_size=1000, seed=None, processes=1, provenance=True):
+def generate_rdf(shape_file, output_file, number, batch_size=1000, seed=None, processes=1, provenance=True,
+                 base_iri=DEFAULT_BASE_IRI):
     """
     Generate a synthetic RDF graph and write it to output_file (Turtle), in batches of batch_size entities.
     With processes > 1, the batches are generated in parallel. The same seed always produces the same file,
     regardless of the number of processes. provenance=False: the entities are not linked to their shapes
-    (sh:description) in the output.
+    (sh:description) in the output. base_iri: the IRIs of the generated entities start with it.
     """
     from rdf_graph_gen.multiprocess_generate import MultiprocessGenerator
     MultiprocessGenerator(shape_file, output_file, number, batch_size, processes=processes, seed=seed,
-                          provenance=provenance).generate()
+                          provenance=provenance, base_iri=base_iri).generate()

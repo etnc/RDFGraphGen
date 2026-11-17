@@ -63,6 +63,9 @@ def build_generate_parser():
                              "pip install \"rdf-graph-gen[validate]\")")
     parser.add_argument("--report", metavar="FILE",
                         help="with --validate: also write the full SHACL validation report to FILE (Turtle)")
+    parser.add_argument("--base-iri", metavar="IRI", default=None,
+                        help="the IRIs of the generated entities start with IRI, e.g. https://data.example.com/ "
+                             "(default: http://example.org/ns#)")
     parser.add_argument("--no-provenance", action="store_true",
                         help="do not link the generated entities to the shapes they were generated from "
                              "(sh:description); --validate still checks every entity against its shape, but "
@@ -100,11 +103,18 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.report and not args.validate:
         parser.error("--report requires --validate")
+    if args.base_iri is not None:
+        from rdf_graph_gen.rdf_graph_generator import checked_base_iri
+        try:
+            checked_base_iri(args.base_iri)
+        except ValueError as error:
+            parser.error(str(error))
     return generate(args)
 
 
 def generate(args):
     from rdf_graph_gen.multiprocess_generate import MultiprocessGenerator
+    from rdf_graph_gen.rdf_graph_generator import DEFAULT_BASE_IRI
 
     if args.validate:
         # Fail before a potentially long generation run, not after it
@@ -118,7 +128,8 @@ def generate(args):
     start = datetime.now()
     generator = MultiprocessGenerator(args.input_file, args.output_file, args.scale_factor, args.batch_size,
                                       processes=args.processes, seed=args.seed, validate=args.validate,
-                                      collect_report=bool(args.report), provenance=not args.no_provenance)
+                                      collect_report=bool(args.report), provenance=not args.no_provenance,
+                                      base_iri=args.base_iri or DEFAULT_BASE_IRI)
     summary = generator.generate()
     print(f"Generator ran with {generator.processes} process(es), finished in {datetime.now() - start}.")
 

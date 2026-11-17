@@ -36,6 +36,8 @@ There are also some optional parameters. You can find out more by using the:
 
 For reproducible graphs, e.g. for benchmarks, use `--seed`: the same seed always produces the same graph, regardless of the number of worker processes (`--processes`).
 
+The IRIs of the generated entities start with `http://example.org/ns#`; use `--base-iri` to choose another namespace, e.g. `--base-iri https://data.example.com/`.
+
 ## Checking Conformance
 
 RDFGraphGen can check whether a generated RDF graph conforms to the input SHACL shapes. This requires the optional validation dependencies:

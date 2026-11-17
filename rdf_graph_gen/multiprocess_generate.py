@@ -14,23 +14,24 @@ from itertools import islice
 
 from rdflib import Graph
 
-from rdf_graph_gen.rdf_graph_generator import generate_batch
+from rdf_graph_gen.rdf_graph_generator import DEFAULT_BASE_IRI, checked_base_iri, generate_batch
 from rdf_graph_gen.shacl_mapping_generator import generate_dictionary_from_shapes_graph
 
 # State of a worker process, set once per process by _init_worker
 _worker_state = {}
 
 
-def _init_worker(shapes_graph, dictionary, seed, validate, collect_report, provenance=True):
+def _init_worker(shapes_graph, dictionary, seed, validate, collect_report, provenance=True,
+                 base_iri=DEFAULT_BASE_IRI):
     _worker_state.update(shapes_graph=shapes_graph, dictionary=dictionary, seed=seed, validate=validate,
-                         collect_report=collect_report, provenance=provenance)
+                         collect_report=collect_report, provenance=provenance, base_iri=base_iri)
 
 
 def _generate_batch(batch_index, size):
     """Generate one batch; return its Turtle serialization and, if requested, its validation results."""
     state = _worker_state
     graph = generate_batch(state["shapes_graph"], state["dictionary"], size, batch_index, state["seed"],
-                           state["provenance"])
+                           state["provenance"], state["base_iri"])
     validation = None
     if state["validate"]:
         from rdf_graph_gen.validation import validate_generated
@@ -44,7 +45,7 @@ def _generate_batch(batch_index, size):
 
 class MultiprocessGenerator:
     def __init__(self, shape_file, output_file, graph_number, batch_size=1000, processes=None, seed=None,
-                 validate=False, collect_report=False, provenance=True):
+                 validate=False, collect_report=False, provenance=True, base_iri=DEFAULT_BASE_IRI):
         """
         shape_file: file with the SHACL shapes; output_file: the generated graph is written to it (Turtle).
         graph_number: the scale factor (entities per top-level node shape); batch_size: entities per batch.
@@ -54,6 +55,7 @@ class MultiprocessGenerator:
         collect_report: with validate, also collect the full SHACL validation report (summary.report_graph).
         provenance: link each entity to its shape (sh:description) in the output; validate checks every entity
         against its shape either way.
+        base_iri: the IRIs of the generated entities start with it (default: http://example.org/ns#).
         """
         self.shape_file = shape_file
         self.output_file = output_file
@@ -64,6 +66,7 @@ class MultiprocessGenerator:
         self.validate = validate
         self.collect_report = collect_report
         self.provenance = provenance
+        self.base_iri = checked_base_iri(base_iri)
 
         # Parse the shapes in this process first, so that errors in the shapes are reported here.
         # bind_namespaces="core": the prefixes of the shapes file win over rdflib's defaults in summaries.
@@ -96,7 +99,8 @@ class MultiprocessGenerator:
 
     def _batch_results(self):
         """The results of all batches, in batch order. Only a few batches are held in memory at any time."""
-        init_args = (self.shape, self.dictionary, self.seed, self.validate, self.collect_report, self.provenance)
+        init_args = (self.shape, self.dictionary, self.seed, self.validate, self.collect_report, self.provenance,
+                     self.base_iri)
         number_of_batches = -(-self.graph_number // self.batch_size)
         processes = min(self.processes, number_of_batches)
 

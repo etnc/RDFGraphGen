@@ -256,3 +256,12 @@ def test_person_dependencies_are_added_once():
     assert properties[URIRef("http://schema.org/givenName")]["depends_on"] == [URIRef("http://schema.org/gender")]
     assert properties[URIRef("http://schema.org/email")]["depends_on"] == [
         URIRef("http://schema.org/givenName"), URIRef("http://schema.org/familyName")]
+
+
+def test_the_base_iri_changes_only_the_iris_of_the_entities():
+    shapes = load_shapes(path=THREE_COMPLEX)
+    default = generate_graph(shapes, 10, seed=3).serialize(format="nt")
+    based = generate_graph(shapes, 10, seed=3, base_iri="https://data.example.com/").serialize(format="nt")
+    assert "https://data.example.com/NodeB1_100" in based and "http://example.org/ns#" not in based
+    assert sorted(based.replace("https://data.example.com/", "http://example.org/ns#").splitlines()) == \
+        sorted(default.splitlines())

@@ -135,3 +135,20 @@ def test_generate_without_provenance(tmp_path, capsys):
     assert len(set(data.subjects(None, None))) == 20 and not list(data.triples((None, SH.description, None)))
     # without the links, 'rdfgen validate' finds nothing to check for shapes without target declarations
     assert main(["validate", shapes, str(output)]) == EXIT_NOTHING_CHECKED
+
+
+def test_generate_with_a_base_iri(tmp_path):
+    shapes = write(tmp_path, "shapes.ttl", SHAPES)
+    output = tmp_path / "out.ttl"
+    assert main([shapes, str(output), "5", "--seed", "1", "--processes", "1", "--base-iri",
+                 "https://data.example.com/"]) == EXIT_OK
+    entities = set(Graph().parse(output).subjects(SH.description, None))
+    assert len(entities) == 5 and all(str(e).startswith("https://data.example.com/Node") for e in entities)
+
+
+def test_generate_with_an_invalid_base_iri(tmp_path, capsys):
+    shapes = write(tmp_path, "shapes.ttl", SHAPES)
+    with pytest.raises(SystemExit) as exit_info:
+        main([shapes, str(tmp_path / "out.ttl"), "5", "--base-iri", "data/"])
+    assert exit_info.value.code == 2
+    assert "absolute IRI" in capsys.readouterr().err
