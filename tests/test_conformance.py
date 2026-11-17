@@ -24,9 +24,9 @@ SHIPPED_SHAPES = sorted(path.relative_to(REPO_ROOT).as_posix()
 
 
 def test_the_shipped_shapes_are_found():
-    # the four shapes of the experiment suite and the seven examples (at least): if the files are missing (e.g. from
+    # the four shapes of the experiment suite and the eight examples (at least): if the files are missing (e.g. from
     # a source distribution), the test below would silently test nothing
-    assert len(SHIPPED_SHAPES) >= 11
+    assert len(SHIPPED_SHAPES) >= 12
 
 
 @pytest.mark.parametrize("relative_path", SHIPPED_SHAPES, ids=lambda p: Path(p).stem)

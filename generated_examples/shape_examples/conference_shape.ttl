@@ -1,0 +1,235 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.com/ns#> .
+
+# Conferences with their talks, speakers, venues and tickets: a tour of the SHACL features that RDFGraphGen supports.
+# Generated with: rdfgen conference_shape.ttl generated_conferences.ttl 5 --seed 1 --validate
+
+ex:ConferenceShape
+    a sh:NodeShape ;
+    sh:targetClass ex:Conference ;
+    # language-tagged strings: a name in English, in German or in both, but not two names in the same language
+    sh:property [
+        sh:path schema:name ;
+        sh:datatype rdf:langString ;
+        sh:languageIn ( "en" "de" ) ;
+        sh:uniqueLang true ;
+        sh:minCount 1 ;
+        sh:maxCount 2 ;
+    ] ;
+    # date-times with a time zone, and a property pair: the conference starts before it ends
+    sh:property [
+        sh:path schema:startDate ;
+        sh:datatype xsd:dateTime ;
+        sh:minInclusive "2027-01-01T09:00:00Z"^^xsd:dateTime ;
+        sh:maxExclusive "2027-07-01T09:00:00Z"^^xsd:dateTime ;
+        sh:lessThan schema:endDate ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:endDate ;
+        sh:datatype xsd:dateTime ;
+        sh:maxExclusive "2028-01-01T00:00:00Z"^^xsd:dateTime ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    # a string-based datatype with a pattern
+    sh:property [
+        sh:path schema:url ;
+        sh:datatype xsd:anyURI ;
+        sh:pattern "^https://[a-z]{4,12}[.]example[.]org/$" ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:location ;
+        sh:node ex:VenueShape ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    # an inverse path: the talks refer to their conference
+    sh:property [
+        sh:path [ sh:inversePath schema:superEvent ] ;
+        sh:class ex:Talk ;
+        sh:minCount 2 ;
+        sh:maxCount 4 ;
+    ] ;
+    # qualified cardinality: two or three tickets, at least one of which is for students
+    sh:property [
+        sh:path schema:offers ;
+        sh:node ex:TicketShape ;
+        sh:minCount 2 ;
+        sh:maxCount 3 ;
+    ] ;
+    sh:property [
+        sh:path schema:offers ;
+        sh:qualifiedValueShape [
+            sh:property [
+                sh:path schema:category ;
+                sh:hasValue "student" ;
+            ] ;
+        ] ;
+        sh:qualifiedMinCount 1 ;
+    ] .
+
+ex:TalkShape
+    a sh:NodeShape ;
+    sh:targetClass ex:Talk ;
+    sh:property [
+        sh:path schema:name ;
+        sh:datatype rdf:langString ;
+        sh:languageIn ( "en" "de" ) ;
+        sh:uniqueLang true ;
+        sh:minCount 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:performer ;
+        sh:class schema:Person ;
+        sh:minCount 1 ;
+        sh:maxCount 3 ;
+    ] ;
+    # durations between a quarter of an hour and an hour
+    sh:property [
+        sh:path schema:duration ;
+        sh:datatype xsd:duration ;
+        sh:minInclusive "PT15M"^^xsd:duration ;
+        sh:maxInclusive "PT1H"^^xsd:duration ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    # exactly one of the two: a talk is given either online or on site
+    sh:property [
+        sh:path schema:eventAttendanceMode ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:xone (
+        [ sh:property [ sh:path schema:eventAttendanceMode ; sh:hasValue schema:OnlineEventAttendanceMode ] ]
+        [ sh:property [ sh:path schema:eventAttendanceMode ; sh:hasValue schema:OfflineEventAttendanceMode ] ]
+    ) ;
+    # a negation: a talk in the programme has any status but cancelled
+    sh:property [
+        sh:path schema:eventStatus ;
+        sh:in ( schema:EventScheduled schema:EventRescheduled schema:EventPostponed schema:EventCancelled ) ;
+        sh:not [ sh:hasValue schema:EventCancelled ] ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] .
+
+ex:SpeakerShape
+    a sh:NodeShape ;
+    sh:targetClass schema:Person ;
+    # realistic values: names from lists, and an e-mail address made from them
+    sh:property [
+        sh:path schema:givenName ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:familyName ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:email ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    # IRIs made from a pattern
+    sh:property [
+        sh:path schema:sameAs ;
+        sh:nodeKind sh:IRI ;
+        sh:pattern "^https://orcid[.]org/0000-000[1-9]-[0-9]{4}-[0-9]{3}[0-9X]$" ;
+        sh:maxCount 1 ;
+    ] ;
+    # a sequence path: the name of the speaker's affiliation
+    sh:property [
+        sh:path ( schema:affiliation schema:name ) ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    # recursion: speakers know other speakers (through their class, so that validation is not recursive)
+    sh:property [
+        sh:path schema:knows ;
+        sh:class schema:Person ;
+        sh:maxCount 1 ;
+    ] .
+
+ex:VenueShape
+    a sh:NodeShape ;
+    sh:targetClass schema:Place ;
+    sh:property [
+        sh:path schema:name ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:maximumAttendeeCapacity ;
+        sh:datatype xsd:positiveInteger ;
+        sh:minInclusive 50 ;
+        sh:maxInclusive 2000 ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:address ;
+        sh:node ex:AddressShape ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] .
+
+# a closed shape: an address has no properties other than these (and its type)
+ex:AddressShape
+    a sh:NodeShape ;
+    sh:targetClass schema:PostalAddress ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:property [
+        sh:path schema:streetAddress ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    # a pattern on an integer: four-digit postal codes
+    sh:property [
+        sh:path schema:postalCode ;
+        sh:datatype xsd:integer ;
+        sh:pattern "^[1-9][0-9]{3}$" ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:addressCountry ;
+        sh:in ( "AT" "CH" "DE" ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] .
+
+ex:TicketShape
+    a sh:NodeShape ;
+    sh:targetClass schema:Offer ;
+    sh:property [
+        sh:path schema:category ;
+        sh:in ( "regular" "student" "speaker" ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    # decimals within a range
+    sh:property [
+        sh:path schema:price ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 900 ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:priceCurrency ;
+        sh:hasValue "EUR" ;
+        sh:maxCount 1 ;
+    ] .
