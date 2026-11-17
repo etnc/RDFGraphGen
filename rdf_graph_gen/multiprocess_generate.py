@@ -78,7 +78,7 @@ def _generate_batch(batch_index, size):
 class MultiprocessGenerator:
     def __init__(self, shape_file, output_file, graph_number, batch_size=1000, processes=None, seed=None,
                  validate=False, collect_report=False, provenance=True, base_iri=DEFAULT_BASE_IRI,
-                 output_format=None):
+                 output_format=None, shapes_graph=None):
         """
         shape_file: file with the SHACL shapes; output_file: the generated graph is written to it.
         graph_number: the scale factor (entities per top-level node shape); batch_size: entities per batch.
@@ -90,6 +90,7 @@ class MultiprocessGenerator:
         against its shape either way.
         base_iri: the IRIs of the generated entities start with it (default: http://example.org/ns#).
         output_format: "turtle" or "ntriples" (default: ntriples for an output file ending in .nt, else turtle).
+        shapes_graph: optional, the shapes of shape_file already parsed (by default, they are parsed from it).
         """
         self.shape_file = shape_file
         self.output_file = output_file
@@ -105,8 +106,9 @@ class MultiprocessGenerator:
 
         # Parse the shapes in this process first, so that errors in the shapes are reported here.
         # bind_namespaces="core": the prefixes of the shapes file win over rdflib's defaults in summaries.
-        self.shape = Graph(bind_namespaces="core")
-        self.shape.parse(self.shape_file)
+        if shapes_graph is None:
+            shapes_graph = Graph(bind_namespaces="core").parse(self.shape_file)
+        self.shape = shapes_graph
         self.dictionary = generate_dictionary_from_shapes_graph(self.shape)
 
     def batches(self):

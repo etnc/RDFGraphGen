@@ -128,11 +128,23 @@ def generate(args):
             return EXIT_ERROR
 
     start = datetime.now()
+    # the shapes are read before the output file is opened, so that nothing is written if they cannot be read
+    shapes_graph = read_graph(args.input_file)
+    if shapes_graph is None:
+        return EXIT_ERROR
     generator = MultiprocessGenerator(args.input_file, args.output_file, args.scale_factor, args.batch_size,
                                       processes=args.processes, seed=args.seed, validate=args.validate,
                                       collect_report=bool(args.report), provenance=not args.no_provenance,
-                                      base_iri=args.base_iri or DEFAULT_BASE_IRI, output_format=args.format)
-    summary = generator.generate()
+                                      base_iri=args.base_iri or DEFAULT_BASE_IRI, output_format=args.format,
+                                      shapes_graph=shapes_graph)
+    try:
+        summary = generator.generate()
+    except OSError as error:
+        if error.filename != args.output_file:
+            raise
+        # e.g. a directory that does not exist (the output file is opened before anything is generated)
+        print(f"rdfgen: cannot write {args.output_file}: {error.strerror}", file=sys.stderr)
+        return EXIT_ERROR
     print(f"Generator ran with {generator.processes} process(es), finished in {datetime.now() - start}.")
 
     if summary is None:
@@ -140,22 +152,36 @@ def generate(args):
     return report_conformance(summary, args.report)
 
 
+def read_graph(path):
+    """The RDF graph in a file, or None (after an error message) if the file is missing, unreadable or not valid RDF."""
+    from rdflib import Graph
+    try:
+        # bind_namespaces="core": the prefixes declared in the file win over rdflib's defaults (in the summary of a
+        # validation, and in the generated graph)
+        return Graph(bind_namespaces="core").parse(path)
+    except FileNotFoundError:
+        # (rdflib's message names another path: it resolves a relative path that does not exist as a URL, against
+        # the parent of the current directory)
+        print(f"rdfgen: cannot read {path}: no such file", file=sys.stderr)
+        return None
+    except Exception as error:  # unreadable file or RDF syntax error
+        print(f"rdfgen: cannot read {path}: {error}", file=sys.stderr)
+        return None
+
+
 def check_conformance(shapes_file, data_file, report_file=None, use_provenance=True):
     """Validate data_file against shapes_file, print a summary and return the exit status."""
-    from rdflib import Graph
     from rdf_graph_gen.validation import ValidatorUnavailableError, validate_generated
 
     graphs = []
     for path in (shapes_file, data_file):
-        try:
-            if os.path.getsize(path) > LARGE_GRAPH_BYTES:
-                print(f"rdfgen: note: {path} is large; validation loads the whole graph into memory and may be slow.",
-                      file=sys.stderr)
-            # bind_namespaces="core": prefixes declared in the files win over rdflib's defaults in the summary
-            graphs.append(Graph(bind_namespaces="core").parse(path))
-        except Exception as error:  # missing file, unreadable file or RDF syntax error
-            print(f"rdfgen: cannot read {path}: {error}", file=sys.stderr)
+        if os.path.isfile(path) and os.path.getsize(path) > LARGE_GRAPH_BYTES:
+            print(f"rdfgen: note: {path} is large; validation loads the whole graph into memory and may be slow.",
+                  file=sys.stderr)
+        graph = read_graph(path)
+        if graph is None:
             return EXIT_ERROR
+        graphs.append(graph)
     shapes_graph, data_graph = graphs
 
     try:

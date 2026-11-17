@@ -60,6 +60,24 @@ def test_validate_command_missing_file(tmp_path, capsys):
     assert "cannot read" in capsys.readouterr().err
 
 
+@pytest.mark.parametrize("content", [None, "ex:a ex:b ."], ids=["missing", "invalid-turtle"])
+def test_generate_from_a_shapes_file_that_cannot_be_read(tmp_path, capsys, content):
+    shapes = tmp_path / "shapes.ttl"
+    if content is not None:
+        shapes.write_text(PREFIXES + content, encoding="utf-8")
+    output = tmp_path / "out.ttl"
+    # an error (not a traceback with exit status 1, which means that the graph does not conform)
+    assert main([str(shapes), str(output), "5", "-p", "1"]) == EXIT_ERROR
+    assert "cannot read" in capsys.readouterr().err
+    assert not output.exists()  # nothing is written
+
+
+def test_generate_into_a_directory_that_does_not_exist(tmp_path, capsys):
+    shapes = write(tmp_path, "shapes.ttl", SHAPES)
+    assert main([shapes, str(tmp_path / "missing" / "out.ttl"), "5", "-p", "1"]) == EXIT_ERROR
+    assert "cannot write" in capsys.readouterr().err
+
+
 def test_version(capsys):
     with pytest.raises(SystemExit) as exit_info:
         main(["--version"])
