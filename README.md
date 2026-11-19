@@ -64,7 +64,7 @@ Entities of closed shapes (`sh:closed true`) are not linked to their shape, sinc
 
 ## Examples
 
-Examples of SHACL shapes based on Schema.org and other types, along with generated synthetic RDF graphs based on these shapes, can be found in the [generated examples](generated_examples/) directory in this repo. The [conference example](generated_examples/shape_examples/conference_shape.ttl) uses most of the supported SHACL features in one file.
+Examples of SHACL shapes based on Schema.org and other types, along with generated synthetic RDF graphs based on these shapes, can be found in the [generated examples](https://github.com/etnc/RDFGraphGen/tree/main/generated_examples) directory in this repo. The [conference example](https://github.com/etnc/RDFGraphGen/blob/main/generated_examples/shape_examples/conference_shape.ttl) uses most of the supported SHACL features in one file.
 
 ## Publications
 

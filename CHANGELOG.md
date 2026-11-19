@@ -2,7 +2,7 @@
 
 All notable changes to RDFGraphGen are documented in this file.
 
-## [Unreleased] - 1.3.0
+## [1.3.0] - 2026-11-18
 
 ### Added
 
@@ -26,6 +26,8 @@ All notable changes to RDFGraphGen are documented in this file.
 - `sh:minLength`, `sh:maxLength` and `sh:pattern` apply to values of every datatype, since they constrain the lexical form of any value: e.g. an `xsd:integer` with a length of 6 to 12 gets numbers with 6 to 12 digits, and one with the pattern `^[0-9]{5}$` gets five-digit numbers. Previously, they applied only to strings, and `sh:pattern` ignored `sh:minLength` and `sh:maxLength`. When no value can satisfy these constraints, a warning is shown and no value is generated.
 - Sequence paths (e.g. `sh:path ( ex:address ex:postalCode )`) and inverse paths (e.g. `sh:path [ sh:inversePath ex:author ]`), and their combinations. A sequence path is generated through intermediate nodes (`entity ex:address [ ex:postalCode value ]`), and an inverse path as a triple in the other direction (`value ex:author entity`). The values of a path that ends with an inverse step are never literals, since they are subjects of triples; shapes that require literal values for such a path produce a warning.
 - Test suite (pytest) with conformance tests for the experiment-suite shapes, the example shapes, the example from the paper, and individual SHACL constraint components; known generator bugs are tracked as expected failures. Continuous integration runs the tests on Python 3.9 to 3.14, and a lint check, for every push and pull request.
+- An example of conferences, with their talks, speakers, venues and tickets, that uses most of the supported SHACL features in one shapes file.
+- The README describes the supported SHACL features, the datatypes, the realistic values and the known limitations.
 
 ### Changed
 
@@ -44,6 +46,9 @@ All notable changes to RDFGraphGen are documented in this file.
 - Dates are drawn uniformly from the days of their range, and decimal numbers have two decimal places (more if the range requires it), so the generated values differ from those of earlier versions with the same shapes.
 - `python-dateutil` is no longer a dependency.
 - `sh:or` uses one of its shapes, instead of combining a random number of them: shapes can contradict each other (e.g. two datatypes), and then the combined constraints satisfied none of them. Shapes with a property path that is not supported are not used.
+- The generated output uses the prefixes of the shapes file (e.g. `ex:` and `schema:`), instead of the ones rdflib makes up (e.g. `ns1:`) or its own defaults (which turned `schema:` for `http://schema.org/` into `schemaorg:` or `schema1:`).
+- The example outputs are generated with a seed and checked with `--validate`; all of them conform.
+- The measurement script of the experiment suite (`measure.sh`) writes the CSV header only to a new results file, does not record failed runs, and passes further options to `rdfgen` (e.g. `--seed` or `--processes`).
 
 ### Fixed
 
@@ -74,3 +79,4 @@ All notable changes to RDFGraphGen are documented in this file.
 - The default patterns for properties named like an e-mail address or a telephone number produced malformed values (e.g. `n@gmailucom`, `339217-3216`).
 - Entities of closed shapes (`sh:closed true`) did not conform, because of their link to the shape (`sh:description`). They are no longer linked in the data (unless the shape lists `sh:description` in `sh:ignoredProperties`); `--validate` still checks them against their shape, and `rdfgen validate` through the shapes that refer to them and the target declarations.
 - IRIs with `sh:pattern`, `sh:minLength` or `sh:maxLength` (e.g. `sh:nodeKind sh:IRI` with a pattern for Wikidata IRIs) did not conform, since generated IRIs were always numbered and some values were blank nodes. Such IRIs are now generated from these constraints.
+- `rdfgen` crashed with a traceback and exit status `1` (which means that the graph does not conform) when the shapes file was missing or not valid RDF, or when the output file could not be written. It now prints an error message and exits with status `2`, and writes nothing if the shapes cannot be read.
