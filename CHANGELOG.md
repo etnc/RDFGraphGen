@@ -2,7 +2,7 @@
 
 All notable changes to RDFGraphGen are documented in this file.
 
-## [1.3.0] - 2026-11-18
+## [1.3.0] - 2026-11-19
 
 ### Added
 
